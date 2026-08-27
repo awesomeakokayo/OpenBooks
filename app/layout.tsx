@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Manrope, DM_Serif_Display } from "next/font/google";
+import { IBM_Plex_Mono, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -16,10 +16,10 @@ const manrope = Manrope({
   display: "swap",
 });
 
-const dmSerif = DM_Serif_Display({
-  variable: "--font-dm-serif",
+const mono = IBM_Plex_Mono({
+  variable: "--font-mono-openbooks",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
@@ -31,13 +31,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${manrope.variable} ${dmSerif.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-white text-plum">
-        {children}
-      </body>
+    <html lang="en" className={`${inter.variable} ${manrope.variable} ${mono.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-white text-plum">{children}</body>
     </html>
   );
 }
