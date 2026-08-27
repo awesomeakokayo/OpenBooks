@@ -37,6 +37,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Link href="/sales" className="rounded-[12px] px-4 py-2.5 text-sm font-medium text-plum/70 hover:bg-pale-sage">
             Sales
           </Link>
+          <Link href="/payments" className="rounded-[12px] px-4 py-2.5 text-sm font-medium text-plum/70 hover:bg-pale-sage">
+            Payments
+          </Link>
+          <Link href="/receipts" className="rounded-[12px] px-4 py-2.5 text-sm font-medium text-plum/70 hover:bg-pale-sage">
+            Receipts
+          </Link>
           <Link href="/expenses" className="rounded-[12px] px-4 py-2.5 text-sm font-medium text-plum/70 hover:bg-pale-sage">
             Expenses
           </Link>
@@ -63,7 +69,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               Settings
             </Link>
           </nav>
-          <div className="hidden lg:block text-xs text-plum/40">Phase 1 — Business ready</div>
+          <div className="hidden lg:block text-xs text-plum/40">Phase 4 — Manual payments ready</div>
         </header>
 
         {/* Mobile nav */}
@@ -76,6 +82,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
           <Link href="/invoices" className="whitespace-nowrap rounded-full border border-plum/10 px-4 py-2 text-xs font-semibold text-plum">
             Invoices
+          </Link>
+          <Link href="/payments" className="whitespace-nowrap rounded-full border border-plum/10 px-4 py-2 text-xs font-semibold text-plum">
+            Payments
           </Link>
           <Link href="/expenses" className="whitespace-nowrap rounded-full border border-plum/10 px-4 py-2 text-xs font-semibold text-plum">
             Expenses

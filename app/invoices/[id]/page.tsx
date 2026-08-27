@@ -3,6 +3,8 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import Link from "next/link";
+import { RecordPaymentForm } from "@/components/payments/RecordPaymentForm";
+import { CopyButton } from "@/components/ui/CopyButton";
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -81,9 +83,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <a href={waLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 flex-1 items-center justify-center rounded-[12px] bg-sage px-6 text-sm font-semibold text-plum hover:bg-sage/80">
             Share via WhatsApp
           </a>
-          <button onClick={() => { if (typeof navigator !== 'undefined') navigator.clipboard.writeText(publicUrl); }} className="inline-flex h-11 flex-1 items-center justify-center rounded-[12px] border border-plum/10 bg-white px-6 text-sm font-semibold text-plum hover:bg-pale-sage">
-            Copy link
-          </button>
+          <CopyButton text={publicUrl} />
         </div>
 
         {invoice.notes && (
@@ -93,6 +93,24 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         )}
       </div>
+
+      {invoice.status !== "PAID" && invoice.status !== "CANCELLED" && (
+        <RecordPaymentForm businessId={businessId} invoiceId={invoice.id} customerId={invoice.customerId} outstanding={outstanding} />
+      )}
+
+      {invoice.payments.length > 0 && (
+        <div className="rounded-[16px] border border-plum/10 bg-white p-6">
+          <h3 className="font-heading text-sm font-bold text-plum">Payments</h3>
+          <div className="mt-3 flex flex-col gap-2">
+            {invoice.payments.map((p) => (
+              <div key={p.id} className="flex justify-between rounded-[12px] border border-plum/10 px-4 py-2.5">
+                <span className="text-sm text-plum">{p.method} • {p.provider} • {p.verificationType}</span>
+                <span className="text-sm font-semibold text-plum">₦{Number(p.amount).toLocaleString("en-NG")}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
