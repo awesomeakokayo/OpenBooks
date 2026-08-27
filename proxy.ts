@@ -4,7 +4,7 @@ export default auth((req) => {
   const isAuth = !!req.auth;
   const pathname = req.nextUrl.pathname;
 
-  const publicPaths = ["/", "/login", "/register", "/api/auth", "/api/webhooks", "/invoice"];
+  const publicPaths = ["/", "/login", "/register", "/api/auth", "/api/webhooks", "/invoice", "/api/invoice"];
   const isPublic = publicPaths.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
   if (!isPublic && !isAuth) {
