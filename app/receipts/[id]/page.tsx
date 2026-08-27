@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
+import { ReceiptActions } from "@/components/receipts/ReceiptActions";
 
 export default async function ReceiptPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -64,19 +65,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           )}
         </div>
 
-        <div className="mt-8 flex gap-2 print:hidden">
-          <button onClick={() => typeof window !== "undefined" && window.print()} className="flex-1 rounded-[12px] bg-plum px-6 py-3 text-sm font-semibold text-white hover:bg-plum/90">
-            Print
-          </button>
-          <a
-            href={`https://wa.me/?text=${encodeURIComponent(`Receipt ${receipt.receiptNumber} from ${business.name} — ₦${Number(receipt.amount).toLocaleString("en-NG")} paid via ${receipt.paymentMethod}.`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 rounded-[12px] bg-sage px-6 py-3 text-center text-sm font-semibold text-plum hover:bg-sage/80"
-          >
-            Share via WhatsApp
-          </a>
-        </div>
+        <ReceiptActions receiptNumber={receipt.receiptNumber} businessName={business.name} amount={Number(receipt.amount)} paymentMethod={receipt.paymentMethod} />
 
         <p className="mt-6 text-center text-xs text-plum/40">Thank you for your business • OpenBooks NG</p>
       </div>

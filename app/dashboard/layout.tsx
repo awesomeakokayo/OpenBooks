@@ -17,7 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex min-h-screen bg-white">
       {/* Sidebar */}
-      <aside className="hidden w-[260px] shrink-0 border-r border-plum/10 bg-white lg:flex lg:flex-col">
+      <aside className="hidden w-[260px] shrink-0 border-r border-plum/10 bg-white lg:flex lg:flex-col print:hidden">
         <div className="flex h-16 items-center gap-2 border-b border-plum/10 px-6">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-plum text-sm font-bold text-white">
             OB
@@ -58,7 +58,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <div className="flex flex-1 flex-col">
         {/* Top bar */}
-        <header className="flex h-16 items-center justify-between border-b border-plum/10 bg-white px-4 lg:px-8">
+        <header className="flex h-16 items-center justify-between border-b border-plum/10 bg-white px-4 lg:px-8 print:hidden">
           <p className="font-heading text-sm font-bold text-plum lg:hidden">OpenBooks NG</p>
           <div className="hidden lg:block text-xs text-plum/50">{member.business.name} • NGN</div>
           <nav className="flex items-center gap-2 lg:hidden">
@@ -69,11 +69,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
               Settings
             </Link>
           </nav>
-          <div className="hidden lg:block text-xs text-plum/40">Phase 4 — Manual payments ready</div>
+          <div className="hidden lg:block text-xs text-plum/40">Phase 5 — Receipts ready</div>
         </header>
 
         {/* Mobile nav */}
-        <nav className="flex gap-2 overflow-x-auto border-b border-plum/10 bg-white px-4 py-3 lg:hidden">
+        <nav className="flex gap-2 overflow-x-auto border-b border-plum/10 bg-white px-4 py-3 lg:hidden print:hidden">
           <Link href="/dashboard" className="whitespace-nowrap rounded-full bg-plum px-4 py-2 text-xs font-semibold text-white">
             Dashboard
           </Link>

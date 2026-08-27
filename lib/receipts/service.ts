@@ -16,15 +16,35 @@ export async function issueReceipt(
   if (existing) return existing;
 
   const receiptNumber = await nextReceiptNumber(tx, params.businessId);
-  return tx.receipt.create({
-    data: {
-      businessId: params.businessId,
-      paymentId: params.paymentId,
-      invoiceId: params.invoiceId || null,
-      customerId: params.customerId,
-      receiptNumber,
-      amount: params.amount,
-      paymentMethod: params.paymentMethod as never,
-    },
-  });
+  try {
+    return await tx.receipt.create({
+      data: {
+        businessId: params.businessId,
+        paymentId: params.paymentId,
+        invoiceId: params.invoiceId || null,
+        customerId: params.customerId,
+        receiptNumber,
+        amount: params.amount,
+        paymentMethod: params.paymentMethod as never,
+      },
+    });
+  } catch (e: unknown) {
+    // Unique constraint race fallback — retry once with suffixed number
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("Unique constraint") || msg.includes("receiptNumber")) {
+      const fallback = `${receiptNumber}-${Date.now().toString().slice(-4)}`;
+      return tx.receipt.create({
+        data: {
+          businessId: params.businessId,
+          paymentId: params.paymentId,
+          invoiceId: params.invoiceId || null,
+          customerId: params.customerId,
+          receiptNumber: fallback,
+          amount: params.amount,
+          paymentMethod: params.paymentMethod as never,
+        },
+      });
+    }
+    throw e;
+  }
 }
