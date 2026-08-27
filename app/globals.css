@@ -1,29 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  /* OpenBooks NG Design Tokens — style.md authoritative */
   --color-plum: #503047;
   --color-terracotta: #c05746;
   --color-sage: #adc698;
   --color-pale-sage: #d0e3c4;
   --color-white: #ffffff;
-
-  --color-background: var(--color-white);
+  --color-background: #f8f8f6;
   --color-foreground: var(--color-plum);
 
-  /* Typography tokens */
   --font-heading: var(--font-manrope);
   --font-body: var(--font-inter);
-  --font-editorial: var(--font-dm-serif);
+  --font-editorial: var(--font-manrope);
+  --font-openbooks-mono: var(--font-mono-openbooks);
 
-  /* Semantic */
   --color-muted: rgba(80, 48, 71, 0.52);
   --color-muted-strong: rgba(80, 48, 71, 0.72);
   --color-border: rgba(80, 48, 71, 0.1);
   --color-border-soft: rgba(80, 48, 71, 0.06);
   --color-focus: var(--color-terracotta);
 
-  /* Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -31,7 +27,6 @@
   --radius-2xl: 24px;
   --radius-pill: 999px;
 
-  /* Spacing - 8px base */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -51,7 +46,7 @@
   --color-white: var(--color-white);
   --font-sans: var(--font-body);
   --font-heading: var(--font-heading);
-  --font-mono: ui-monospace, monospace;
+  --font-mono: var(--font-openbooks-mono);
 }
 
 body {
@@ -60,7 +55,6 @@ body {
   font-family: var(--font-body), Inter, system-ui, sans-serif;
 }
 
-/* Typography hierarchy — style.md 16 */
 h1,
 h2,
 h3,
@@ -71,15 +65,40 @@ h4 {
 }
 
 a {
-  color: var(--color-terracotta);
-}
-a:hover {
-  color: var(--color-plum);
+  color: inherit;
 }
 
-/* Focus ring — style.md 85 */
+a:hover {
+  color: inherit;
+}
+
 *:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(192, 87, 70, 0.2);
   border-color: var(--color-terracotta);
+}
+
+.animate-openbooks-fade {
+  animation: openbooks-fade 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes openbooks-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
