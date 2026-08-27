@@ -34,7 +34,9 @@
   --color-background: var(--color-background);
   --color-foreground: var(--color-foreground);
   --color-plum: var(--color-plum);
+  --color-plum-deep: var(--color-plum-deep);
   --color-terracotta: var(--color-terracotta);
+  --color-terracotta-dark: var(--color-terracotta-dark);
   --color-sage: var(--color-sage);
   --color-pale-sage: var(--color-pale-sage);
   --color-white: var(--color-white);
@@ -62,7 +64,6 @@ a[href], button:not(:disabled) { cursor: pointer; }
 a { color: inherit; }
 a:hover { color: inherit; }
 button:disabled, a[aria-disabled="true"] { cursor: not-allowed; }
-
 a:not([href]) { cursor: default; }
 
 ::selection {
