@@ -21,7 +21,6 @@ buildversion.md
 officialproduct.md
 technicalimplementation.md
 style.md
-implement.md 
 
 # Testing
 coverage
@@ -35,3 +34,5 @@ blob-report
 # Misc
 .DS_Store
 *.log
+*.tsbuildinfo
+tsconfig.tsbuildinfo
