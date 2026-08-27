@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
 import { z } from "zod";
+import { checkRateLimit, LIMITS, rateLimitHeaders } from "@/lib/security/rateLimit";
+import { logError } from "@/lib/security/error";
 
 const registerSchema = z.object({
   name: z.string().min(2).max(100),
@@ -11,6 +13,11 @@ const registerSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rl = checkRateLimit(`register:${ip}`, LIMITS.auth);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many attempts, try again shortly" }, { status: 429, headers: rateLimitHeaders(rl.remaining, rl.resetAt) });
+  }
   try {
     const body = await req.json();
     const parsed = registerSchema.safeParse(body);
@@ -29,7 +36,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
   } catch (e) {
-    console.error("[register] error", e);
-    return NextResponse.json({ error: "Could not create account" }, { status: 500 });
+    const id = logError("register", e, { ip: req.headers.get("x-forwarded-for") });
+    return NextResponse.json({ error: "Could not create account", requestId: id }, { status: 500 });
   }
 }

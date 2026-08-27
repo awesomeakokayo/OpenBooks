@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { verifyTransaction, verifyWebhookSignature } from "@/lib/paystack/client";
 import { issueReceipt } from "@/lib/receipts/service";
+import { checkRateLimit, LIMITS, rateLimitHeaders } from "@/lib/security/rateLimit";
+import { logError } from "@/lib/security/error";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "webhook";
+  const rl = checkRateLimit(`webhook:${ip}`, LIMITS.webhook);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Webhook rate limited" }, { status: 429, headers: rateLimitHeaders(rl.remaining, rl.resetAt) });
+  }
   const rawBody = await req.text();
   const signature = req.headers.get("x-paystack-signature");
   const isValid = verifyWebhookSignature(rawBody, signature);
@@ -38,9 +45,9 @@ export async function POST(req: NextRequest) {
   try {
     verified = await verifyTransaction(reference);
   } catch (e: unknown) {
+    const id = logError("webhook-verify", e, { reference });
     const msg = e instanceof Error ? e.message : "Verify failed";
-    console.error("[webhook] verify failed", reference, msg);
-    return NextResponse.json({ error: msg }, { status: 502 });
+    return NextResponse.json({ error: msg, requestId: id }, { status: 502 });
   }
 
   if (verified.status !== "success") {

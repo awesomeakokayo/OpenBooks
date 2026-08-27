@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { initializeTransaction } from "@/lib/paystack/client";
 import { randomBytes } from "crypto";
+import { checkRateLimit, LIMITS, rateLimitHeaders } from "@/lib/security/rateLimit";
+import { logError } from "@/lib/security/error";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rl = checkRateLimit(`paystack-init:${ip}`, LIMITS.paystackInit);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many payment attempts" }, { status: 429, headers: rateLimitHeaders(rl.remaining, rl.resetAt) });
+  }
   const body = await req.json();
   const { invoiceToken } = body as { invoiceToken?: string };
   if (!invoiceToken) return NextResponse.json({ error: "invoiceToken required" }, { status: 400 });
@@ -71,7 +78,8 @@ export async function POST(req: NextRequest) {
   } catch (e: unknown) {
     // Mark pending as FAILED for audit
     await prisma.payment.update({ where: { providerReference: reference }, data: { status: "FAILED" } }).catch(() => {});
+    const id = logError("paystack-init", e, { invoiceToken: invoice.publicToken });
     const msg = e instanceof Error ? e.message : "Paystack initialize failed";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    return NextResponse.json({ error: msg, requestId: id }, { status: 502 });
   }
 }
