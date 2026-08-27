@@ -64,12 +64,22 @@ h4 {
   line-height: 1.15;
 }
 
+a,
+button {
+  cursor: pointer;
+}
+
 a {
   color: inherit;
 }
 
 a:hover {
   color: inherit;
+}
+
+button:disabled,
+a[aria-disabled="true"] {
+  cursor: not-allowed;
 }
 
 *:focus-visible {
