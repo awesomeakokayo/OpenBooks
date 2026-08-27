@@ -50,8 +50,11 @@ export default async function BusinessSettingsPage() {
           Choose the payment methods customers will see. You can change this per invoice later.
         </p>
         <div className="mt-6">
-          <PaymentSettingsForm businessId={business.id} initial={setting} />
+          <PaymentSettingsForm businessId={business.id} initial={setting} subaccountCode={business.paystackSubaccountCode} />
         </div>
+        <p className="mt-4 text-xs text-plum/40">
+          Subaccount code is stored as paystackSubaccountCode (e.g., ACCT_xxx) — see docs/paystack-settlement.md for settlement details.
+        </p>
       </div>
     </div>
   );

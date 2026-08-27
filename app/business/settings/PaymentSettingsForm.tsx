@@ -16,9 +16,11 @@ type Setting = {
 export function PaymentSettingsForm({
   businessId,
   initial,
+  subaccountCode,
 }: {
   businessId: string;
   initial: Setting;
+  subaccountCode?: string | null;
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -31,6 +33,7 @@ export function PaymentSettingsForm({
     bankName: initial?.bankName ?? "",
     accountName: initial?.accountName ?? "",
     accountNumber: initial?.accountNumber ?? "",
+    paystackSubaccountCode: subaccountCode ?? "",
   });
 
   async function onSubmit(e: React.FormEvent) {
@@ -142,9 +145,16 @@ export function PaymentSettingsForm({
       </label>
 
       {form.paystackEnabled && (
-        <p className="rounded-[12px] bg-pale-sage px-4 py-3 text-xs text-plum/70">
-          Paystack checkout will be configured in Phase 6. For now this enables “Pay Online” on invoices.
-        </p>
+        <div className="flex flex-col gap-1.5 rounded-[12px] bg-pale-sage/40 p-4">
+          <label className="text-xs font-medium text-plum">Paystack subaccount code (optional)</label>
+          <input
+            value={form.paystackSubaccountCode}
+            onChange={(e) => setForm({ ...form, paystackSubaccountCode: e.target.value })}
+            placeholder="ACCT_xxx (from Paystack dashboard)"
+            className="flex h-11 rounded-[12px] border border-plum/10 bg-white px-3 text-sm text-plum"
+          />
+          <p className="text-xs text-plum/50">Leave empty to settle to platform account. See docs/paystack-settlement.md</p>
+        </div>
       )}
 
       {msg && <p className={`text-sm ${msg === "Saved" ? "text-sage" : "text-terracotta"}`}>{msg}</p>}

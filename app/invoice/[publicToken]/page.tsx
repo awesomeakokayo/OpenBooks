@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { logAuditEvent } from "@/lib/audit/logger";
+import { PayOnlineButton } from "@/components/paystack/PayOnlineButton";
+import { VerifyBanner } from "@/components/paystack/VerifyBanner";
+import { Suspense } from "react";
 
 // Public invoice — no auth required, token-based, minimal leak
 
@@ -65,6 +68,10 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
 
           {invoice.notes && <p className="mt-4 rounded-[12px] bg-plum/[0.03] p-3 text-sm text-plum/70">{invoice.notes}</p>}
 
+          <Suspense fallback={null}>
+            <VerifyBanner />
+          </Suspense>
+
           <div className="mt-6 border-t border-plum/10 pt-6">
             <h2 className="font-heading text-sm font-bold text-plum">How to pay</h2>
 
@@ -93,13 +100,7 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
             )}
 
             {enabled.has("PAYSTACK") && invoice.status !== "PAID" && invoice.status !== "CANCELLED" && (
-              <div className="mt-3 rounded-[12px] bg-pale-sage p-4">
-                <p className="text-sm font-bold text-plum">Pay Online</p>
-                <p className="text-xs text-plum/60">Secure payment via Paystack — Phase 6 will enable this button.</p>
-                <button disabled className="mt-3 inline-flex h-11 items-center justify-center rounded-[12px] bg-plum px-6 text-sm font-semibold text-white opacity-50">
-                  Pay ₦{outstanding.toLocaleString("en-NG")}
-                </button>
-              </div>
+              <PayOnlineButton invoiceToken={publicToken} amount={outstanding} />
             )}
 
             {invoice.status === "PAID" && <p className="mt-4 rounded-[12px] bg-sage px-4 py-3 text-sm font-semibold text-plum">✓ This invoice is paid. Thank you!</p>}

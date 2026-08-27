@@ -55,6 +55,14 @@ export async function PATCH(req: NextRequest) {
     },
   });
 
+  // Handle paystack subaccount code on Business (optional)
+  if (typeof data.paystackSubaccountCode === "string") {
+    await prisma.business.update({
+      where: { id: businessId },
+      data: { paystackSubaccountCode: data.paystackSubaccountCode || null },
+    });
+  }
+
   await logAuditEvent({
     businessId,
     userId,
