@@ -46,6 +46,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Link href="/expenses" className="rounded-[12px] px-4 py-2.5 text-sm font-medium text-plum/70 hover:bg-pale-sage">
             Expenses
           </Link>
+          <Link href="/reports" className="rounded-[12px] px-4 py-2.5 text-sm font-medium text-plum/70 hover:bg-pale-sage">
+            Reports
+          </Link>
           <Link href="/business/settings" className="rounded-[12px] px-4 py-2.5 text-sm font-medium text-plum/70 hover:bg-pale-sage">
             Settings
           </Link>
@@ -88,6 +91,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
           <Link href="/expenses" className="whitespace-nowrap rounded-full border border-plum/10 px-4 py-2 text-xs font-semibold text-plum">
             Expenses
+          </Link>
+          <Link href="/reports" className="whitespace-nowrap rounded-full border border-plum/10 px-4 py-2 text-xs font-semibold text-plum">
+            Reports
           </Link>
         </nav>
 
