@@ -2,45 +2,41 @@
 
 :root {
   --color-plum: #503047;
+  --color-plum-deep: #3d2437;
   --color-terracotta: #c05746;
+  --color-terracotta-dark: #a94738;
   --color-sage: #adc698;
   --color-pale-sage: #d0e3c4;
   --color-white: #ffffff;
   --color-background: #f8f8f6;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f3f3ef;
   --color-foreground: var(--color-plum);
-
   --font-heading: var(--font-manrope);
   --font-body: var(--font-inter);
   --font-editorial: var(--font-manrope);
   --font-openbooks-mono: var(--font-mono-openbooks);
-
   --color-muted: rgba(80, 48, 71, 0.52);
   --color-muted-strong: rgba(80, 48, 71, 0.72);
   --color-border: rgba(80, 48, 71, 0.1);
   --color-border-soft: rgba(80, 48, 71, 0.06);
   --color-focus: var(--color-terracotta);
-
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-2xl: 24px;
+  --radius-3xl: 28px;
   --radius-pill: 999px;
-
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
 }
 
 @theme inline {
   --color-background: var(--color-background);
   --color-foreground: var(--color-foreground);
   --color-plum: var(--color-plum);
+  --color-plum-deep: var(--color-plum-deep);
   --color-terracotta: var(--color-terracotta);
+  --color-terracotta-dark: var(--color-terracotta-dark);
   --color-sage: var(--color-sage);
   --color-pale-sage: var(--color-pale-sage);
   --color-white: var(--color-white);
@@ -49,47 +45,56 @@
   --font-mono: var(--font-openbooks-mono);
 }
 
+html { scroll-behavior: smooth; }
+
 body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-body), Inter, system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
-h1,
-h2,
-h3,
-h4 {
+h1, h2, h3, h4 {
   font-family: var(--font-heading), Manrope, sans-serif;
   color: inherit;
   line-height: 1.15;
 }
 
-a[href],
-button:not(:disabled) {
-  cursor: pointer;
-}
+a[href], button:not(:disabled) { cursor: pointer; }
+a { color: inherit; }
+a:hover { color: inherit; }
+button:disabled, a[aria-disabled="true"] { cursor: not-allowed; }
+a:not([href]) { cursor: default; }
 
-a {
-  color: inherit;
-}
-
-a:hover {
-  color: inherit;
-}
-
-button:disabled,
-a[aria-disabled="true"] {
-  cursor: not-allowed;
-}
-
-a:not([href]) {
-  cursor: default;
+::selection {
+  background: var(--color-pale-sage);
+  color: var(--color-plum);
 }
 
 *:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(192, 87, 70, 0.2);
-  border-color: var(--color-terracotta);
+}
+
+.openbooks-card {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 14px 40px rgba(80, 48, 71, 0.07);
+}
+
+.openbooks-card-soft {
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-xl);
+}
+
+.openbooks-eyebrow {
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .animate-openbooks-fade {
@@ -97,20 +102,12 @@ a:not([href]) {
 }
 
 @keyframes openbooks-fade {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.99);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     scroll-behavior: auto !important;
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
