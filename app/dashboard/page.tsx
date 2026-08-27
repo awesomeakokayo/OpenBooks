@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
 import { redirect } from "next/navigation";
+import { getDashboardMetrics } from "@/lib/reports/metrics";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -14,20 +15,14 @@ export default async function DashboardPage() {
   if (!member) redirect("/create-business");
   const business = member.business;
 
-  // Basic metrics (server aggregation, Phase 1 skeleton)
-  const customerCount = await prisma.customer.count({ where: { businessId: business.id } });
+  const metrics = await getDashboardMetrics(business.id);
+  const customerCount = metrics.customerCount;
+  const totalPaid = metrics.totalPaid;
+  const totalExpenses = (
+    await prisma.expense.aggregate({ where: { businessId: business.id }, _sum: { amount: true } })
+  )._sum.amount;
+  const totalExpensesNum = Number(totalExpenses ?? 0);
   const invoiceCount = await prisma.invoice.count({ where: { businessId: business.id } });
-  const paymentAgg = await prisma.payment.aggregate({
-    where: { businessId: business.id, status: "SUCCESS" },
-    _sum: { amount: true },
-  });
-  const expenseAgg = await prisma.expense.aggregate({
-    where: { businessId: business.id },
-    _sum: { amount: true },
-  });
-
-  const totalPaid = Number(paymentAgg._sum.amount ?? 0);
-  const totalExpenses = Number(expenseAgg._sum.amount ?? 0);
 
   const name = session.user?.name?.split(" ")[0] ?? "there";
 
@@ -48,8 +43,8 @@ export default async function DashboardPage() {
         </div>
         <div className="rounded-[16px] bg-pale-sage p-5">
           <p className="text-xs font-medium text-plum/60">Customers owe you</p>
-          <p className="mt-2 text-3xl font-extrabold text-plum">—</p>
-          <p className="mt-1 text-xs text-plum/50">Outstanding derived in Phase 2</p>
+          <p className="mt-2 text-3xl font-extrabold text-plum">₦{metrics.outstanding.toLocaleString("en-NG")}</p>
+          <p className="mt-1 text-xs text-plum/50">Invoices − payments (derived)</p>
         </div>
         <div className="rounded-[16px] border border-plum/10 bg-white p-5 shadow-[0_4px_20px_rgba(80,48,71,0.06)]">
           <p className="text-xs font-medium text-plum/50">Customers</p>
@@ -68,12 +63,12 @@ export default async function DashboardPage() {
         </div>
         <div className="rounded-[16px] border border-plum/10 bg-white p-5">
           <p className="text-xs font-medium text-plum/50">Expenses</p>
-          <p className="mt-1 text-xl font-bold text-plum">₦{totalExpenses.toLocaleString("en-NG")}</p>
+          <p className="mt-1 text-xl font-bold text-plum">₦{totalExpensesNum.toLocaleString("en-NG")}</p>
         </div>
         <div className="rounded-[16px] bg-plum p-5 text-white">
-          <p className="text-xs font-medium text-white/70">Phase 1</p>
-          <p className="mt-1 text-sm font-semibold text-white">Business workspace ready</p>
-          <p className="mt-1 text-xs text-pale-sage">Next: add customers & record sales</p>
+          <p className="text-xs font-medium text-white/70">This month</p>
+          <p className="mt-1 text-sm font-semibold text-white">₦{metrics.monthSales.toLocaleString("en-NG")} sales</p>
+          <p className="mt-1 text-xs text-pale-sage">Today ₦{metrics.todaySales.toLocaleString("en-NG")}</p>
         </div>
       </div>
 
@@ -99,12 +94,21 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Recent activity placeholder */}
+      {/* Recent activity */}
       <div className="rounded-[16px] border border-plum/10 bg-white p-6">
-        <h2 className="font-heading text-sm font-bold text-plum">Recent activity</h2>
-        <p className="mt-2 text-sm text-plum/50">
-          No transactions yet. Create your first customer and record a sale to see activity here.
-        </p>
+        <h2 className="font-heading text-sm font-bold text-plum">Recent sales</h2>
+        {metrics.recentSales.length === 0 ? (
+          <p className="mt-2 text-sm text-plum/50">No transactions yet. Create your first customer and record a sale to see activity here.</p>
+        ) : (
+          <div className="mt-3 flex flex-col gap-2">
+            {metrics.recentSales.map((s) => (
+              <div key={s.id} className="flex justify-between rounded-[12px] border border-plum/10 px-4 py-2.5">
+                <span className="text-sm text-plum">{s.description} • {s.customer?.name ?? "Walk-in"}</span>
+                <span className="text-sm font-semibold text-plum">₦{Number(s.totalAmount).toLocaleString("en-NG")}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
