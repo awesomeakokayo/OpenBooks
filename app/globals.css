@@ -60,7 +60,7 @@ h2,
 h3,
 h4 {
   font-family: var(--font-heading), Manrope, sans-serif;
-  color: var(--color-plum);
+  color: inherit;
   line-height: 1.15;
 }
 
