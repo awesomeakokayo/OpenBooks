@@ -64,8 +64,8 @@ h4 {
   line-height: 1.15;
 }
 
-a,
-button {
+a[href],
+button:not(:disabled) {
   cursor: pointer;
 }
 
@@ -80,6 +80,10 @@ a:hover {
 button:disabled,
 a[aria-disabled="true"] {
   cursor: not-allowed;
+}
+
+a:not([href]) {
+  cursor: default;
 }
 
 *:focus-visible {
