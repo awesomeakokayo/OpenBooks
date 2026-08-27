@@ -1,97 +1,90 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  BanknoteArrowDown,
+  Check,
+  CirclePlay,
+  FileText,
+  Menu,
+  ReceiptText,
+  Send,
+  Sparkles,
+  WalletCards,
+  X,
+} from "lucide-react";
+import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
+
+const steps = [
+  { number: "01", title: "Start with your business", copy: "Create your OpenBooks account, add the business name and choose the ways customers can pay you.", button: "Create business" },
+  { number: "02", title: "Keep customers in one place", copy: "Add a customer once, then keep their invoices, payments and outstanding balance together.", button: "Add customer" },
+  { number: "03", title: "Make an invoice in seconds", copy: "Choose the customer, add the work, set the amount and pick the payment methods you want to accept.", button: "Create invoice" },
+  { number: "04", title: "Get paid. Keep the proof.", copy: "Customers can pay through the methods you enable. OpenBooks records the payment and makes the receipt ready.", button: "See payment" },
+];
+
+const sellingPoints = [
+  { eyebrow: "01 — The notebook, upgraded", title: "Everything you used to write down, now in one place.", copy: "Sales, customers, invoices, payments and expenses without turning your business into an accounting class.", points: ["Fast transaction records", "Customer history", "Simple business totals"], className: "bg-[#503047] text-white", kickerClass: "text-[#D0E3C4]", icon: FileText },
+  { eyebrow: "02 — Payment, your way", title: "You choose how customers can pay you.", copy: "Bank transfer, cash, POS or online payment with Paystack. Your business decides what appears on every invoice.", points: ["Business-controlled payment methods", "Direct bank details", "Paystack-ready online checkout"], className: "bg-[#C05746] text-white", kickerClass: "text-[#D0E3C4]", icon: WalletCards },
+  { eyebrow: "03 — Less chasing", title: "Know who has paid. Know who still owes you.", copy: "OpenBooks keeps outstanding balances beside the customer and invoice that created them, so you stop guessing.", points: ["Outstanding customer balances", "Partial payments", "Clear payment history"], className: "bg-[#D0E3C4] text-[#503047]", kickerClass: "text-[#C05746]", icon: BanknoteArrowDown },
+  { eyebrow: "04 — Your records are yours", title: "Open by design. Simple enough to trust.", copy: "The core is open source, built around ordinary Nigerian business workflows and designed to stay useful on a phone.", points: ["Open-source core", "Mobile-first experience", "Nigeria-first by default"], className: "bg-[#ADC698] text-[#503047]", kickerClass: "text-[#503047]", icon: Sparkles },
+];
+
+const personas = [
+  { label: "For business owners", href: "/for-businesses", text: "Sell, invoice, collect, keep records." },
+  { label: "For customers", href: "/for-customers", text: "Open an invoice and pay without an account." },
+  { label: "For freelancers", href: "/for-freelancers", text: "Look professional from invoice to receipt." },
+];
 
 export default function Home() {
+  const [activeStep, setActiveStep] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const currentStep = steps[activeStep];
+
+  const mockContent = useMemo(() => {
+    if (activeStep === 0) return <div className="grid gap-5 md:grid-cols-[1.1fr_0.9fr]"><div className="rounded-3xl bg-white p-6 shadow-[0_20px_60px_rgba(80,48,71,0.12)]"><div className="mb-7 flex items-center justify-between"><span className="text-sm font-semibold text-[#503047]">Create your business</span><span className="rounded-full bg-[#D0E3C4] px-3 py-1 text-xs font-semibold text-[#503047]">1 / 4</span></div><div className="space-y-5"><MockInput label="Business name" value="Ade Phone Repairs" /><MockInput label="Phone number" value="0803 000 0000" /><MockInput label="Business address" value="Ibadan, Oyo State" /><div className="rounded-2xl bg-[#F8F8F6] p-4"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#918A91]">Payment methods</p><div className="mt-3 grid grid-cols-2 gap-2">{["Bank transfer", "Cash", "POS", "Paystack"].map((item) => <span key={item} className="rounded-xl border border-[#E5E3DF] bg-white px-3 py-2 text-sm font-medium text-[#503047]">✓ {item}</span>)}</div></div></div></div><div className="rounded-3xl bg-[#503047] p-6 text-white"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D0E3C4]">What you get</p><div className="mt-10 space-y-6">{[["01", "A clean business workspace"], ["02", "Your payment preferences"], ["03", "A place for every transaction"]].map(([number, text]) => <div key={number} className="flex gap-4 border-b border-white/10 pb-5 last:border-b-0"><span className="font-mono text-xs text-[#ADC698]">{number}</span><span className="text-sm leading-6 text-white/80">{text}</span></div>)}</div></div></div>;
+    if (activeStep === 1) return <div className="rounded-3xl bg-white p-5 shadow-[0_20px_60px_rgba(80,48,71,0.12)]"><div className="flex items-center justify-between border-b border-[#E5E3DF] pb-5"><div><p className="text-xs uppercase tracking-[0.18em] text-[#918A91]">Customers</p><h4 className="mt-1 font-heading text-2xl font-bold text-[#503047]">37 customers</h4></div><button className="rounded-xl bg-[#503047] px-4 py-2 text-sm font-semibold text-white">+ Add customer</button></div><div className="mt-3 divide-y divide-[#E5E3DF]">{[["Chinedu Okafor", "₦45,000 owed", "Last payment 2 days ago"], ["Bola Design Co.", "₦12,500 owed", "Invoice #1024"], ["Musa Ventures", "Paid ₦80,000", "Today"]].map(([name, balance, detail]) => <div key={name} className="flex items-center justify-between gap-4 py-5"><div className="min-w-0"><p className="truncate font-semibold text-[#503047]">{name}</p><p className="mt-1 text-sm text-[#918A91]">{detail}</p></div><p className="shrink-0 text-sm font-bold text-[#C05746]">{balance}</p></div>)}</div></div>;
+    if (activeStep === 2) return <div className="grid gap-5 md:grid-cols-[0.95fr_1.05fr]"><div className="rounded-3xl bg-[#503047] p-6 text-white"><p className="text-xs uppercase tracking-[0.18em] text-[#D0E3C4]">New invoice</p><h4 className="mt-3 font-heading text-2xl font-bold">INV-001029</h4><div className="mt-8 space-y-4 text-sm"><div className="flex items-center justify-between border-b border-white/10 pb-3"><span className="text-white/60">Customer</span><span>John Doe</span></div><div className="flex items-center justify-between border-b border-white/10 pb-3"><span className="text-white/60">Service</span><span>Website design</span></div><div className="flex items-center justify-between border-b border-white/10 pb-3"><span className="text-white/60">Due date</span><span>05 Sept 2026</span></div></div><p className="mt-9 font-heading text-4xl font-bold">₦150,000</p></div><div className="rounded-3xl bg-white p-6 shadow-[0_20px_60px_rgba(80,48,71,0.12)]"><div className="flex items-center justify-between"><span className="text-sm font-semibold text-[#503047]">Payment methods</span><span className="text-xs text-[#918A91]">Business defaults</span></div><div className="mt-5 space-y-3">{["Bank transfer", "Paystack"].map((item) => <div key={item} className="flex items-center justify-between rounded-2xl border border-[#E5E3DF] p-4"><span className="font-semibold text-[#503047]">{item}</span><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#D0E3C4] text-[#503047]"><Check size={15} strokeWidth={2.5} /></span></div>)}</div><button className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#C05746] px-5 py-4 text-sm font-semibold text-white">Create invoice <ArrowRight size={17} /></button></div></div>;
+    return <div className="grid gap-5 md:grid-cols-[1.1fr_0.9fr]"><div className="rounded-3xl bg-white p-6 shadow-[0_20px_60px_rgba(80,48,71,0.12)]"><div className="flex items-center justify-between"><div><p className="text-xs uppercase tracking-[0.18em] text-[#918A91]">Invoice paid</p><p className="mt-1 text-sm font-semibold text-[#503047]">INV-001029 · John Doe</p></div><span className="rounded-full bg-[#D0E3C4] px-3 py-1 text-xs font-semibold text-[#36563A]">Paid</span></div><div className="mt-8 rounded-3xl bg-[#F8F8F6] p-6 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#D0E3C4] text-[#36563A]"><Check size={26} strokeWidth={2.4} /></div><p className="mt-4 text-sm text-[#6F6670]">Payment received</p><p className="mt-1 font-heading text-4xl font-bold text-[#503047]">₦150,000</p><button className="mt-6 rounded-xl bg-[#503047] px-5 py-3 text-sm font-semibold text-white">View receipt</button></div></div><div className="rounded-3xl bg-[#ADC698] p-6 text-[#503047]"><p className="text-xs font-semibold uppercase tracking-[0.18em]">Business updated</p><div className="mt-10 space-y-6">{["Payment added to history", "Customer balance recalculated", "Receipt ready to share"].map((item) => <div key={item} className="flex items-center gap-3 text-sm font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/70"><Check size={15} /></span>{item}</div>)}</div></div></div>;
+  }, [activeStep]);
+
   return (
-    <div className="flex flex-1 flex-col bg-white">
-      {/* Hero — style.md 77 */}
-      <header className="mx-auto w-full max-w-[1320px] px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-plum flex items-center justify-center text-white font-bold text-sm">
-            OB
-          </div>
-          <span className="font-heading font-bold text-plum text-lg">
-            OpenBooks NG
-          </span>
-        </div>
-        <Link
-          href="/login"
-          className="rounded-md bg-plum px-5 py-2.5 text-sm font-semibold text-white hover:bg-plum/90 transition-colors"
-        >
-          Sign in
-        </Link>
-      </header>
+    <main className="min-h-screen overflow-x-clip bg-[#F8F8F6] text-[#503047]">
+      <div className="sticky top-0 z-50 border-b border-white/10 bg-[#503047]/95 backdrop-blur-xl">
+        <nav className="mx-auto flex max-w-[1320px] items-center justify-between px-5 py-4 lg:px-8">
+          <Link href="/" className="flex items-center gap-2.5 text-white"><OpenBooksBrandMark size={36} light /><span className="font-heading text-xl font-bold tracking-tight">Open<span className="text-[#C05746]">Books</span></span></Link>
+          <div className="hidden items-center gap-8 lg:flex"><Link href="#guide" className="text-sm font-medium text-white/75 hover:text-white">Guide</Link><Link href="/for-customers" className="text-sm font-medium text-white/75 hover:text-white">Customers</Link><Link href="/for-businesses" className="text-sm font-medium text-white/75 hover:text-white">Business owners</Link><Link href="/for-freelancers" className="text-sm font-medium text-white/75 hover:text-white">Freelancers</Link></div>
+          <div className="hidden items-center gap-3 sm:flex"><Link href="/login" className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white/80 hover:text-white">Sign in</Link><Link href="/register" className="rounded-xl bg-[#C05746] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_30px_rgba(192,87,70,0.24)] transition-transform hover:-translate-y-0.5">Start free</Link></div>
+          <button aria-label="Open menu" className="rounded-xl p-2 text-white sm:hidden" onClick={() => setMobileOpen((v) => !v)}>{mobileOpen ? <X size={21} /> : <Menu size={21} />}</button>
+        </nav>
+        {mobileOpen && <div className="border-t border-white/10 px-5 pb-5 pt-3 sm:hidden"><div className="flex flex-col gap-1">{[["Guide", "#guide"], ["Customers", "/for-customers"], ["Business owners", "/for-businesses"], ["Freelancers", "/for-freelancers"]].map(([label, href]) => <Link key={label} href={href} onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium text-white/80 hover:bg-white/5 hover:text-white">{label}</Link>)}<div className="mt-2 grid grid-cols-2 gap-2"><Link href="/login" className="rounded-xl border border-white/15 px-3 py-3 text-center text-sm font-semibold text-white">Sign in</Link><Link href="/register" className="rounded-xl bg-[#C05746] px-3 py-3 text-center text-sm font-semibold text-white">Start free</Link></div></div></div>}
+      </div>
 
-      <main className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col px-6 py-12 lg:py-20">
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-          <div className="flex flex-col gap-6">
-            <p className="text-sm font-semibold tracking-widest uppercase text-terracotta">
-              Nigeria-first · Mobile-first · Open source
-            </p>
-            <h1
-              className="font-heading font-extrabold text-plum leading-[1.1] text-[32px] lg:text-[48px]"
-              style={{ fontFamily: "var(--font-manrope)" }}
-            >
-              Your business notebook,
-              <br />
-              <span className="text-sage">but digital.</span>
-            </h1>
-            <p className="max-w-xl text-[18px] leading-7 text-plum/70">
-              Record sales, send invoices, collect payments and keep track of
-              what your business is owed — without complicated accounting
-              software.
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row pt-2">
-              <Link
-                href="/register"
-                className="inline-flex h-12 items-center justify-center rounded-[12px] bg-plum px-8 text-sm font-semibold text-white hover:bg-plum/90 transition-colors"
-              >
-                Start for free
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex h-12 items-center justify-center rounded-[12px] bg-pale-sage px-8 text-sm font-semibold text-plum hover:bg-sage/60 transition-colors"
-              >
-                Sign in
-              </Link>
-            </div>
-            <p className="text-sm text-plum/50">Free. No card required. NGN only — V1.</p>
-          </div>
+      <section className="relative isolate overflow-hidden bg-[#503047] text-white"><div className="pointer-events-none absolute -left-24 top-10 h-96 w-96 rounded-full bg-[#C05746]/20 blur-3xl" /><div className="pointer-events-none absolute right-0 top-0 h-[520px] w-[520px] rounded-full bg-[#ADC698]/15 blur-3xl" /><div className="mx-auto grid min-h-[calc(100vh-73px)] max-w-[1320px] items-center gap-14 px-5 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-24"><div className="relative z-10 max-w-2xl"><p className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#D0E3C4]"><span className="h-1.5 w-1.5 rounded-full bg-[#ADC698]" /> Nigeria-first · Open source</p><h1 className="max-w-3xl font-heading text-[clamp(3rem,6vw,6.2rem)] font-extrabold leading-[0.94] tracking-[-0.05em] text-white">Your business notebook.<span className="mt-2 block text-[#ADC698]">Now it works for you.</span></h1><p className="mt-7 max-w-xl text-base leading-7 text-white/70 sm:text-lg sm:leading-8">Record sales, send invoices, collect payments and keep track of who owes you — without the complicated feeling of accounting software.</p><div className="mt-9 flex flex-col gap-3 sm:flex-row"><Link href="/register" className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-[#C05746] px-7 text-sm font-semibold text-white shadow-[0_18px_50px_rgba(192,87,70,0.28)] transition-transform hover:-translate-y-0.5">Start for free <ArrowRight size={17} /></Link><Link href="#guide" className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-7 text-sm font-semibold text-white hover:bg-white/10">See how it works <CirclePlay size={17} /></Link></div><div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs text-white/45"><span>Free to use</span><span>•</span><span>Built for phones</span><span>•</span><span>NGN-first</span></div></div><div className="relative mx-auto w-full max-w-[680px] lg:ml-auto"><div className="absolute -inset-6 rounded-[44px] border border-[#ADC698]/20" /><svg className="pointer-events-none absolute -right-8 -top-14 hidden h-[470px] w-[540px] lg:block" viewBox="0 0 540 470" fill="none"><path d="M48 428C115 128 228 32 486 58" stroke="#ADC698" strokeOpacity="0.55" strokeWidth="2" strokeDasharray="5 8" /><circle cx="486" cy="58" r="7" fill="#C05746" /></svg><div className="relative rounded-[36px] border border-white/10 bg-[#604054] p-3 shadow-[0_40px_110px_rgba(0,0,0,0.28)] sm:p-5"><div className="rounded-[28px] bg-[#F8F8F6] p-4 text-[#503047] sm:p-6"><div className="flex items-center justify-between border-b border-[#E5E3DF] pb-4"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#918A91]">Today&apos;s business</p><p className="mt-1 font-heading text-xl font-bold sm:text-2xl">Good morning, Ade 👋</p></div><div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#D0E3C4] text-xs font-bold">AD</div></div><div className="mt-5 grid gap-3 sm:grid-cols-3"><MetricCard label="Sales this month" value="₦184,500" tone="plum" /><MetricCard label="Customers owe you" value="₦42,000" tone="sage" /><MetricCard label="Customers" value="23" tone="terracotta" /></div><div className="mt-5 grid gap-3 sm:grid-cols-[1.1fr_0.9fr]"><div className="rounded-2xl bg-[#503047] p-5 text-white"><div className="flex items-center justify-between"><span className="text-sm font-semibold">Recent activity</span><span className="text-xs text-white/45">View all</span></div><div className="mt-4 space-y-3">{[["Payment received", "₦25,000", "2m ago"], ["Invoice sent", "₦85,000", "1h ago"], ["Cash payment", "₦12,500", "3h ago"]].map(([a, b, c]) => <div key={a} className="flex items-center justify-between rounded-xl bg-white/5 p-3"><div className="flex min-w-0 items-center gap-3"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#ADC698] text-[#503047]"><Check size={14} /></span><div className="min-w-0"><p className="truncate text-xs font-semibold">{a}</p><p className="text-[10px] text-white/45">{c}</p></div></div><p className="text-xs font-bold text-[#D0E3C4]">{b}</p></div>)}</div></div><div className="rounded-2xl bg-[#D0E3C4] p-5"><p className="text-sm font-semibold">Customers who owe you</p><div className="mt-4 space-y-4">{["Chinedu · ₦45,000", "Bola · ₦12,500", "Musa · ₦80,000"].map((x) => <div key={x} className="flex items-center justify-between border-b border-[#503047]/10 pb-3 text-xs font-semibold last:border-b-0 last:pb-0">{x}<ArrowUpRight size={14} /></div>)}</div></div></div><div className="mt-5 flex flex-col gap-3 sm:flex-row"><button className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#C05746] text-sm font-semibold text-white">+ Record sale</button><button className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#ADC698] text-sm font-semibold text-[#503047]">Create invoice</button></div></div></div></div></div></section>
 
-          {/* Decorative preview — pale sage panel */}
-          <div className="rounded-[24px] bg-pale-sage p-6 lg:p-8 flex flex-col gap-4">
-            <p className="text-sm font-semibold text-plum">Preview • Dashboard</p>
-            <div className="rounded-[16px] bg-white p-5 shadow-[0_4px_20px_rgba(80,48,71,0.06)] border border-plum/10">
-              <p className="text-sm font-medium text-plum/60">Good morning, Ade 👋</p>
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs font-medium text-plum/50">Sales this month</p>
-                  <p className="mt-1 text-2xl font-bold text-plum">₦184,500</p>
-                </div>
-                <div className="rounded-[12px] bg-pale-sage px-3 py-2">
-                  <p className="text-xs font-medium text-plum/60">Customers owe you</p>
-                  <p className="mt-1 text-lg font-bold text-plum">₦42,000</p>
-                </div>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <span className="rounded-full bg-plum px-3 py-1 text-xs font-semibold text-white">
-                  + Record Sale
-                </span>
-                <span className="rounded-full bg-pale-sage px-3 py-1 text-xs font-semibold text-plum">
-                  Create Invoice
-                </span>
-              </div>
-            </div>
-            <p className="text-xs text-plum/50">
-              OpenBooks NG is not an accounting package — it is your simple digital
-              cashbook. <span className="font-semibold text-plum">Record. Send. Get Paid. Grow.</span>
-            </p>
-          </div>
-        </div>
-      </main>
+      <section className="border-b border-[#503047]/10 bg-white"><div className="mx-auto grid max-w-[1320px] gap-px bg-[#503047]/10 md:grid-cols-3">{personas.map((persona, index) => <Link key={persona.label} href={persona.href} className="group bg-white px-6 py-7 transition-colors hover:bg-[#F8F8F6] lg:px-8"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.17em] text-[#C05746]">0{index + 1}</p><h2 className="mt-2 font-heading text-lg font-bold">{persona.label}</h2><p className="mt-2 max-w-sm text-sm leading-6 text-[#6F6670]">{persona.text}</p></div><ArrowUpRight className="mt-1 shrink-0 text-[#503047]/40 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" size={19} /></div></Link>)}</div></section>
 
-      <footer className="border-t border-plum/10 py-6 text-center text-xs text-plum/50">
-        OpenBooks NG • Open source • Built for Nigerian small businesses
-      </footer>
-    </div>
+      <section className="bg-[#F8F8F6] px-5 py-24 lg:px-8 lg:py-32"><div className="mx-auto max-w-[1320px]"><div className="mb-14 max-w-3xl lg:mb-20"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C05746]">Why OpenBooks</p><h2 className="mt-4 font-heading text-[clamp(2.5rem,5vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.045em]">Small business software should feel small.</h2><p className="mt-5 max-w-2xl text-base leading-7 text-[#6F6670] sm:text-lg">Four ideas. One simple system. Scroll slowly — the cards are designed to stay with you before the next one takes its place.</p></div><div className="space-y-5">{sellingPoints.map((card, index) => { const Icon = card.icon; return <article key={card.eyebrow} className={`sticky top-[96px] min-h-[76vh] overflow-hidden rounded-[32px] p-7 shadow-[0_25px_70px_rgba(80,48,71,0.12)] sm:p-10 lg:p-14 ${card.className}`} style={{ zIndex: index + 1 }}><div className="flex h-full flex-col justify-between gap-14 lg:flex-row lg:items-end"><div className="max-w-3xl"><div className="flex items-center gap-3"><span className={`${card.kickerClass} text-xs font-semibold uppercase tracking-[0.18em]`}>{card.eyebrow}</span><span className="h-px w-10 bg-current opacity-30" /></div><h3 className="mt-8 max-w-3xl font-heading text-[clamp(2.5rem,5.2vw,5.8rem)] font-extrabold leading-[0.93] tracking-[-0.045em]">{card.title}</h3><p className="mt-7 max-w-2xl text-base leading-7 opacity-75 sm:text-lg sm:leading-8">{card.copy}</p></div><div className="min-w-0 max-w-md lg:w-[330px] lg:shrink-0"><div className="mb-7 flex h-16 w-16 items-center justify-center rounded-2xl border border-current/15 bg-white/10"><Icon size={30} /></div><div className="space-y-3">{card.points.map((point) => <div key={point} className="flex items-start gap-3 border-t border-current/15 pt-3 text-sm font-semibold leading-6"><Check className="mt-0.5 shrink-0" size={16} /><span>{point}</span></div>)}</div></div></div></article> })}</div></div></section>
+
+      <section id="guide" className="scroll-mt-24 bg-white px-5 py-24 lg:px-8 lg:py-32"><div className="mx-auto max-w-[1320px]"><div className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C05746]">Guide</p><h2 className="mt-4 font-heading text-[clamp(2.5rem,5vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.045em]">Don&apos;t read a manual. Walk through it.</h2><p className="mt-5 max-w-2xl text-base leading-7 text-[#6F6670] sm:text-lg">Click a step and OpenBooks changes with you. The guide is meant to feel like a product demo you control, not a wall of documentation.</p></div><div className="mt-14 grid gap-10 lg:grid-cols-[0.34fr_0.66fr] lg:gap-14"><div className="space-y-2">{steps.map((step, index) => { const active = index === activeStep; return <button key={step.number} onClick={() => setActiveStep(index)} className={`w-full rounded-2xl p-4 text-left transition-all ${active ? "bg-[#503047] text-white shadow-[0_16px_50px_rgba(80,48,71,0.14)]" : "text-[#503047] hover:bg-[#F8F8F6]"}`}><div className="flex items-start gap-4"><span className={`font-mono text-xs ${active ? "text-[#ADC698]" : "text-[#C05746]"}`}>{step.number}</span><div><p className="font-heading font-bold">{step.title}</p><p className={`mt-2 text-sm leading-6 ${active ? "text-white/60" : "text-[#918A91]"}`}>{step.copy}</p></div></div></button> })}<div className="mt-6 rounded-2xl bg-[#D0E3C4] p-5"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#503047]">You are controlling the demo</p><p className="mt-2 text-sm leading-6 text-[#503047]/70">No autoplay. No guessing. Pick a step and see what the user actually does.</p></div></div><div className="rounded-[32px] bg-[#F8F8F6] p-4 sm:p-6"><div className="mb-4 flex items-center justify-between px-2"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#918A91]">Interactive walkthrough</p><p className="mt-1 font-heading text-lg font-bold">{currentStep.title}</p></div><button className="hidden items-center gap-2 rounded-xl border border-[#E5E3DF] bg-white px-3 py-2 text-xs font-semibold text-[#503047] sm:flex"><CirclePlay size={15} /> Demo mode</button></div><div key={activeStep} className="animate-openbooks-fade">{mockContent}</div><div className="mt-5 flex items-center justify-between rounded-2xl border border-[#E5E3DF] bg-white p-4"><div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D0E3C4] text-[#503047]"><Check size={17} /></div><div><p className="text-sm font-semibold">{currentStep.button}</p><p className="text-xs text-[#918A91]">Step {activeStep + 1} of {steps.length}</p></div></div><button onClick={() => setActiveStep((activeStep + 1) % steps.length)} className="inline-flex items-center gap-2 rounded-xl bg-[#C05746] px-4 py-2.5 text-xs font-semibold text-white">Next step <ArrowRight size={15} /></button></div></div></div></div></section>
+
+      <section className="relative isolate overflow-hidden bg-[#503047] px-5 py-24 text-white lg:px-8 lg:py-32"><div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_70%_20%,rgba(173,198,152,0.2),transparent_28%),radial-gradient(circle_at_10%_80%,rgba(192,87,70,0.24),transparent_24%)]" /><div className="absolute inset-0 -z-10 opacity-30" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)", backgroundSize: "48px 48px" }} /><div className="mx-auto grid max-w-[1320px] items-end gap-12 lg:grid-cols-[0.68fr_0.32fr]"><div><span className="inline-flex items-center gap-2 rounded-full bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#D0E3C4]"><CirclePlay size={14} /> Built for the way work actually happens</span><h2 className="mt-7 max-w-4xl font-heading text-[clamp(3rem,6vw,6.6rem)] font-extrabold leading-[0.93] tracking-[-0.05em]">Less software theater. More getting paid.</h2><p className="mt-6 max-w-2xl text-base leading-7 text-white/65 sm:text-lg sm:leading-8">For the barber closing the shop, the freelancer sending one last invoice, the tailor waiting on a transfer, the phone repairer trying to remember who still owes them. OpenBooks is built around those moments.</p></div><div className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><div className="overflow-hidden rounded-2xl border border-white/10 bg-[#241620] p-4"><div className="flex items-center gap-2 pb-4"><span className="h-2.5 w-2.5 rounded-full bg-[#C05746]" /><span className="h-2.5 w-2.5 rounded-full bg-[#ADC698]" /><span className="h-2.5 w-2.5 rounded-full bg-white/20" /></div><div className="space-y-3">{["Record the sale", "Send the invoice", "Get the payment", "Issue the receipt"].map((text, i) => <div key={text} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#D0E3C4] text-[#503047] text-xs font-bold">{i + 1}</span><span className="text-sm font-semibold text-white/85">{text}</span><ArrowRight className="ml-auto text-white/30" size={15} /></div>)}</div></div><p className="mt-4 text-xs leading-5 text-white/40">Replace this visual loop with the final product/business footage in <code className="font-mono">/public/openbooks-loop.mp4</code>; the section already has the overlay treatment.</p></div></div></section>
+
+      <section className="bg-[#C05746] px-5 py-24 text-white lg:px-8 lg:py-32"><div className="mx-auto flex max-w-[1320px] flex-col justify-between gap-12 lg:flex-row lg:items-end"><div className="max-w-4xl"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D0E3C4]">OpenBooks NG</p><h2 className="mt-4 font-heading text-[clamp(3rem,6vw,6.4rem)] font-extrabold leading-[0.9] tracking-[-0.055em]">Keep the notebook. Lose the chaos.</h2><p className="mt-6 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">Start with one customer, one sale and one invoice. That&apos;s enough to see what OpenBooks is about.</p></div><Link href="/register" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-white px-7 py-4 text-sm font-bold text-[#503047] shadow-[0_18px_50px_rgba(0,0,0,0.12)] transition-transform hover:-translate-y-0.5">Start for free <ArrowRight size={17} /></Link></div></section>
+
+      <footer className="bg-[#241620] px-5 py-8 text-white/60 lg:px-8"><div className="mx-auto flex max-w-[1320px] flex-col gap-6 text-xs sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-2.5 text-white"><OpenBooksBrandMark size={28} light /><span className="font-heading font-bold">Open<span className="text-[#C05746]">Books</span></span></div><p>Open source · Built for Nigerian small businesses · Your business notebook, but digital.</p><div className="flex gap-5"><Link href="/guide" className="hover:text-white">Guide</Link><Link href="/for-businesses" className="hover:text-white">Business owners</Link><Link href="/for-customers" className="hover:text-white">Customers</Link></div></div></footer>
+    </main>
   );
+}
+
+function MetricCard({ label, value, tone }: { label: string; value: string; tone: "plum" | "sage" | "terracotta" }) {
+  const styles = { plum: "bg-white border-[#E5E3DF]", sage: "bg-[#D0E3C4] border-transparent", terracotta: "bg-[#C05746] border-transparent text-white" }[tone];
+  const labelClass = tone === "terracotta" ? "text-white/70" : "text-[#918A91]";
+  return <div className={`rounded-2xl border p-4 ${styles}`}><p className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${labelClass}`}>{label}</p><p className={`mt-2 font-heading text-xl font-bold ${tone === "terracotta" ? "text-white" : "text-[#503047]"}`}>{value}</p></div>;
+}
+
+function MockInput({ label, value }: { label: string; value: string }) {
+  return <div><p className="mb-2 text-xs font-semibold text-[#6F6670]">{label}</p><div className="rounded-2xl border border-[#E5E3DF] bg-[#F8F8F6] px-4 py-3 text-sm font-medium text-[#503047]">{value}</div></div>;
 }
