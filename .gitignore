@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Next.js
+.next
+out
+build
+dist
+
+# Env — never commit secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Work/planning docs — local only (not pushed per project decision)
+buildversion.md
+officialproduct.md
+technicalimplementation.md
+style.md
+implement.md 
+
+# Testing
+coverage
+playwright-report
+test-results
+blob-report
+
+# Vercel
+.vercel
+
+# Misc
+.DS_Store
+*.log

@@ -1,0 +1,41 @@
+{
+  "name": "openbooks-ng",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "next": "16.3.3",
+    "next-auth": "5.0.0-beta.30",
+    "@auth/prisma-adapter": "^2.11.1",
+    "@prisma/client": "^6.17.1",
+    "prisma": "^6.17.1",
+    "bcryptjs": "^3.0.3",
+    "zod": "^4.1.13",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.563.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/bcryptjs": "^3.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.3",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^4.1.5",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "jsdom": "^27.3.0",
+    "@playwright/test": "^1.57.0"
+  }
+}
