@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
-import { businessSchema } from "@/lib/validation/schemas";
+import { businessSchema, paymentSettingsSchema } from "@/lib/validation/schemas";
 import { logAuditEvent } from "@/lib/audit/logger";
 
 export async function createBusiness(params: {
@@ -11,17 +11,36 @@ export async function createBusiness(params: {
   address?: string;
   logoUrl?: string;
   description?: string;
+  paymentSettings?: {
+    bankTransferEnabled?: boolean;
+    cashEnabled?: boolean;
+    posEnabled?: boolean;
+    bankName?: string;
+    accountName?: string;
+    accountNumber?: string;
+  };
 }) {
-  const parsed = businessSchema.safeParse({
+  const parsedBusiness = businessSchema.safeParse({
     name: params.name,
     phone: params.phone,
     email: params.email,
     address: params.address,
     description: params.description,
   });
-  if (!parsed.success) throw new Error(parsed.error.message);
+  if (!parsedBusiness.success) throw new Error(parsedBusiness.error.issues[0]?.message || "Invalid business details");
 
-  // Optional: enforce single business in V1 — allow multiples but ensure atomic
+  const paymentSettings = {
+    bankTransferEnabled: params.paymentSettings?.bankTransferEnabled ?? true,
+    cashEnabled: params.paymentSettings?.cashEnabled ?? true,
+    posEnabled: params.paymentSettings?.posEnabled ?? false,
+    bankName: params.paymentSettings?.bankName,
+    accountName: params.paymentSettings?.accountName,
+    accountNumber: params.paymentSettings?.accountNumber,
+  };
+
+  const parsedPayments = paymentSettingsSchema.safeParse(paymentSettings);
+  if (!parsedPayments.success) throw new Error(parsedPayments.error.issues[0]?.message || "Invalid payment settings");
+
   const business = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const b = await tx.business.create({
       data: {
@@ -41,10 +60,13 @@ export async function createBusiness(params: {
     await tx.businessPaymentSetting.create({
       data: {
         businessId: b.id,
-        bankTransferEnabled: true,
-        cashEnabled: true,
-        posEnabled: false,
+        bankTransferEnabled: paymentSettings.bankTransferEnabled,
+        cashEnabled: paymentSettings.cashEnabled,
+        posEnabled: paymentSettings.posEnabled,
         paystackEnabled: false,
+        bankName: paymentSettings.bankName?.trim() || null,
+        accountName: paymentSettings.accountName?.trim() || null,
+        accountNumber: paymentSettings.accountNumber?.trim() || null,
       },
     });
     return b;
