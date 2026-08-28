@@ -9,6 +9,7 @@ export function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -113,9 +114,9 @@ export function RegisterForm() {
           </div>
           <span className="relative flex">
             <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#918A91]"><Lock size={17} strokeWidth={2} /></span>
-            <input name="password" type="password" required minLength={8} placeholder="At least 8 characters" autoComplete="new-password" className="flex h-[52px] w-full rounded-2xl border border-[#E5E3DF] bg-[#F8F8F6] pl-11 pr-11 text-[15px] font-medium text-[#503047] placeholder:text-[#918A91] focus:border-[#C05746] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C05746]/15" />
-            <button type="button" aria-label="Show password" onClick={(e) => { const input = e.currentTarget.previousElementSibling as HTMLInputElement | null; if (input) input.type = input.type === "password" ? "text" : "password"; e.currentTarget.setAttribute("aria-label", input?.type === "password" ? "Show password" : "Hide password"); }} className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-[#918A91] hover:bg-white hover:text-[#503047]">
-              <Eye size={17} strokeWidth={2} />
+            <input name="password" type={showPassword ? "text" : "password"} required minLength={8} placeholder="At least 8 characters" autoComplete="new-password" className="flex h-[52px] w-full rounded-2xl border border-[#E5E3DF] bg-[#F8F8F6] pl-11 pr-11 text-[15px] font-medium text-[#503047] placeholder:text-[#918A91] focus:border-[#C05746] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C05746]/15" />
+            <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((value) => !value)} className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-[#918A91] hover:bg-white hover:text-[#503047]">
+              {showPassword ? <EyeOff size={17} strokeWidth={2} /> : <Eye size={17} strokeWidth={2} />}
             </button>
           </span>
         </label>
