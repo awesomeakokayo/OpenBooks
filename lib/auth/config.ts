@@ -36,13 +36,16 @@ export const authConfig: NextAuthConfig = {
   ],
   pages: {
     signIn: "/login",
+    error: "/auth-error",
   },
   session: { strategy: "jwt" },
   callbacks: {
     async signIn({ user, account }) {
-      // OAuth providers authenticate the email with the provider, so a separate
-      // OpenBooks verification email is not required for those sign-ins.
       if (account?.provider === "google" || account?.provider === "github") {
+        // OAuth providers are responsible for authenticating the provider-side
+        // identity. We intentionally do NOT auto-link an OAuth account to an
+        // existing OpenBooks credentials account by matching email alone.
+        // This avoids account takeover via unsafe automatic linking.
         return Boolean(user.email);
       }
       return true;
