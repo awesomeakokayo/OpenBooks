@@ -1,6 +1,7 @@
 # OpenBooks NG — Current Build Checkpoint
 
 **Current phase:** Phase 1 — Identity and onboarding
+**Implementation status:** Phase 1 implementation substantially complete; runtime exit tests pending operator configuration and local verification.
 
 ## Completed
 - Authoritative V1 implementation plan added.
@@ -8,39 +9,33 @@
 - Resend email provider boundary added.
 - Resend SDK dependency added.
 - Email verification token generation and verification email template added.
-- Credential registration now creates a verification token and sends the verification email.
-- Credential registration now redirects the user to the verification screen instead of signing them in immediately.
-- Verification result page added and wired to display the registration email when supplied.
-- Verification endpoint added with token expiry, token deletion, transaction-safe user verification, rate limiting, and non-sensitive error logging.
-- Verification email resend endpoint added with rate limiting and account-enumeration-safe responses.
-- Verification resend form added to the verification page.
-- Credentials sign-in now requires `emailVerified` before authentication succeeds.
+- Credential registration creates a verification token and sends the verification email.
+- Credential registration redirects the user to the verification screen instead of signing them in immediately.
+- Verification result page and resend flow added.
+- Verification endpoint has token expiry, token deletion, transaction-safe user verification, rate limiting, and non-sensitive error logging.
+- Credentials sign-in requires `emailVerified` before authentication succeeds.
 - Google and GitHub signup/sign-in controls are present in the auth UI.
-- OAuth authentication policy explicitly avoids automatic email-based account linking.
-- OAuth authentication errors now have a safe dedicated user-facing page.
-- Forgot-password request page and endpoint added.
-- Password-reset email helper added using the existing Resend adapter.
-- Password-reset confirmation endpoint added with expiring single-use reset tokens and session invalidation after password change.
-- Password-reset page and form added.
-- Login form now links to password recovery and shows reset-success feedback.
-- Business creation service accepts V1 payment setup and persists business + membership + payment settings atomically.
+- OAuth policy explicitly avoids automatic email-based account linking.
+- OAuth authentication errors have a safe dedicated user-facing page.
+- Forgot-password and password-reset flow implemented with expiring single-use tokens and session invalidation after reset.
+- Business creation accepts V1 payment setup and persists business + membership + payment settings atomically.
 - Business onboarding is a two-step flow: business identity, then payment methods.
 - V1 payment onboarding supports Bank Transfer, Cash and POS only.
 - Bank transfer onboarding requires bank name, account name and a 10-digit account number.
 - Payment settings API validates V1 payment methods and forcibly keeps Paystack disabled.
 - Business onboarding explains that bank details are displayed to customers and funds are never held by OpenBooks.
-- Register form password visibility interaction is implemented cleanly.
+- Authentication/recovery/public-route protection was audited and `proxy.ts` now allows registration, verification, password recovery, auth errors and public invoice routes without authentication.
+- Deferred Paystack public route exposure was removed from the public proxy allow-list.
+- Phase 1 exit-test matrix added at `docs/PHASE-1-EXIT-TESTS.md`.
 
-## Partially completed
-- OAuth provider credentials still need to be supplied locally and production callback URLs configured before real provider testing.
-- OAuth flows need end-to-end testing with real Google/GitHub applications.
-- Existing-account OAuth linking is intentionally not automatic; a dedicated authenticated account-linking flow may be introduced later if needed.
-- Password recovery is implemented but still needs local end-to-end testing with a configured Resend account.
-- Business onboarding has been implemented but still needs local end-to-end testing and a final UX/accessibility audit.
-- Bank account details are structurally validated, but account ownership/name verification is intentionally not performed in V1.
-- Manual payment V1 audit/refactor is not yet complete.
-- Paystack cleanup/isolation remains deferred; existing Paystack routes/schema concepts must not be exposed by V1.
-- Resend production DNS/domain configuration remains an operator/deployment task; code assumes `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are configured.
+## Remaining before Phase 1 can be declared release-ready
+- Configure and test Resend with a real verified sending domain/API key.
+- Configure and test Google OAuth with the documented callback URL.
+- Configure and test GitHub OAuth with the documented callback URL.
+- Run all Phase 1 exit tests in `docs/PHASE-1-EXIT-TESTS.md`.
+- Perform final accessibility/UX review of authentication and onboarding screens.
+- Verify that protected business APIs consistently enforce tenant membership and do not leak records across businesses.
+- Complete a focused manual-payment audit before Phase 2 relies on the payment model.
 
 ## Not started
 - Customers and sales.
@@ -51,14 +46,14 @@
 - Paystack future integration.
 
 ## Known implementation note
-Password-reset tokens currently reuse Auth.js's existing `VerificationToken` table with a dedicated `password-reset:` identifier namespace. This avoids adding a schema migration during the identity implementation. If the identity system grows, a dedicated password-reset token model may be introduced in a later schema cleanup.
+Password-reset tokens currently reuse Auth.js's existing `VerificationToken` table with a dedicated `password-reset:` identifier namespace. This avoids a schema migration during the identity implementation. A dedicated password-reset token model may be introduced in a later schema cleanup if the identity system grows.
 
 The repository still contains Paystack routes and Paystack-related Prisma fields/enums from earlier work. They are not part of the V1 feature surface. Do not expose or depend on them while implementing V1. The V1 payment-settings API explicitly forces `paystackEnabled` to false.
 
-Business onboarding and payment setup are implemented in the existing `/create-business` flow; a duplicate standalone `/onboarding/payments` flow was removed to avoid competing onboarding paths.
+Business onboarding and payment setup are implemented in the existing `/create-business` flow. A duplicate standalone `/onboarding/payments` flow was removed.
 
 ## Next task
-Perform the final Phase 1 code audit for authentication/onboarding access control and production configuration. Then define and verify the Phase 1 exit tests. Only after those pass should Phase 2 (Customers and Sales) begin.
+Run the Phase 1 exit tests once local provider configuration is available. Do not start Phase 2 until the identity/onboarding test matrix passes and the tenant/access-control audit is clean.
 
 ## Recovery rule
 If later work diverges from the V1 implementation plan, stop feature work, compare the affected code with `docs/V1-IMPLEMENTATION-PLAN.md`, correct the deviation, test the corrected behaviour, and update this checkpoint before continuing.
