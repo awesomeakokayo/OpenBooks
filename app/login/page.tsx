@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { LoginForm } from "./LoginForm";
 import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
 
@@ -33,7 +34,9 @@ export default function LoginPage() {
             <p className="mt-3 text-sm leading-6 text-[#6F6670]">Your business notebook is ready. Pick up where you left off.</p>
 
             <div className="mt-7">
-              <LoginForm />
+              <Suspense fallback={<div className="h-[360px] animate-pulse rounded-2xl bg-[#F8F8F6]" />}>
+                <LoginForm />
+              </Suspense>
             </div>
 
             <p className="mt-7 text-center text-sm leading-6 text-[#6F6670]">
