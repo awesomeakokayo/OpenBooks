@@ -85,6 +85,11 @@ main > div.sticky nav a:hover {
   color: var(--color-white) !important;
 }
 
+/* Use the original full-resolution hero photograph instead of the low-resolution fallback asset. */
+main > section:first-of-type img[alt="A Nigerian market woman serving a customer"] {
+  content: url("/openbooks-market-woman-hd.jpg");
+}
+
 .openbooks-card {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
