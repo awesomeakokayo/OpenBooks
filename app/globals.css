@@ -76,6 +76,15 @@ a:not([href]) { cursor: default; }
   box-shadow: 0 0 0 3px rgba(192, 87, 70, 0.2);
 }
 
+/* Landing-page navigation sits on plum; keep every navigation label readable. */
+main > div.sticky nav a {
+  color: var(--color-white) !important;
+}
+
+main > div.sticky nav a:hover {
+  color: var(--color-white) !important;
+}
+
 .openbooks-card {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
