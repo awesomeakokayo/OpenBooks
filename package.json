@@ -20,7 +20,8 @@
     "bcryptjs": "^3.0.3",
     "zod": "^4.1.13",
     "date-fns": "^4.1.0",
-    "lucide-react": "^0.563.0"
+    "lucide-react": "^0.563.0",
+    "resend": "^6.24.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
