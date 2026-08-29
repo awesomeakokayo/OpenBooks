@@ -28,8 +28,9 @@ export const metadata: Metadata = {
   description:
     "Record sales, send invoices, collect payments and keep track of what your business is owed. Nigeria-first, mobile-first, open-source.",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: "/OPENBOOKS_LOGO.png",
+    shortcut: "/OPENBOOKS_LOGO.png",
+    apple: "/OPENBOOKS_LOGO.png",
   },
 };
 
