@@ -11,13 +11,30 @@ const map: Record<string, string> = {
   FAILED: "bg-terracotta text-white",
 };
 
+const labels: Record<string, string> = {
+  PAID: "Paid",
+  SUCCESS: "Success",
+  PARTIALLY_PAID: "Partially paid",
+  DRAFT: "Draft",
+  SENT: "Sent",
+  VIEWED: "Viewed",
+  OVERDUE: "Overdue",
+  CANCELLED: "Cancelled",
+  PENDING: "Pending",
+  FAILED: "Failed",
+};
+
+export function getStatusLabel(status: string): string {
+  return labels[status] ?? status.replace(/_/g, " ");
+}
+
 export function StatusBadge({ status }: { status: string }) {
   const cls = map[status] ?? "bg-plum/10 text-plum";
   return (
     <span
       className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${cls}`}
     >
-      {status}
+      {getStatusLabel(status)}
     </span>
   );
 }
