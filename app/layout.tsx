@@ -23,14 +23,22 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const OPENBOOKS_ICON = "/OPENBOOKS_LOGO.png?v=2";
+
 export const metadata: Metadata = {
   title: "OpenBooks NG — Your business notebook, but digital.",
   description:
     "Record sales, send invoices, collect payments and keep track of what your business is owed. Nigeria-first, mobile-first, open-source.",
   icons: {
-    icon: "/OPENBOOKS_LOGO.png",
-    shortcut: "/OPENBOOKS_LOGO.png",
-    apple: "/OPENBOOKS_LOGO.png",
+    icon: [
+      { url: OPENBOOKS_ICON, type: "image/png" },
+    ],
+    shortcut: [
+      { url: OPENBOOKS_ICON, type: "image/png" },
+    ],
+    apple: [
+      { url: OPENBOOKS_ICON, type: "image/png" },
+    ],
   },
 };
 
