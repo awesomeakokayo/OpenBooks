@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
-import { prisma } from "@/lib/db/prisma";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import Link from "next/link";
 import { RecordPaymentForm } from "@/components/payments/RecordPaymentForm";
@@ -27,6 +26,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const publicUrl = `${process.env.APP_URL || "http://localhost:3000"}/invoice/${invoice.publicToken}`;
   const waMessage = `Hello ${invoice.customer.name}, your invoice from ${invoice.business.name} is ₦${Number(invoice.total).toLocaleString("en-NG")}. View your invoice and payment options here: ${publicUrl}`;
   const waLink = `https://wa.me/?text=${encodeURIComponent(waMessage)}`;
+  const manualPaymentMethods = invoice.paymentMethods.filter((pm) => ["BANK_TRANSFER", "CASH", "POS"].includes(pm.method));
+  const setting = invoice.business.paymentSetting;
 
   return (
     <div className="print-invoice mx-auto flex max-w-[720px] flex-col gap-6">
@@ -74,13 +75,35 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-2 print:hidden">
-          <span className="text-xs font-medium text-plum/60">Payment methods:</span>
-          {invoice.paymentMethods.map((pm) => (
-            <span key={pm.id} className="rounded-full bg-pale-sage px-3 py-1 text-xs font-semibold text-plum">
-              {pm.method}
-            </span>
-          ))}
+        <div className="print:hidden mt-6 flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs font-medium text-plum/60">Payment methods:</span>
+            {manualPaymentMethods.map((pm) => (
+              <span key={pm.id} className="rounded-full bg-pale-sage px-3 py-1 text-xs font-semibold text-plum">
+                {pm.method.replaceAll("_", " ")}
+              </span>
+            ))}
+          </div>
+
+          {manualPaymentMethods.some((pm) => pm.method === "BANK_TRANSFER") && setting?.bankName && setting.accountName && setting.accountNumber && (
+            <div className="rounded-[12px] border border-plum/10 bg-pale-sage/30 p-4">
+              <p className="text-sm font-bold text-plum">Bank transfer details</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-plum/45">Bank</p>
+                  <p className="text-sm font-semibold text-plum">{setting.bankName}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-plum/45">Account name</p>
+                  <p className="text-sm font-semibold text-plum">{setting.accountName}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-plum/45">Account number</p>
+                  <p className="text-sm font-bold tracking-[0.04em] text-plum">{setting.accountNumber}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="print:hidden mt-4 flex flex-col gap-1 rounded-[12px] bg-pale-sage/40 p-4">
@@ -127,7 +150,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <div className="mt-3 flex flex-col gap-2">
             {invoice.payments.map((p) => (
               <div key={p.id} className="flex justify-between gap-4 rounded-[12px] border border-plum/10 px-4 py-2.5">
-                <span className="text-sm text-plum">{p.method} • {p.provider} • {p.verificationType}</span>
+                <span className="text-sm text-plum">{p.method.replaceAll("_", " ")} • {p.provider} • {p.verificationType}</span>
                 <span className="text-sm font-semibold text-plum">₦{Number(p.amount).toLocaleString("en-NG")}</span>
               </div>
             ))}
