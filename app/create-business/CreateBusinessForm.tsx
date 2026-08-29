@@ -6,16 +6,35 @@ import { ArrowLeft, ArrowRight, Building2, Check, Landmark, Banknote, CreditCard
 
 const inputClass = "flex h-[50px] w-full rounded-2xl border border-plum/12 bg-white px-4 text-[15px] text-plum placeholder:text-plum/35 focus:border-terracotta focus:outline-none focus:ring-2 focus:ring-terracotta/20";
 
+type BusinessDetails = {
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  description: string;
+};
+
 export function CreateBusinessForm() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [methods, setMethods] = useState({ bankTransfer: true, cash: true, pos: false });
+  const [businessDetails, setBusinessDetails] = useState<BusinessDetails>({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    description: "",
+  });
 
-  function validateStepOne(form: FormData) {
-    const name = String(form.get("name") || "").trim();
-    const phone = String(form.get("phone") || "").trim();
+  function updateBusinessDetail(field: keyof BusinessDetails, value: string) {
+    setBusinessDetails((current) => ({ ...current, [field]: value }));
+  }
+
+  function validateStepOne() {
+    const name = businessDetails.name.trim();
+    const phone = businessDetails.phone.trim();
     if (name.length < 2) return "Enter your business name.";
     if (phone.length < 8) return "Enter a valid business phone number.";
     return null;
@@ -23,7 +42,7 @@ export function CreateBusinessForm() {
 
   function continueToPayments(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const message = validateStepOne(new FormData(e.currentTarget));
+    const message = validateStepOne();
     setError(message || "");
     if (!message) setStep(2);
   }
@@ -36,7 +55,7 @@ export function CreateBusinessForm() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const form = new FormData(e.currentTarget);
+
     if (!methods.bankTransfer && !methods.cash && !methods.pos) {
       setError("Choose at least one payment method.");
       setLoading(false);
@@ -44,18 +63,24 @@ export function CreateBusinessForm() {
     }
 
     const payload = {
-      name: String(form.get("name") || "").trim(),
-      phone: String(form.get("phone") || "").trim(),
-      email: String(form.get("email") || "").trim(),
-      address: String(form.get("address") || "").trim(),
-      description: String(form.get("description") || "").trim(),
+      name: businessDetails.name.trim(),
+      phone: businessDetails.phone.trim(),
+      email: businessDetails.email.trim(),
+      address: businessDetails.address.trim(),
+      description: businessDetails.description.trim(),
       paymentSettings: {
         bankTransferEnabled: methods.bankTransfer,
         cashEnabled: methods.cash,
         posEnabled: methods.pos,
-        bankName: String(form.get("bankName") || "").trim(),
-        accountName: String(form.get("accountName") || "").trim(),
-        accountNumber: String(form.get("accountNumber") || "").trim(),
+        bankName: e.currentTarget.elements.namedItem("bankName") instanceof HTMLInputElement
+          ? e.currentTarget.elements.namedItem("bankName")?.value.trim() || ""
+          : "",
+        accountName: e.currentTarget.elements.namedItem("accountName") instanceof HTMLInputElement
+          ? e.currentTarget.elements.namedItem("accountName")?.value.trim() || ""
+          : "",
+        accountNumber: e.currentTarget.elements.namedItem("accountNumber") instanceof HTMLInputElement
+          ? e.currentTarget.elements.namedItem("accountNumber")?.value.trim() || ""
+          : "",
       },
     };
 
@@ -102,25 +127,25 @@ export function CreateBusinessForm() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-plum">Business name *</label>
-            <input name="name" required placeholder="Ade Phone Repairs" className={inputClass} autoComplete="organization" />
+            <input name="name" required placeholder="Ade Phone Repairs" className={inputClass} autoComplete="organization" value={businessDetails.name} onChange={(e) => updateBusinessDetail("name", e.target.value)} />
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-plum">Business phone *</label>
-            <input name="phone" required placeholder="0803 000 0000" inputMode="tel" className={inputClass} autoComplete="tel" />
+            <input name="phone" required placeholder="0803 000 0000" inputMode="tel" className={inputClass} autoComplete="tel" value={businessDetails.phone} onChange={(e) => updateBusinessDetail("phone", e.target.value)} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-plum">Business email <span className="font-normal text-plum/40">(optional)</span></label>
-              <input name="email" type="email" placeholder="ade@example.com" className={inputClass} autoComplete="email" />
+              <input name="email" type="email" placeholder="ade@example.com" className={inputClass} autoComplete="email" value={businessDetails.email} onChange={(e) => updateBusinessDetail("email", e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-plum">Location <span className="font-normal text-plum/40">(optional)</span></label>
-              <input name="address" placeholder="Ibadan, Oyo State" className={inputClass} autoComplete="street-address" />
+              <input name="address" placeholder="Ibadan, Oyo State" className={inputClass} autoComplete="street-address" value={businessDetails.address} onChange={(e) => updateBusinessDetail("address", e.target.value)} />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-plum">What do you do? <span className="font-normal text-plum/40">(optional)</span></label>
-            <textarea name="description" rows={3} placeholder="Phone repairs, accessories and screen replacements..." className="w-full rounded-2xl border border-plum/12 bg-white px-4 py-3 text-[15px] text-plum placeholder:text-plum/35 focus:border-terracotta focus:outline-none focus:ring-2 focus:ring-terracotta/20" />
+            <textarea name="description" rows={3} placeholder="Phone repairs, accessories and screen replacements..." className="w-full rounded-2xl border border-plum/12 bg-white px-4 py-3 text-[15px] text-plum placeholder:text-plum/35 focus:border-terracotta focus:outline-none focus:ring-2 focus:ring-terracotta/20" value={businessDetails.description} onChange={(e) => updateBusinessDetail("description", e.target.value)} />
           </div>
 
           {error && <p role="alert" className="text-sm leading-5 text-terracotta">{error}</p>}
