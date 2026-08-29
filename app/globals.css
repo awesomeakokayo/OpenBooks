@@ -87,12 +87,32 @@ main > div.sticky nav a:hover {
 
 /* Terracotta is a filled action surface; never allow a terracotta-on-terracotta label. */
 .bg-terracotta.text-terracotta,
-.bg-terracotta .text-terracotta {
+.bg-terracotta .text-terracotta,
+.bg-\[\#C05746\].text-\[\#C05746\],
+.bg-\[\#C05746\] .text-\[\#C05746\],
+.bg-\[\#c05746\].text-\[\#c05746\],
+.bg-\[\#c05746\] .text-\[\#c05746\],
+.bg-\[\#C05746\].text-terracotta,
+.bg-\[\#C05746\] .text-terracotta,
+.bg-terracotta.text-\[\#C05746\],
+.bg-terracotta .text-\[\#C05746\],
+.bg-\[\#c05746\].text-terracotta,
+.bg-\[\#c05746\] .text-terracotta,
+.bg-terracotta .text-\[\#c05746\],
+.bg-\[\#C05746\] .text-\[\#c05746\] {
   color: var(--color-white) !important;
 }
 
 .bg-terracotta.text-terracotta:hover,
-.bg-terracotta:hover .text-terracotta {
+.bg-terracotta:hover .text-terracotta,
+.bg-\[\#C05746\].text-\[\#C05746\]:hover,
+.bg-\[\#C05746\]:hover .text-\[\#C05746\],
+.bg-\[\#c05746\].text-\[\#c05746\]:hover,
+.bg-\[\#c05746\]:hover .text-\[\#c05746\],
+.bg-\[\#C05746\].text-terracotta:hover,
+.bg-\[\#C05746\]:hover .text-terracotta,
+.bg-terracotta.text-\[\#C05746\]:hover,
+.bg-terracotta:hover .text-\[\#C05746\] {
   color: var(--color-white) !important;
 }
 
