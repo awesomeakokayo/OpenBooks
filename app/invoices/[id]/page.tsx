@@ -29,6 +29,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const waLink = `https://wa.me/?text=${encodeURIComponent(waMessage)}`;
   const manualPaymentMethods = invoice.paymentMethods.filter((pm) => ["BANK_TRANSFER", "CASH", "POS"].includes(pm.method));
   const setting = invoice.business.paymentSetting;
+  const hasBankTransfer = manualPaymentMethods.some((pm) => pm.method === "BANK_TRANSFER");
+  const hasBankDetails = Boolean(setting?.bankName && setting.accountName && setting.accountNumber);
 
   return (
     <div className="print-invoice mx-auto flex max-w-[720px] flex-col gap-6">
@@ -80,7 +82,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             ))}
           </div>
 
-          {manualPaymentMethods.some((pm) => pm.method === "BANK_TRANSFER") && setting?.bankName && setting.accountName && setting.accountNumber && (
+          {hasBankTransfer && hasBankDetails && (
             <div className="rounded-[12px] border border-plum/10 bg-pale-sage/30 p-4">
               <p className="text-sm font-bold text-plum">Bank transfer details</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -100,6 +102,26 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             </div>
           )}
         </div>
+
+        {hasBankTransfer && hasBankDetails && (
+          <div className="mt-6 hidden rounded-[12px] border border-plum/10 bg-pale-sage/30 p-4 print:block">
+            <p className="text-sm font-bold text-plum">Bank transfer details</p>
+            <div className="mt-3 grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-plum/45">Bank</p>
+                <p className="text-sm font-semibold text-plum">{setting.bankName}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-plum/45">Account name</p>
+                <p className="text-sm font-semibold text-plum">{setting.accountName}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-plum/45">Account number</p>
+                <p className="text-sm font-bold tracking-[0.04em] text-plum">{setting.accountNumber}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="print:hidden mt-4 flex flex-col gap-1 rounded-[12px] bg-pale-sage/40 p-4">
           <p className="text-xs font-semibold text-plum">Public invoice</p>
