@@ -62,19 +62,21 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
             </div>
           </div>
         </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-5" aria-label="Workspace navigation">
-          <p className="px-3 pb-3 pt-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/35">Workspace</p>
-          {navigation.map(({ href, label, icon: Icon }) => {
-            const active = isActivePath(pathname, href);
-            return (
-              <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}>
-                <Icon size={17} strokeWidth={1.9} />
-                <span>{label}</span>
-                {active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="openbooks-nav-scroll-region min-h-0 flex-1">
+          <nav className="openbooks-scrollbar-hidden h-full space-y-1 overflow-y-auto px-3 pb-5" aria-label="Workspace navigation">
+            <p className="px-3 pb-3 pt-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/35">Workspace</p>
+            {navigation.map(({ href, label, icon: Icon }) => {
+              const active = isActivePath(pathname, href);
+              return (
+                <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}>
+                  <Icon size={17} strokeWidth={1.9} />
+                  <span>{label}</span>
+                  {active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
         <div className="shrink-0 border-t border-white/10 p-4">
           <Link href="/guide" className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/65 transition-colors hover:bg-white/6 hover:text-white">
             <BookOpen size={17} strokeWidth={1.9} />
@@ -92,13 +94,15 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
             <button type="button" onClick={() => setMobileOpen(false)} className="rounded-xl p-2 text-white/65 hover:bg-white/10 hover:text-white" aria-label="Close workspace navigation"><X size={19} /></button>
           </div>
           <div className="px-4 py-5"><div className="rounded-2xl border border-white/10 bg-white/5 p-4"><p className="truncate text-sm font-bold">{businessName}</p><p className="mt-1 text-xs text-white/50">NGN · {firstName}</p></div></div>
-          <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-5" aria-label="Mobile workspace navigation">
-            {navigation.map(({ href, label, icon: Icon }) => {
-              const active = isActivePath(pathname, href);
-              return <Link key={href} href={href} onClick={() => setMobileOpen(false)} aria-current={active ? "page" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}><Icon size={17} strokeWidth={1.9} /><span>{label}</span>{active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}</Link>;
-            })}
-            <Link href="/guide" onClick={() => setMobileOpen(false)} className="mt-4 flex items-center gap-3 rounded-xl border-t border-white/10 px-3 py-4 text-sm font-semibold text-white/65 hover:text-white"><BookOpen size={17} strokeWidth={1.9} /><span>OpenBooks guide</span></Link>
-          </nav>
+          <div className="openbooks-nav-scroll-region min-h-0 flex-1">
+            <nav className="openbooks-scrollbar-hidden h-full space-y-1 overflow-y-auto px-3 pb-5" aria-label="Mobile workspace navigation">
+              {navigation.map(({ href, label, icon: Icon }) => {
+                const active = isActivePath(pathname, href);
+                return <Link key={href} href={href} onClick={() => setMobileOpen(false)} aria-current={active ? "page" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}><Icon size={17} strokeWidth={1.9} /><span>{label}</span>{active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}</Link>;
+              })}
+              <Link href="/guide" onClick={() => setMobileOpen(false)} className="mt-4 flex items-center gap-3 rounded-xl border-t border-white/10 px-3 py-4 text-sm font-semibold text-white/65 hover:text-white"><BookOpen size={17} strokeWidth={1.9} /><span>OpenBooks guide</span></Link>
+            </nav>
+          </div>
         </div>
       </div>
 
