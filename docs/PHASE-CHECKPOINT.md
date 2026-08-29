@@ -29,6 +29,11 @@
 - Phase 1 exit-test matrix added at `docs/PHASE-1-EXIT-TESTS.md`.
 - Auth proxy now bypasses file-like static asset paths so public images, SVGs and other assets cannot be redirected to `/login`.
 - Vercel build now runs `prisma generate && prisma db push` before `next build` so the production database is synchronized with the current Prisma schema, including Auth.js tables required for OAuth.
+- Shared authenticated workspace shell added so sidebar/header navigation persists across dashboard, customers, invoices, sales, payments, receipts, expenses, reports and business-settings routes.
+- Workspace navigation now determines active state from the current pathname and includes a complete mobile drawer instead of hiding sections behind a partial horizontal navigation.
+- Workspace header spacing was increased and kept visible as part of the shared shell.
+- Invoice creation now supports inline customer creation without leaving the invoice workflow; the new customer is automatically added to the selector and selected for the invoice.
+- Inline customer creation reuses the existing tenant-protected customer API and does not introduce a duplicate customer model or endpoint.
 
 ## Remaining before Phase 1 can be declared release-ready
 - Configure and test Resend with a real verified sending domain/API key.
@@ -38,29 +43,30 @@
 - Perform final accessibility/UX review of authentication and onboarding screens.
 - Verify that protected business APIs consistently enforce tenant membership and do not leak records across businesses.
 - Complete a focused manual-payment audit before Phase 2 relies on the payment model.
+- Verify the new shared workspace shell and inline customer creation in the production deployment after the automatic Vercel deployment completes.
 
 ## Production issues addressed in this checkpoint
 - Production previously failed with `TypeError: Invalid URL` because a production URL value lacked the `https://` protocol; the operator corrected `AUTH_URL`/`APP_URL` accordingly.
 - Production Google/GitHub OAuth requests then failed because the Prisma adapter queried `public.accounts`, which did not exist in the production database. The Vercel build now synchronizes the Prisma schema before the Next.js build.
 - The hero image was present in `public/openbooks-market-woman.webp`, but `proxy.ts` was intercepting the static asset request and redirecting it to `/login`; the proxy now explicitly bypasses static asset paths.
+- The previous dashboard navigation lived only in `app/dashboard/layout.tsx`, so top-level business routes lost the workspace chrome. The shared workspace shell is now applied at each authenticated top-level route boundary.
 
 ## Not started
-- Customers and sales.
-- Invoice engine.
-- Manual payments and receipts.
-- Expenses and reports.
+- Customers and sales as a formally completed V1 phase.
+- Invoice engine as a formally completed V1 phase.
+- Manual payments and receipts as a formally completed V1 phase.
+- Expenses and reports as a formally completed V1 phase.
 - Production hardening.
 - Paystack future integration.
 
-## Known implementation note
-Password-reset tokens currently reuse Auth.js's existing `VerificationToken` table with a dedicated `password-reset:` identifier namespace. This avoids a schema migration during the identity implementation. A dedicated password-reset token model may be introduced in a later schema cleanup if the identity system grows.
-
-The repository still contains Paystack routes and Paystack-related Prisma fields/enums from earlier work. They are not part of the V1 feature surface. Do not expose or depend on them while implementing V1. The V1 payment-settings API explicitly forces `paystackEnabled` to false.
-
-Business onboarding and payment setup are implemented in the existing `/create-business` flow. A duplicate standalone `/onboarding/payments` flow was removed.
+## Known implementation notes
+- Password-reset tokens currently reuse Auth.js's existing `VerificationToken` table with a dedicated `password-reset:` identifier namespace. This avoids a schema migration during the identity implementation. A dedicated password-reset token model may be introduced in a later schema cleanup if the identity system grows.
+- The repository still contains Paystack routes and Paystack-related Prisma fields/enums from earlier work. They are not part of the V1 feature surface. Do not expose or depend on them while implementing V1. The V1 payment-settings API explicitly forces `paystackEnabled` to false.
+- Business onboarding and payment setup are implemented in the existing `/create-business` flow. A duplicate standalone `/onboarding/payments` flow was removed.
+- The shared workspace shell is intentionally implemented through reusable components plus route-level layouts rather than moving every business page into a route group. This keeps the existing URL structure stable while giving all authenticated business sections a consistent shell.
 
 ## Next task
-Redeploy the latest `main` branch, confirm the build completes successfully, then test the production hero asset and OAuth flow. After that, run the Phase 1 exit tests. Do not start Phase 2 until the identity/onboarding test matrix passes and the tenant/access-control audit is clean.
+Redeploy the latest `main` branch, confirm the build completes successfully, then test the shared navigation on every business section and the inline customer creation flow. After that, run the Phase 1 exit tests. Do not start additional feature work until the current changes have been verified in production and any regressions are corrected.
 
 ## Recovery rule
 If later work diverges from the V1 implementation plan, stop feature work, compare the affected code with `docs/V1-IMPLEMENTATION-PLAN.md`, correct the deviation, test the corrected behaviour, and update this checkpoint before continuing.
