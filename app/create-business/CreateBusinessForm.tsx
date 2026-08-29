@@ -51,6 +51,11 @@ export function CreateBusinessForm() {
     setMethods((current) => ({ ...current, [key]: !current[key] }));
   }
 
+  function getInputValue(form: HTMLFormElement, name: string) {
+    const element = form.elements.namedItem(name);
+    return element instanceof HTMLInputElement ? element.value.trim() : "";
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -62,6 +67,7 @@ export function CreateBusinessForm() {
       return;
     }
 
+    const form = e.currentTarget;
     const payload = {
       name: businessDetails.name.trim(),
       phone: businessDetails.phone.trim(),
@@ -72,15 +78,9 @@ export function CreateBusinessForm() {
         bankTransferEnabled: methods.bankTransfer,
         cashEnabled: methods.cash,
         posEnabled: methods.pos,
-        bankName: e.currentTarget.elements.namedItem("bankName") instanceof HTMLInputElement
-          ? e.currentTarget.elements.namedItem("bankName")?.value.trim() || ""
-          : "",
-        accountName: e.currentTarget.elements.namedItem("accountName") instanceof HTMLInputElement
-          ? e.currentTarget.elements.namedItem("accountName")?.value.trim() || ""
-          : "",
-        accountNumber: e.currentTarget.elements.namedItem("accountNumber") instanceof HTMLInputElement
-          ? e.currentTarget.elements.namedItem("accountNumber")?.value.trim() || ""
-          : "",
+        bankName: getInputValue(form, "bankName"),
+        accountName: getInputValue(form, "accountName"),
+        accountNumber: getInputValue(form, "accountNumber"),
       },
     };
 
