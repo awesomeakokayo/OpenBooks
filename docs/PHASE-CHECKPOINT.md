@@ -7,7 +7,6 @@
 - Authoritative V1 implementation plan added.
 - Paystack marked as deferred from V1 in the implementation plan and environment contract.
 - Resend email provider boundary added.
-- Resend SDK dependency added.
 - Email verification token generation and verification email template added.
 - Credential registration creates a verification token and sends the verification email.
 - Credential registration redirects the user to the verification screen instead of signing them in immediately.
@@ -24,16 +23,24 @@
 - Bank transfer onboarding requires bank name, account name and a 10-digit account number.
 - Payment settings API validates V1 payment methods and forcibly keeps Paystack disabled.
 - Business onboarding explains that bank details are displayed to customers and funds are never held by OpenBooks.
-- Authentication/recovery/public-route protection was audited and `proxy.ts` now allows registration, verification, password recovery, auth errors and public invoice routes without authentication.
+- Authentication/recovery/public-route protection was audited and `proxy.ts` allows registration, verification, password recovery, auth errors and public invoice routes without authentication.
 - Deferred Paystack public route exposure was removed from the public proxy allow-list.
 - Phase 1 exit-test matrix added at `docs/PHASE-1-EXIT-TESTS.md`.
-- Auth proxy now bypasses file-like static asset paths so public images, SVGs and other assets cannot be redirected to `/login`.
-- Vercel build now runs `prisma generate && prisma db push` before `next build` so the production database is synchronized with the current Prisma schema, including Auth.js tables required for OAuth.
+- Auth proxy bypasses file-like static asset paths so public images, SVGs and other assets cannot be redirected to `/login`.
+- Vercel build runs `prisma generate && prisma db push` before `next build` so the production database is synchronized with the current Prisma schema, including Auth.js tables required for OAuth.
 - Shared authenticated workspace shell added so sidebar/header navigation persists across dashboard, customers, invoices, sales, payments, receipts, expenses, reports and business-settings routes.
-- Workspace navigation now determines active state from the current pathname and includes a complete mobile drawer instead of hiding sections behind a partial horizontal navigation.
+- Workspace navigation determines active state from the current pathname and includes a complete mobile drawer.
+- Workspace navigation now preserves its own scroll position between workspace route navigations so lower items such as Reports and Settings do not disappear after navigation.
 - Workspace header spacing was increased and kept visible as part of the shared shell.
-- Invoice creation now supports inline customer creation without leaving the invoice workflow; the new customer is automatically added to the selector and selected for the invoice.
+- Invoice creation supports inline customer creation without leaving the invoice workflow; the new customer is automatically added to the selector and selected for the invoice.
 - Inline customer creation reuses the existing tenant-protected customer API and does not introduce a duplicate customer model or endpoint.
+- Dashboard sales metrics include successful recorded payments as well as direct sales, including standalone payments not attached to an invoice.
+- Dashboard invoice outstanding calculations use only invoice-linked payments, preventing standalone payments from incorrectly reducing invoice balances.
+- Dashboard recent activity includes recorded payments and shows the payment method where applicable.
+- Business profile information can now be edited from Business Settings through a tenant-protected PATCH endpoint and reusable form.
+- V1 expense payment options no longer expose Paystack and the filled expense action buttons explicitly use readable white text.
+- Guide navigation is account-aware for authenticated business users and directs them back to the dashboard instead of the public start flow.
+- Authenticated users visiting the public landing page `/` are redirected to `/dashboard`; authenticated users visiting `/login` are also redirected to `/dashboard`, keeping the landing page as an entrance rather than the authenticated home.
 
 ## Remaining before Phase 1 can be declared release-ready
 - Configure and test Resend with a real verified sending domain/API key.
@@ -43,7 +50,7 @@
 - Perform final accessibility/UX review of authentication and onboarding screens.
 - Verify that protected business APIs consistently enforce tenant membership and do not leak records across businesses.
 - Complete a focused manual-payment audit before Phase 2 relies on the payment model.
-- Verify the new shared workspace shell and inline customer creation in the production deployment after the automatic Vercel deployment completes.
+- Verify the shared workspace shell, dashboard payment metrics, editable business settings and landing-page authentication redirect in the production deployment after the automatic deployment completes.
 
 ## Production issues addressed in this checkpoint
 - Production previously failed with `TypeError: Invalid URL` because a production URL value lacked the `https://` protocol; the operator corrected `AUTH_URL`/`APP_URL` accordingly.
@@ -57,6 +64,7 @@
 - Manual payments and receipts as a formally completed V1 phase.
 - Expenses and reports as a formally completed V1 phase.
 - Production hardening.
+- Offline/PWA implementation.
 - Paystack future integration.
 
 ## Known implementation notes
@@ -64,9 +72,10 @@
 - The repository still contains Paystack routes and Paystack-related Prisma fields/enums from earlier work. They are not part of the V1 feature surface. Do not expose or depend on them while implementing V1. The V1 payment-settings API explicitly forces `paystackEnabled` to false.
 - Business onboarding and payment setup are implemented in the existing `/create-business` flow. A duplicate standalone `/onboarding/payments` flow was removed.
 - The shared workspace shell is intentionally implemented through reusable components plus route-level layouts rather than moving every business page into a route group. This keeps the existing URL structure stable while giving all authenticated business sections a consistent shell.
+- Dashboard "Sales" means recorded money received/recorded for the selected period: direct sales plus successful payments. Invoice outstanding is calculated separately from invoice-linked payments only.
 
 ## Next task
-Redeploy the latest `main` branch, confirm the build completes successfully, then test the shared navigation on every business section and the inline customer creation flow. After that, run the Phase 1 exit tests. Do not start additional feature work until the current changes have been verified in production and any regressions are corrected.
+Finish the remaining Phase 1 runtime verification tasks. Do not start Phase 2 customers/sales until identity, onboarding, payment settings, dashboard payment accounting, and authenticated navigation have been exercised end-to-end and any regressions are corrected.
 
 ## Recovery rule
 If later work diverges from the V1 implementation plan, stop feature work, compare the affected code with `docs/V1-IMPLEMENTATION-PLAN.md`, correct the deviation, test the corrected behaviour, and update this checkpoint before continuing.
