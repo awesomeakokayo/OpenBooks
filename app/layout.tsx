@@ -27,6 +27,10 @@ export const metadata: Metadata = {
   title: "OpenBooks NG — Your business notebook, but digital.",
   description:
     "Record sales, send invoices, collect payments and keep track of what your business is owed. Nigeria-first, mobile-first, open-source.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
