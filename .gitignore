@@ -15,6 +15,7 @@ dist
 .env.development.local
 .env.test.local
 .env.production.local
+.env.example
 
 # Work/planning docs — local only (not pushed per project decision)
 buildversion.md
