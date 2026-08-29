@@ -93,7 +93,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
         <div className="print:hidden mt-6 flex flex-col gap-2 sm:flex-row">
           <InvoicePdfButton />
-          <a href={waLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 flex-1 items-center justify-center rounded-[12px] bg-sage px-6 text-sm font-semibold text-plum hover:bg-sage/80">
+          <a href={waLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-12 w-full flex-1 items-center justify-center rounded-[12px] bg-sage px-6 text-sm font-semibold text-plum hover:bg-sage/80 sm:h-11">
             Share via WhatsApp
           </a>
           <CopyButton text={publicUrl} />

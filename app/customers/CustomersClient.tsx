@@ -31,9 +31,9 @@ export function CustomersClient({ businessId, initialSearch }: { businessId: str
             className="h-11 w-full rounded-xl border border-plum/10 bg-[#F8F8F6] pl-10 pr-3 text-sm font-medium text-plum placeholder:text-plum/35 outline-none transition focus:border-terracotta focus:bg-white focus:ring-2 focus:ring-terracotta/10"
           />
         </div>
-        <button type="submit" className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-plum px-4 text-sm font-bold text-white transition hover:bg-plum-deep">
-          <Search size={16} />
-          <span className="hidden sm:inline">Search</span>
+        <button type="submit" className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-plum px-4 text-sm font-bold !text-white transition hover:bg-plum-deep">
+          <Search size={16} className="text-white" />
+          <span className="hidden sm:inline text-white">Search</span>
         </button>
         <button type="button" aria-label="Search filters" className="hidden h-11 w-11 items-center justify-center rounded-xl border border-plum/10 bg-white text-plum/55 hover:bg-[#F8F8F6] sm:inline-flex">
           <SlidersHorizontal size={17} />

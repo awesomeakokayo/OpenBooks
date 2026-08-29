@@ -31,8 +31,8 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           <h1 className="mt-2 font-heading text-3xl font-extrabold tracking-tight text-plum">Customers</h1>
           <p className="mt-1.5 text-sm text-plum/55">{customers.length} customer{customers.length !== 1 ? "s" : ""} in your business records.</p>
         </div>
-        <Link href="/customers/new" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-plum px-5 text-sm font-bold text-white shadow-[0_10px_28px_rgba(80,48,71,0.14)] hover:bg-plum-deep">
-          <Plus size={17} /> Add customer
+        <Link href="/customers/new" className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-plum px-5 text-sm font-bold !text-white shadow-[0_10px_28px_rgba(80,48,71,0.14)] hover:bg-plum-deep sm:h-11 sm:w-auto">
+          <Plus size={17} className="text-white" /> Add customer
         </Link>
       </section>
 
@@ -43,7 +43,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/75 text-plum shadow-sm"><Users size={23} /></span>
           <h2 className="mt-5 font-heading text-lg font-extrabold">No customers yet</h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-plum/55">Add your first customer and OpenBooks will keep their contact details, invoices and payment history together.</p>
-          <Link href="/customers/new" className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-plum px-5 text-sm font-bold text-white hover:bg-plum-deep"><Plus size={16} /> Add customer</Link>
+          <Link href="/customers/new" className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-plum px-5 text-sm font-bold !text-white hover:bg-plum-deep sm:h-11 sm:w-auto"><Plus size={16} className="text-white" /> Add customer</Link>
         </div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-plum/10 bg-white shadow-[0_12px_32px_rgba(80,48,71,0.05)]">

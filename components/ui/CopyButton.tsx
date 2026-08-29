@@ -11,7 +11,7 @@ export function CopyButton({ text }: { text: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      className="inline-flex h-11 flex-1 items-center justify-center rounded-[12px] border border-plum/10 bg-white px-6 text-sm font-semibold text-plum hover:bg-pale-sage"
+      className="inline-flex h-12 w-full flex-1 items-center justify-center rounded-[12px] border border-plum/10 bg-white px-6 text-sm font-semibold text-plum hover:bg-pale-sage sm:h-11"
     >
       {copied ? "Copied!" : "Copy link"}
     </button>

@@ -31,13 +31,13 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           <h1 className="mt-2 font-heading text-3xl font-extrabold tracking-tight text-plum">Invoices</h1>
           <p className="mt-1.5 text-sm text-plum/55">{invoices.length} invoice{invoices.length !== 1 ? "s" : ""} in your records.</p>
         </div>
-        <Link href="/invoices/new" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-terracotta px-5 text-sm font-bold text-white shadow-[0_10px_28px_rgba(192,87,70,0.2)] hover:bg-terracotta-dark"><Plus size={17} /> Create invoice</Link>
+        <Link href="/invoices/new" className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-terracotta px-5 text-sm font-bold !text-white shadow-[0_10px_28px_rgba(192,87,70,0.2)] hover:bg-terracotta-dark sm:h-11 sm:w-auto"><Plus size={17} className="text-white" /> Create invoice</Link>
       </section>
 
       <div className="rounded-2xl border border-plum/10 bg-white p-3 shadow-[0_8px_24px_rgba(80,48,71,0.04)]">
         <div className="flex gap-2 overflow-x-auto openbooks-scrollbar-hidden">
           {statuses.map((s) => (
-            <Link key={s || "all"} href={s ? `/invoices?status=${s}` : "/invoices"} className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition ${!status && !s ? "bg-plum text-white" : status === s ? "bg-pale-sage text-plum" : "text-plum/50 hover:bg-[#F8F8F6] hover:text-plum"}`}>{s ? getStatusLabel(s) : "All invoices"}</Link>
+            <Link key={s || "all"} href={s ? `/invoices?status=${s}` : "/invoices"} className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition ${!status && !s ? "bg-plum !text-white" : status === s ? "bg-pale-sage text-plum" : "text-plum/50 hover:bg-[#F8F8F6] hover:text-plum"}`}>{s ? getStatusLabel(s) : "All invoices"}</Link>
           ))}
         </div>
       </div>
@@ -47,7 +47,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/75 text-plum shadow-sm"><FileText size={23} /></span>
           <h2 className="mt-5 font-heading text-lg font-extrabold">No invoices yet</h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-plum/55">Create a professional invoice, choose the payment methods you accept, and send it to your customer.</p>
-          <Link href="/invoices/new" className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-plum px-5 text-sm font-bold text-white hover:bg-plum-deep"><Plus size={16} /> Create invoice</Link>
+          <Link href="/invoices/new" className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-plum px-5 text-sm font-bold !text-white hover:bg-plum-deep sm:h-11 sm:w-auto"><Plus size={16} className="text-white" /> Create invoice</Link>
         </div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-plum/10 bg-white shadow-[0_12px_32px_rgba(80,48,71,0.05)]">
