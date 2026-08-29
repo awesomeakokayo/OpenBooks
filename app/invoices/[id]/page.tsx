@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { prisma } from "@/lib/db/prisma";
 import { redirect, notFound } from "next/navigation";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import Link from "next/link";
@@ -31,16 +32,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="print-invoice mx-auto flex max-w-[720px] flex-col gap-6">
-      <Link href="/invoices" className="print:hidden text-sm text-plum/60 hover:text-plum">
-        ← Back to invoices
-      </Link>
+      <Link href="/invoices" className="print:hidden text-sm text-plum/60 hover:text-plum">← Back to invoices</Link>
 
       <div className="print-invoice-card rounded-[16px] border border-plum/10 bg-white p-6 shadow-[0_4px_20px_rgba(80,48,71,0.06)]">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0 flex-1">
-            {invoice.business.logoUrl && (
-              <img src={invoice.business.logoUrl} alt={`${invoice.business.name} logo`} className="mb-4 h-12 w-auto max-w-[180px] object-contain" />
-            )}
+            {invoice.business.logoUrl && <img src={invoice.business.logoUrl} alt={`${invoice.business.name} logo`} className="mb-4 h-12 w-auto max-w-[180px] object-contain" />}
             <p className="text-xs font-semibold tracking-widest text-plum/50">{invoice.invoiceNumber}</p>
             <h1 className="font-heading text-xl font-bold text-plum">{invoice.business.name}</h1>
             <p className="text-sm text-plum/60">{invoice.customer.name} {invoice.customer.phone ? `• ${invoice.customer.phone}` : ""}</p>
@@ -75,13 +72,11 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div className="print:hidden mt-6 flex flex-col gap-3">
+        <div className="mt-6 flex flex-col gap-3 print:hidden">
           <div className="flex flex-wrap gap-2">
             <span className="text-xs font-medium text-plum/60">Payment methods:</span>
             {manualPaymentMethods.map((pm) => (
-              <span key={pm.id} className="rounded-full bg-pale-sage px-3 py-1 text-xs font-semibold text-plum">
-                {pm.method.replaceAll("_", " ")}
-              </span>
+              <span key={pm.id} className="rounded-full bg-pale-sage px-3 py-1 text-xs font-semibold text-plum">{pm.method.replaceAll("_", " ")}</span>
             ))}
           </div>
 
@@ -108,17 +103,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
         <div className="print:hidden mt-4 flex flex-col gap-1 rounded-[12px] bg-pale-sage/40 p-4">
           <p className="text-xs font-semibold text-plum">Public invoice</p>
-          <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="break-all text-xs text-terracotta hover:text-plum">
-            {publicUrl}
-          </a>
+          <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="break-all text-xs text-terracotta hover:text-plum">{publicUrl}</a>
           <p className="text-xs text-plum/60">Paid ₦{amountPaid.toLocaleString("en-NG")} • Outstanding ₦{outstanding.toLocaleString("en-NG")}</p>
         </div>
 
         <div className="print:hidden mt-6 flex flex-col gap-2 sm:flex-row">
           <InvoicePdfButton />
-          <a href={waLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-12 w-full flex-1 items-center justify-center rounded-[12px] bg-sage px-6 text-sm font-semibold text-plum hover:bg-sage/80 sm:h-11">
-            Share via WhatsApp
-          </a>
+          <a href={waLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-12 w-full flex-1 items-center justify-center rounded-[12px] bg-sage px-6 text-sm font-semibold text-plum hover:bg-sage/80 sm:h-11">Share via WhatsApp</a>
           <CopyButton text={publicUrl} />
         </div>
 
