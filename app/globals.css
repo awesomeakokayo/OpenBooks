@@ -85,6 +85,17 @@ main > div.sticky nav a:hover {
   color: var(--color-white) !important;
 }
 
+/* Terracotta is a filled action surface; never allow a terracotta-on-terracotta label. */
+.bg-terracotta.text-terracotta,
+.bg-terracotta .text-terracotta {
+  color: var(--color-white) !important;
+}
+
+.bg-terracotta.text-terracotta:hover,
+.bg-terracotta:hover .text-terracotta {
+  color: var(--color-white) !important;
+}
+
 .openbooks-card {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
