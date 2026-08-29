@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { createBusiness, getBusinessesForUser } from "@/lib/business/service";
+import { createBusiness, getBusinessesForUser, updateBusiness } from "@/lib/business/service";
+import { requireBusinessMember } from "@/lib/security/tenant";
+import { z } from "zod";
 
 function sessionUserId(session: { user?: unknown } | null) {
   return (session?.user as { id?: string } | undefined)?.id;
 }
+
+const updateBusinessSchema = z.object({
+  businessId: z.string().min(1),
+  name: z.string().min(2).max(100),
+  phone: z.string().min(8).max(20),
+  email: z.string().email().optional().or(z.literal("")),
+  address: z.string().max(200),
+  description: z.string().max(500),
+});
 
 export async function GET() {
   const session = await auth();
@@ -37,5 +48,35 @@ export async function POST(req: NextRequest) {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Could not create business";
     return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  const session = await auth();
+  const userId = sessionUserId(session);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const body = await req.json();
+    const parsed = updateBusinessSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid business details" }, { status: 400 });
+    }
+
+    const { businessId, ...data } = parsed.data;
+    await requireBusinessMember(userId, businessId);
+
+    const business = await updateBusiness(businessId, userId, {
+      ...data,
+      email: data.email || "",
+      address: data.address || "",
+      description: data.description || "",
+    });
+
+    return NextResponse.json(business);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Could not update business";
+    const status = message === "Forbidden" || message.includes("not found") ? 403 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }
