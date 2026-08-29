@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
 import { redirect } from "next/navigation";
-import { WorkspaceNavigation } from "./WorkspaceNavigation";
+import { WorkspaceHeader, WorkspaceNavigation } from "./WorkspaceNavigation";
 
 export async function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -10,11 +10,7 @@ export async function WorkspaceShell({ children }: { children: React.ReactNode }
   const userId = (session.user as { id?: string }).id;
   if (!userId) redirect("/login");
 
-  const member = await prisma.businessMember.findFirst({
-    where: { userId },
-    include: { business: true },
-  });
-
+  const member = await prisma.businessMember.findFirst({ where: { userId }, include: { business: true } });
   if (!member) redirect("/create-business");
 
   const firstName = session.user.name?.split(" ")[0] ?? "there";
@@ -24,7 +20,8 @@ export async function WorkspaceShell({ children }: { children: React.ReactNode }
       <div className="flex min-h-screen">
         <WorkspaceNavigation businessName={member.business.name} firstName={firstName} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">{children}</main>
+          <WorkspaceHeader businessName={member.business.name} firstName={firstName} />
+          <div className="flex-1 px-4 pb-8 pt-24 sm:px-6 lg:px-8 lg:pb-10 lg:pt-10">{children}</div>
         </div>
       </div>
     </div>
