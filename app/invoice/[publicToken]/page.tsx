@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { logAuditEvent } from "@/lib/audit/logger";
-import { PayOnlineButton } from "@/components/paystack/PayOnlineButton";
-import { VerifyBanner } from "@/components/paystack/VerifyBanner";
 import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
 import { Suspense } from "react";
 
@@ -32,7 +30,9 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
   const amountPaid = invoice.payments.reduce((s, p) => s + Number(p.amount), 0);
   const outstanding = Math.max(0, Number(invoice.total) - amountPaid);
   const setting = invoice.business.paymentSetting;
-  const enabled = new Set(invoice.paymentMethods.map((pm) => pm.method));
+  // V1 intentionally supports manual payment methods only. Ignore any stale
+  // Paystack/online entries that may exist from pre-V1 data.
+  const enabled = new Set(invoice.paymentMethods.map((pm) => pm.method).filter((method) => ["BANK_TRANSFER", "CASH", "POS"].includes(method)));
 
   return (
     <div className="min-h-screen bg-white">
@@ -70,19 +70,30 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
           {invoice.notes && <p className="mt-4 rounded-[12px] bg-plum/[0.03] p-3 text-sm text-plum/70">{invoice.notes}</p>}
 
           <Suspense fallback={null}>
-            <VerifyBanner />
+            <div />
           </Suspense>
 
           <div className="mt-6 border-t border-plum/10 pt-6">
             <h2 className="font-heading text-sm font-bold text-plum">How to pay</h2>
 
-            {enabled.has("BANK_TRANSFER") && setting?.bankName && (
+            {enabled.has("BANK_TRANSFER") && setting?.bankName && setting.accountName && setting.accountNumber && (
               <div className="mt-3 rounded-[12px] border border-plum/10 bg-white p-4">
                 <p className="text-sm font-bold text-plum">Bank Transfer</p>
-                <p className="text-sm text-plum">{setting.bankName}</p>
-                <p className="text-sm text-plum">{setting.accountName}</p>
-                <p className="text-lg font-bold text-plum">{setting.accountNumber}</p>
-                <p className="text-xs text-plum/50">Copy the account number and transfer directly. Your payment will be confirmed by the business.</p>
+                <div className="mt-3 grid gap-2">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-plum/45">Bank</p>
+                    <p className="text-sm font-semibold text-plum">{setting.bankName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-plum/45">Account name</p>
+                    <p className="text-sm font-semibold text-plum">{setting.accountName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-plum/45">Account number</p>
+                    <p className="text-lg font-bold tracking-[0.04em] text-plum">{setting.accountNumber}</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-plum/50">Copy the account number and transfer directly. Your payment will be confirmed by the business.</p>
               </div>
             )}
 
@@ -98,10 +109,6 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
                 <p className="text-sm font-bold text-plum">POS</p>
                 <p className="text-xs text-plum/60">Pay via terminal — business will record receipt.</p>
               </div>
-            )}
-
-            {enabled.has("PAYSTACK") && invoice.status !== "PAID" && invoice.status !== "CANCELLED" && (
-              <PayOnlineButton invoiceToken={publicToken} amount={outstanding} />
             )}
 
             {invoice.status === "PAID" && <p className="mt-4 rounded-[12px] bg-sage px-4 py-3 text-sm font-semibold text-plum">✓ This invoice is paid. Thank you!</p>}
