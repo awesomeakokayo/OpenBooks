@@ -68,7 +68,7 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
             {navigation.map(({ href, label, icon: Icon }) => {
               const active = isActivePath(pathname, href);
               return (
-                <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}>
+                <Link prefetch key={href} href={href} aria-current={active ? "page" : undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}>
                   <Icon size={17} strokeWidth={1.9} />
                   <span>{label}</span>
                   {active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}
@@ -78,7 +78,7 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
           </nav>
         </div>
         <div className="shrink-0 border-t border-white/10 p-4">
-          <Link href="/guide" className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/65 transition-colors hover:bg-white/6 hover:text-white">
+          <Link prefetch href="/guide" className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/65 transition-colors hover:bg-white/6 hover:text-white">
             <BookOpen size={17} strokeWidth={1.9} />
             <span>OpenBooks guide</span>
           </Link>
@@ -98,9 +98,9 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
             <nav className="openbooks-scrollbar-hidden h-full space-y-1 overflow-y-auto px-3 pb-5" aria-label="Mobile workspace navigation">
               {navigation.map(({ href, label, icon: Icon }) => {
                 const active = isActivePath(pathname, href);
-                return <Link key={href} href={href} onClick={() => setMobileOpen(false)} aria-current={active ? "page" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}><Icon size={17} strokeWidth={1.9} /><span>{label}</span>{active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}</Link>;
+                return <Link prefetch key={href} href={href} onClick={() => setMobileOpen(false)} aria-current={active ? "page" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}><Icon size={17} strokeWidth={1.9} /><span>{label}</span>{active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}</Link>;
               })}
-              <Link href="/guide" onClick={() => setMobileOpen(false)} className="mt-4 flex items-center gap-3 rounded-xl border-t border-white/10 px-3 py-4 text-sm font-semibold text-white/65 hover:text-white"><BookOpen size={17} strokeWidth={1.9} /><span>OpenBooks guide</span></Link>
+              <Link prefetch href="/guide" onClick={() => setMobileOpen(false)} className="mt-4 flex items-center gap-3 rounded-xl border-t border-white/10 px-3 py-4 text-sm font-semibold text-white/65 hover:text-white"><BookOpen size={17} strokeWidth={1.9} /><span>OpenBooks guide</span></Link>
             </nav>
           </div>
         </div>
@@ -121,7 +121,7 @@ export function WorkspaceHeader({ businessName, firstName }: { businessName: str
     <header className="sticky top-0 z-40 hidden min-h-[84px] items-center justify-between border-b border-plum/10 bg-[#F8F8F6]/95 px-4 backdrop-blur-xl lg:flex lg:px-8 print:hidden">
       <div className="min-w-0"><p className="truncate font-heading text-sm font-extrabold text-plum">{businessName}</p><p className="text-[11px] font-medium text-plum/45">Business workspace · NGN</p></div>
       <div className="flex items-center gap-3">
-        <Link href="/business/settings" className="rounded-xl p-2.5 text-plum/50 transition-colors hover:bg-white hover:text-plum" aria-label="Open settings"><Settings size={18} /></Link>
+        <Link prefetch href="/business/settings" className="rounded-xl p-2.5 text-plum/50 transition-colors hover:bg-white hover:text-plum" aria-label="Open settings"><Settings size={18} /></Link>
         <div className="h-8 w-px bg-plum/10" />
         <div className="flex items-center gap-2 rounded-xl border border-plum/10 bg-white px-2.5 py-2"><div className="flex h-7 w-7 items-center justify-center rounded-full bg-pale-sage text-[10px] font-extrabold text-plum">{(firstName[0] ?? "U").toUpperCase()}</div><span className="max-w-[120px] truncate text-xs font-bold text-plum">{firstName}</span></div>
       </div>
