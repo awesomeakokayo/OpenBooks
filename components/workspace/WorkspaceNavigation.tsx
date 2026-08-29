@@ -17,7 +17,7 @@ import {
   WalletCards,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
 
 const navigation = [
@@ -39,7 +39,30 @@ function isActivePath(pathname: string, href: string) {
 export function WorkspaceNavigation({ businessName, firstName }: { businessName: string; firstName: string }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navRef = useRef<HTMLElement | null>(null);
   const businessInitial = (businessName[0] ?? "O").toUpperCase();
+
+  // Preserve the sidebar's scroll position when navigating between workspace
+  // pages. The lower navigation items (Reports/Settings) should not disappear
+  // simply because the route changed.
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const saved = sessionStorage.getItem("openbooks:workspace-nav-scroll");
+    if (saved) {
+      const top = Number(saved);
+      if (Number.isFinite(top)) requestAnimationFrame(() => nav.scrollTo({ top, behavior: "auto" }));
+    }
+
+    const save = () => sessionStorage.setItem("openbooks:workspace-nav-scroll", String(nav.scrollTop));
+    nav.addEventListener("scroll", save, { passive: true });
+    window.addEventListener("pagehide", save);
+    return () => {
+      save();
+      nav.removeEventListener("scroll", save);
+      window.removeEventListener("pagehide", save);
+    };
+  }, []);
 
   return (
     <>
@@ -63,7 +86,7 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
           </div>
         </div>
         <div className="openbooks-nav-scroll-region min-h-0 flex-1">
-          <nav className="openbooks-scrollbar-hidden h-full space-y-1 overflow-y-auto px-3 pb-5" aria-label="Workspace navigation">
+          <nav ref={navRef} className="openbooks-scrollbar-hidden h-full space-y-1 overflow-y-auto px-3 pb-5" aria-label="Workspace navigation">
             <p className="px-3 pb-3 pt-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/35">Workspace</p>
             {navigation.map(({ href, label, icon: Icon }) => {
               const active = isActivePath(pathname, href);
