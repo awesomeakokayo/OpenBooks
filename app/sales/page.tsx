@@ -11,44 +11,83 @@ export default async function SalesPage() {
   if (!member) redirect("/create-business");
   const businessId = member.business.id;
 
-  const sales = await prisma.sale.findMany({
-    where: { businessId },
-    include: { customer: true },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+  // This page is the complete money-received history. Direct sales live in
+  // Sale, while invoice/manual payments live in Payment, so both sources must
+  // be shown here. The dashboard's Recent Activity is only a preview.
+  const [sales, payments] = await Promise.all([
+    prisma.sale.findMany({
+      where: { businessId },
+      include: { customer: true },
+    }),
+    prisma.payment.findMany({
+      where: { businessId, status: "SUCCESS" },
+      include: { customer: true, invoice: true },
+    }),
+  ]);
+
+  const transactions = [
+    ...sales.map((sale) => ({
+      id: `sale:${sale.id}`,
+      date: sale.createdAt,
+      description: sale.description,
+      customer: sale.customer?.name ?? "Walk-in",
+      method: sale.paymentMethod ?? "—",
+      amount: Number(sale.totalAmount),
+      type: "Sale",
+    })),
+    ...payments.map((payment) => ({
+      id: `payment:${payment.id}`,
+      date: payment.createdAt,
+      description: payment.invoice?.invoiceNumber
+        ? `Payment for ${payment.invoice.invoiceNumber}`
+        : "Payment received",
+      customer: payment.customer?.name ?? "Customer",
+      method: payment.method,
+      amount: Number(payment.amount),
+      type: "Payment",
+    })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  const total = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+  const money = (value: number) => `₦${value.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
     <div className="mx-auto max-w-[1200px] flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl font-bold text-plum">Sales</h1>
-          <p className="text-sm text-plum/60">{sales.length} transactions</p>
+          <p className="text-sm text-plum/60">{transactions.length} recorded transactions</p>
         </div>
         <Link href="/sales/new" className="inline-flex h-11 items-center justify-center rounded-[12px] bg-terracotta px-6 text-sm font-semibold text-white hover:bg-terracotta/90">
           + Record Sale
         </Link>
       </div>
 
-      {sales.length === 0 ? (
+      <div className="rounded-[16px] bg-pale-sage p-5 sm:p-6">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-plum/50">Total money received</p>
+        <p className="mt-2 font-heading text-3xl font-extrabold text-plum">{money(total)}</p>
+        <p className="mt-1 text-xs text-plum/50">Includes direct sales and successful payments recorded against invoices.</p>
+      </div>
+
+      {transactions.length === 0 ? (
         <div className="rounded-[16px] bg-pale-sage p-12 text-center">
-          <p className="font-heading font-bold text-plum">No sales yet</p>
-          <p className="mt-1 text-sm text-plum/60">Record your first sale in seconds.</p>
+          <p className="font-heading font-bold text-plum">No sales or payments yet</p>
+          <p className="mt-1 text-sm text-plum/60">Record your first sale or payment in seconds.</p>
           <Link href="/sales/new" className="mt-4 inline-flex h-11 items-center justify-center rounded-[12px] bg-plum px-6 text-sm font-semibold text-white">
             Record Sale
           </Link>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {sales.map((s) => (
-            <div key={s.id} className="flex items-center justify-between rounded-[16px] border border-plum/10 bg-white px-5 py-4">
-              <div>
-                <p className="text-sm font-semibold text-plum">{s.description}</p>
-                <p className="text-xs text-plum/50">
-                  {s.customer?.name ?? "Walk-in"} • {s.paymentMethod || "Unpaid"} • {new Date(s.saleDate).toLocaleDateString("en-NG")}
+          {transactions.map((transaction) => (
+            <div key={transaction.id} className="flex items-center justify-between gap-4 rounded-[16px] border border-plum/10 bg-white px-5 py-4">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-plum">{transaction.description}</p>
+                <p className="mt-1 text-xs text-plum/50">
+                  {transaction.customer} • {transaction.method.replaceAll("_", " ")} • {new Date(transaction.date).toLocaleDateString("en-NG")} • {transaction.type}
                 </p>
               </div>
-              <p className="text-sm font-bold text-plum">₦{Number(s.totalAmount).toLocaleString("en-NG")}</p>
+              <p className="shrink-0 text-sm font-bold text-plum">{money(transaction.amount)}</p>
             </div>
           ))}
         </div>
