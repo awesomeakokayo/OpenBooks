@@ -106,6 +106,32 @@ main > div.sticky nav a:hover {
   text-transform: uppercase;
 }
 
+.openbooks-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.openbooks-scrollbar-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.openbooks-nav-scroll-region {
+  position: relative;
+  overflow: hidden;
+}
+
+.openbooks-nav-scroll-region::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 34px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(80, 48, 71, 0), #503047 82%);
+}
+
 .animate-openbooks-fade {
   animation: openbooks-fade 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -113,6 +139,43 @@ main > div.sticky nav a:hover {
 @keyframes openbooks-fade {
   from { opacity: 0; transform: translateY(10px) scale(0.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  .print-hidden,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print-invoice {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .print-invoice-card {
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  a {
+    text-decoration: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
