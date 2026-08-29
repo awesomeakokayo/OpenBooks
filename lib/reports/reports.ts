@@ -8,29 +8,28 @@ export async function getReports(businessId: string) {
   startOfWeek.setDate(now.getDate() - 7);
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // OpenBooks treats a completed/recorded payment as money received.
-  // Direct sales are also included because they represent money received at
-  // the point of sale. Invoice payments live in Payment, not Sale.
   const [
     todayDirectSales,
     weekDirectSales,
     monthDirectSales,
+    totalDirectSales,
     todayPayments,
     weekPayments,
     monthPayments,
+    totalPayments,
     paymentsByMethod,
     expensesTotal,
     expensesByCategory,
     outstandingAgg,
-    expensesAgg,
-    salesAgg,
   ] = await Promise.all([
     prisma.sale.aggregate({ where: { businessId, createdAt: { gte: startOfDay } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, createdAt: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, createdAt: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId }, _sum: { totalAmount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
+    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS" }, _sum: { amount: true } }),
     prisma.payment.groupBy({
       by: ["method"],
       where: { businessId, status: "SUCCESS" },
@@ -43,39 +42,38 @@ export async function getReports(businessId: string) {
       prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
       prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", invoiceId: { not: null } }, _sum: { amount: true } }),
     ]),
-    prisma.expense.aggregate({ where: { businessId }, _sum: { amount: true } }),
-    prisma.sale.aggregate({ where: { businessId }, _sum: { totalAmount: true } }),
   ]);
 
   const totalInvoiced = Number(outstandingAgg[0]._sum.total ?? 0);
-  const totalPaid = Number(outstandingAgg[1]._sum.amount ?? 0);
-  const outstanding = Math.max(0, roundMoney(totalInvoiced - totalPaid));
-  const totalExpenses = Number(expensesTotal._sum.amount ?? 0);
+  const totalInvoicePaid = Number(outstandingAgg[1]._sum.amount ?? 0);
+  const outstanding = Math.max(0, roundMoney(totalInvoiced - totalInvoicePaid));
+  const totalExpenses = roundMoney(Number(expensesTotal._sum.amount ?? 0));
 
   const directSales = {
     today: Number(todayDirectSales._sum.totalAmount ?? 0),
     week: Number(weekDirectSales._sum.totalAmount ?? 0),
     month: Number(monthDirectSales._sum.totalAmount ?? 0),
-    total: Number(salesAgg._sum.totalAmount ?? 0),
+    total: Number(totalDirectSales._sum.totalAmount ?? 0),
   };
 
   const payments = {
     today: Number(todayPayments._sum.amount ?? 0),
     week: Number(weekPayments._sum.amount ?? 0),
     month: Number(monthPayments._sum.amount ?? 0),
+    total: Number(totalPayments._sum.amount ?? 0),
   };
 
-  // Sales/revenue in reports must use the same definition as the dashboard:
-  // direct sales + successful recorded payments. This ensures an invoice
-  // payment immediately affects Today, This Week and This Month.
+  // Revenue/sales means money received or recorded. Invoice payments are
+  // stored as Payment records, while standalone sales are stored as Sale
+  // records. Reports must combine both sources using the same definition as
+  // the dashboard so payment activity is reflected immediately.
   const sales = {
     today: roundMoney(directSales.today + payments.today),
     week: roundMoney(directSales.week + payments.week),
     month: roundMoney(directSales.month + payments.month),
-    total: roundMoney(directSales.total + payments.month),
+    total: roundMoney(directSales.total + payments.total),
   };
 
-  // Outstanding by customer
   const customers = await prisma.customer.findMany({
     where: { businessId },
     select: { id: true, name: true, phone: true },
@@ -98,7 +96,7 @@ export async function getReports(businessId: string) {
     orderBy: { dueDate: "asc" },
   });
 
-  const totalReceived = roundMoney(directSales.total + payments.month);
+  const totalReceived = sales.total;
   const net = roundMoney(totalReceived - totalExpenses);
 
   return {
