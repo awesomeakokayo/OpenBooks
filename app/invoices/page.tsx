@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import Link from "next/link";
 import { ArrowUpRight, FileText, Plus } from "lucide-react";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getStatusLabel, StatusBadge } from "@/components/ui/StatusBadge";
 
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const session = await auth();
@@ -35,9 +35,9 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
       </section>
 
       <div className="rounded-2xl border border-plum/10 bg-white p-3 shadow-[0_8px_24px_rgba(80,48,71,0.04)]">
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto openbooks-scrollbar-hidden">
           {statuses.map((s) => (
-            <Link key={s || "all"} href={s ? `/invoices?status=${s}` : "/invoices"} className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition ${!status && !s ? "bg-plum text-white" : status === s ? "bg-pale-sage text-plum" : "text-plum/50 hover:bg-[#F8F8F6] hover:text-plum"}`}>{s || "All invoices"}</Link>
+            <Link key={s || "all"} href={s ? `/invoices?status=${s}` : "/invoices"} className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition ${!status && !s ? "bg-plum text-white" : status === s ? "bg-pale-sage text-plum" : "text-plum/50 hover:bg-[#F8F8F6] hover:text-plum"}`}>{s ? getStatusLabel(s) : "All invoices"}</Link>
           ))}
         </div>
       </div>
