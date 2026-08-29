@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { logAuditEvent } from "@/lib/audit/logger";
 import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
-import { Suspense } from "react";
 
 // Public invoice — no auth required, token-based, minimal leak
 
@@ -21,7 +20,6 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
   });
   if (!invoice) notFound();
 
-  // Mark VIEWED if was SENT/DRAFT
   if (invoice.status === "SENT" || invoice.status === "DRAFT") {
     await prisma.invoice.update({ where: { id: invoice.id }, data: { status: "VIEWED" } });
     await logAuditEvent({ businessId: invoice.businessId, action: "INVOICE_VIEWED", entityType: "Invoice", entityId: invoice.id, metadata: { publicToken } });
@@ -30,8 +28,6 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
   const amountPaid = invoice.payments.reduce((s, p) => s + Number(p.amount), 0);
   const outstanding = Math.max(0, Number(invoice.total) - amountPaid);
   const setting = invoice.business.paymentSetting;
-  // V1 intentionally supports manual payment methods only. Ignore any stale
-  // Paystack/online entries that may exist from pre-V1 data.
   const enabled = new Set(invoice.paymentMethods.map((pm) => pm.method).filter((method) => ["BANK_TRANSFER", "CASH", "POS"].includes(method)));
 
   return (
@@ -68,10 +64,6 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
           </div>
 
           {invoice.notes && <p className="mt-4 rounded-[12px] bg-plum/[0.03] p-3 text-sm text-plum/70">{invoice.notes}</p>}
-
-          <Suspense fallback={null}>
-            <div />
-          </Suspense>
 
           <div className="mt-6 border-t border-plum/10 pt-6">
             <h2 className="font-heading text-sm font-bold text-plum">How to pay</h2>
