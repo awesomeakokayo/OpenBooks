@@ -26,6 +26,18 @@ export default auth((req) => {
   ];
   const isPublic = publicPaths.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
+  // The marketing site is an entrance, not the authenticated home. Once a
+  // user has an active session, returning to `/` should take them back to the
+  // workspace instead of asking them to start the journey again.
+  if (isAuth && pathname === "/") {
+    return Response.redirect(new URL("/dashboard", req.nextUrl.origin));
+  }
+
+  // An authenticated user who visits sign-in should continue to their workspace.
+  if (isAuth && pathname === "/login") {
+    return Response.redirect(new URL("/dashboard", req.nextUrl.origin));
+  }
+
   if (!isPublic && !isAuth) {
     const url = new URL("/login", req.nextUrl.origin);
     url.searchParams.set("callbackUrl", pathname);
