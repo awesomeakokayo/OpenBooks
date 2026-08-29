@@ -4,6 +4,11 @@ export default auth((req) => {
   const isAuth = !!req.auth;
   const pathname = req.nextUrl.pathname;
 
+  // Static assets in /public (images, SVGs, fonts, etc.) must never be
+  // redirected to /login by the application auth layer.
+  const isStaticAsset = /\.[a-zA-Z0-9]+$/.test(pathname);
+  if (isStaticAsset) return;
+
   const publicPaths = [
     "/",
     "/login",
@@ -29,5 +34,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
