@@ -5,6 +5,6 @@
       "schedule": "0 2 * * *"
     }
   ],
-  "buildCommand": "next build",
+  "buildCommand": "prisma generate && prisma db push && next build",
   "framework": "nextjs"
 }
