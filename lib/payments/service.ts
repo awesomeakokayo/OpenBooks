@@ -1,16 +1,18 @@
 import { prisma } from "@/lib/db/prisma";
 import { logAuditEvent } from "@/lib/audit/logger";
 import { issueReceipt } from "@/lib/receipts/service";
+import { roundMoney } from "@/lib/invoices/utils";
 import type { PaymentMethod } from "@prisma/client";
 
 function deriveInvoiceStatus(total: number, totalPaid: number, dueDate: Date | null): string {
-  if (totalPaid >= total && total > 0) return "PAID";
-  if (totalPaid > 0 && totalPaid < total) {
+  const safeTotal = roundMoney(total);
+  const safePaid = roundMoney(totalPaid);
+  if (safePaid >= safeTotal && safeTotal > 0) return "PAID";
+  if (safePaid > 0 && safePaid < safeTotal) {
     if (dueDate && new Date() > dueDate) return "OVERDUE";
     return "PARTIALLY_PAID";
   }
   if (dueDate && new Date() > dueDate) return "OVERDUE";
-  // keep existing SENT/VIEWED if no payment yet — caller decides
   return "SENT";
 }
 
@@ -24,15 +26,13 @@ export async function recordManualPayment(params: {
   reference?: string;
   notes?: string;
 }) {
-  if (params.amount <= 0) throw new Error("Amount must be greater than 0");
+  const amount = roundMoney(params.amount);
+  if (amount <= 0) throw new Error("Amount must be greater than 0");
   if (!["CASH", "BANK_TRANSFER", "POS"].includes(params.method)) {
     throw new Error("Method must be CASH, BANK_TRANSFER or POS for manual payments");
   }
 
-  // Verify customer belongs to business
-  const customer = await prisma.customer.findFirst({
-    where: { id: params.customerId, businessId: params.businessId },
-  });
+  const customer = await prisma.customer.findFirst({ where: { id: params.customerId, businessId: params.businessId } });
   if (!customer) throw new Error("Customer not found in this business");
 
   let invoice: { id: string; total: unknown; status: string; dueDate: Date | null } | null = null;
@@ -45,10 +45,10 @@ export async function recordManualPayment(params: {
     if (inv.status === "CANCELLED") throw new Error("Cannot pay cancelled invoice");
     if (inv.status === "PAID") throw new Error("Invoice already paid");
 
-    const total = Number(inv.total);
-    const totalPaid = inv.payments.reduce((s, p) => s + Number(p.amount), 0);
-    const outstanding = Math.max(0, total - totalPaid);
-    if (params.amount > outstanding) {
+    const total = roundMoney(Number(inv.total));
+    const totalPaid = roundMoney(inv.payments.reduce((sum, payment) => sum + Number(payment.amount), 0));
+    const outstanding = Math.max(0, roundMoney(total - totalPaid));
+    if (amount > outstanding) {
       throw new Error(`Amount exceeds outstanding ₦${outstanding.toLocaleString("en-NG")}`);
     }
     invoice = { id: inv.id, total: inv.total, status: inv.status, dueDate: inv.dueDate };
@@ -60,7 +60,7 @@ export async function recordManualPayment(params: {
         businessId: params.businessId,
         invoiceId: params.invoiceId || null,
         customerId: params.customerId,
-        amount: params.amount,
+        amount,
         currency: "NGN",
         method: params.method,
         provider: "MANUAL",
@@ -76,23 +76,19 @@ export async function recordManualPayment(params: {
       paymentId: payment.id,
       invoiceId: params.invoiceId || null,
       customerId: params.customerId,
-      amount: params.amount,
+      amount,
       paymentMethod: params.method,
     });
 
     if (invoice) {
-      // Recalculate status after this payment
       const allPayments = await tx.payment.findMany({
         where: { invoiceId: invoice.id, status: "SUCCESS" },
         select: { amount: true },
       });
-      const total = Number(invoice.total);
-      const totalPaid = allPayments.reduce((s, p) => s + Number(p.amount), 0);
+      const total = roundMoney(Number(invoice.total));
+      const totalPaid = roundMoney(allPayments.reduce((sum, payment) => sum + Number(payment.amount), 0));
       let nextStatus = deriveInvoiceStatus(total, totalPaid, invoice.dueDate);
-
-      // Preserve VIEWED/SENT nuance if no payment yet not applicable, but here we have payment
       if (nextStatus === "SENT" && invoice.status === "VIEWED") nextStatus = "VIEWED";
-
       await tx.invoice.update({ where: { id: invoice.id }, data: { status: nextStatus as never } });
       return { payment, receipt, nextStatus };
     }
@@ -106,7 +102,7 @@ export async function recordManualPayment(params: {
     action: "PAYMENT_RECORDED",
     entityType: "Payment",
     entityId: result.payment.id,
-    metadata: { amount: params.amount, method: params.method, invoiceId: params.invoiceId },
+    metadata: { amount, method: params.method, invoiceId: params.invoiceId },
   });
 
   return result;
