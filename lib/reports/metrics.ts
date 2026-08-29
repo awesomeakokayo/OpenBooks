@@ -12,28 +12,28 @@ export async function getDashboardMetrics(businessId: string) {
     todayDirectSales,
     weekDirectSales,
     monthDirectSales,
-    todayInvoicePayments,
-    weekInvoicePayments,
-    monthInvoicePayments,
+    todayPayments,
+    weekPayments,
+    monthPayments,
     outstandingAgg,
     customerCount,
     recentSales,
-    recentInvoicePayments,
+    recentPayments,
   ] = await Promise.all([
     prisma.sale.aggregate({ where: { businessId, createdAt: { gte: startOfDay } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, createdAt: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, createdAt: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", invoiceId: { not: null }, createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", invoiceId: { not: null }, createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", invoiceId: { not: null }, createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
+    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
+    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
+    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
     Promise.all([
       prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
-      prisma.payment.aggregate({ where: { businessId, status: "SUCCESS" }, _sum: { amount: true } }),
+      prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", invoiceId: { not: null } }, _sum: { amount: true } }),
     ]),
     prisma.customer.count({ where: { businessId } }),
     prisma.sale.findMany({ where: { businessId }, include: { customer: true }, orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.payment.findMany({
-      where: { businessId, status: "SUCCESS", invoiceId: { not: null } },
+      where: { businessId, status: "SUCCESS" },
       include: { customer: true, invoice: true },
       orderBy: { createdAt: "desc" },
       take: 8,
@@ -41,8 +41,8 @@ export async function getDashboardMetrics(businessId: string) {
   ]);
 
   const totalInvoiced = roundMoney(Number(outstandingAgg[0]._sum.total ?? 0));
-  const totalPaid = roundMoney(Number(outstandingAgg[1]._sum.amount ?? 0));
-  const outstanding = Math.max(0, roundMoney(totalInvoiced - totalPaid));
+  const totalInvoicePaid = roundMoney(Number(outstandingAgg[1]._sum.amount ?? 0));
+  const outstanding = Math.max(0, roundMoney(totalInvoiced - totalInvoicePaid));
 
   const directSales = {
     today: roundMoney(Number(todayDirectSales._sum.totalAmount ?? 0)),
@@ -50,14 +50,15 @@ export async function getDashboardMetrics(businessId: string) {
     month: roundMoney(Number(monthDirectSales._sum.totalAmount ?? 0)),
   };
 
-  const invoicePayments = {
-    today: roundMoney(Number(todayInvoicePayments._sum.amount ?? 0)),
-    week: roundMoney(Number(weekInvoicePayments._sum.amount ?? 0)),
-    month: roundMoney(Number(monthInvoicePayments._sum.amount ?? 0)),
+  const payments = {
+    today: roundMoney(Number(todayPayments._sum.amount ?? 0)),
+    week: roundMoney(Number(weekPayments._sum.amount ?? 0)),
+    month: roundMoney(Number(monthPayments._sum.amount ?? 0)),
   };
 
-  // Dashboard sales represent money received/recorded for the period. Direct
-  // sales live in Sale; invoice payments live in Payment, so both are included.
+  // Dashboard sales represent money recorded as received/completed in the
+  // selected period. This includes direct sales and every successful payment,
+  // including payments recorded independently from an invoice.
   const combinedActivity = [
     ...recentSales.map((sale) => ({
       id: `sale:${sale.id}`,
@@ -68,27 +69,26 @@ export async function getDashboardMetrics(businessId: string) {
       method: sale.paymentMethod ?? null,
       type: "SALE" as const,
     })),
-    ...recentInvoicePayments.map((payment) => ({
+    ...recentPayments.map((payment) => ({
       id: `payment:${payment.id}`,
       createdAt: payment.createdAt,
-      description: payment.invoice?.invoiceNumber ? `Payment for ${payment.invoice.invoiceNumber}` : "Invoice payment",
+      description: payment.invoice?.invoiceNumber ? `Payment for ${payment.invoice.invoiceNumber}` : "Payment received",
       customerName: payment.customer?.name ?? "Customer",
       amount: Number(payment.amount),
       method: payment.method,
       type: "PAYMENT" as const,
     })),
   ]
-    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-    .reverse()
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, 8);
 
   return {
-    todaySales: roundMoney(directSales.today + invoicePayments.today),
-    weekSales: roundMoney(directSales.week + invoicePayments.week),
-    monthSales: roundMoney(directSales.month + invoicePayments.month),
+    todaySales: roundMoney(directSales.today + payments.today),
+    weekSales: roundMoney(directSales.week + payments.week),
+    monthSales: roundMoney(directSales.month + payments.month),
     outstanding,
     totalInvoiced,
-    totalPaid,
+    totalPaid: totalInvoicePaid,
     customerCount,
     recentSales: combinedActivity,
   };
