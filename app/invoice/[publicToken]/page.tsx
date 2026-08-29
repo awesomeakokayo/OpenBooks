@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { logAuditEvent } from "@/lib/audit/logger";
 import { PayOnlineButton } from "@/components/paystack/PayOnlineButton";
 import { VerifyBanner } from "@/components/paystack/VerifyBanner";
+import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
 import { Suspense } from "react";
 
 // Public invoice — no auth required, token-based, minimal leak
@@ -35,9 +36,9 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-[720px] px-6 py-8 flex flex-col gap-6">
+      <div className="mx-auto flex max-w-[720px] flex-col gap-6 px-6 py-8">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-plum text-sm font-bold text-white">OB</div>
+          <OpenBooksBrandMark size={32} />
           <span className="font-heading text-sm font-bold text-plum">OpenBooks NG</span>
         </div>
 
