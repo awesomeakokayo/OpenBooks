@@ -27,6 +27,8 @@
 - Authentication/recovery/public-route protection was audited and `proxy.ts` now allows registration, verification, password recovery, auth errors and public invoice routes without authentication.
 - Deferred Paystack public route exposure was removed from the public proxy allow-list.
 - Phase 1 exit-test matrix added at `docs/PHASE-1-EXIT-TESTS.md`.
+- Auth proxy now bypasses file-like static asset paths so public images, SVGs and other assets cannot be redirected to `/login`.
+- Vercel build now runs `prisma generate && prisma db push` before `next build` so the production database is synchronized with the current Prisma schema, including Auth.js tables required for OAuth.
 
 ## Remaining before Phase 1 can be declared release-ready
 - Configure and test Resend with a real verified sending domain/API key.
@@ -36,6 +38,11 @@
 - Perform final accessibility/UX review of authentication and onboarding screens.
 - Verify that protected business APIs consistently enforce tenant membership and do not leak records across businesses.
 - Complete a focused manual-payment audit before Phase 2 relies on the payment model.
+
+## Production issues addressed in this checkpoint
+- Production previously failed with `TypeError: Invalid URL` because a production URL value lacked the `https://` protocol; the operator corrected `AUTH_URL`/`APP_URL` accordingly.
+- Production Google/GitHub OAuth requests then failed because the Prisma adapter queried `public.accounts`, which did not exist in the production database. The Vercel build now synchronizes the Prisma schema before the Next.js build.
+- The hero image was present in `public/openbooks-market-woman.webp`, but `proxy.ts` was intercepting the static asset request and redirecting it to `/login`; the proxy now explicitly bypasses static asset paths.
 
 ## Not started
 - Customers and sales.
@@ -53,7 +60,7 @@ The repository still contains Paystack routes and Paystack-related Prisma fields
 Business onboarding and payment setup are implemented in the existing `/create-business` flow. A duplicate standalone `/onboarding/payments` flow was removed.
 
 ## Next task
-Run the Phase 1 exit tests once local provider configuration is available. Do not start Phase 2 until the identity/onboarding test matrix passes and the tenant/access-control audit is clean.
+Redeploy the latest `main` branch, confirm the build completes successfully, then test the production hero asset and OAuth flow. After that, run the Phase 1 exit tests. Do not start Phase 2 until the identity/onboarding test matrix passes and the tenant/access-control audit is clean.
 
 ## Recovery rule
 If later work diverges from the V1 implementation plan, stop feature work, compare the affected code with `docs/V1-IMPLEMENTATION-PLAN.md`, correct the deviation, test the corrected behaviour, and update this checkpoint before continuing.
