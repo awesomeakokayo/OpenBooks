@@ -16,6 +16,8 @@ function deriveInvoiceStatus(total: number, totalPaid: number, dueDate: Date | n
   return "SENT";
 }
 
+const MANUAL_PAYMENT_METHODS: PaymentMethod[] = ["CASH", "BANK_TRANSFER", "POS"];
+
 export async function recordManualPayment(params: {
   businessId: string;
   userId: string;
@@ -28,20 +30,30 @@ export async function recordManualPayment(params: {
 }) {
   const amount = roundMoney(params.amount);
   if (amount <= 0) throw new Error("Amount must be greater than 0");
-  if (!["CASH", "BANK_TRANSFER", "POS"].includes(params.method)) {
+  if (!MANUAL_PAYMENT_METHODS.includes(params.method)) {
     throw new Error("Method must be CASH, BANK_TRANSFER or POS for manual payments");
   }
 
-  const customer = await prisma.customer.findFirst({ where: { id: params.customerId, businessId: params.businessId } });
+  const [customer, setting] = await Promise.all([
+    prisma.customer.findFirst({ where: { id: params.customerId, businessId: params.businessId } }),
+    prisma.businessPaymentSetting.findUnique({ where: { businessId: params.businessId } }),
+  ]);
   if (!customer) throw new Error("Customer not found in this business");
+  if (!setting) throw new Error("Payment settings are not configured for this business");
+
+  const methodEnabled =
+    (params.method === "CASH" && setting.cashEnabled) ||
+    (params.method === "BANK_TRANSFER" && setting.bankTransferEnabled) ||
+    (params.method === "POS" && setting.posEnabled);
+  if (!methodEnabled) throw new Error("This payment method is not enabled for the business");
 
   let invoice: { id: string; total: unknown; status: string; dueDate: Date | null } | null = null;
   if (params.invoiceId) {
     const inv = await prisma.invoice.findFirst({
-      where: { id: params.invoiceId, businessId: params.businessId },
+      where: { id: params.invoiceId, businessId: params.businessId, customerId: params.customerId },
       include: { payments: { where: { status: "SUCCESS" } } },
     });
-    if (!inv) throw new Error("Invoice not found in this business");
+    if (!inv) throw new Error("Invoice not found for this customer");
     if (inv.status === "CANCELLED") throw new Error("Cannot pay cancelled invoice");
     if (inv.status === "PAID") throw new Error("Invoice already paid");
 
@@ -67,7 +79,9 @@ export async function recordManualPayment(params: {
         status: "SUCCESS",
         verificationType: "MANUAL",
         verifiedAt: new Date(),
-        metadata: params.notes ? ({ notes: params.notes, reference: params.reference } as never) : undefined,
+        metadata: params.notes || params.reference
+          ? ({ notes: params.notes, reference: params.reference } as never)
+          : undefined,
       },
     });
 
