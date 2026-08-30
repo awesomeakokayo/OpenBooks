@@ -7,7 +7,10 @@ export async function GET(req: NextRequest) {
   const invoice = await getInvoiceByPublicToken(token);
   if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Only expose public-safe fields
+  const bankTransferEnabled = invoice.paymentMethods.some((pm) => pm.method === "BANK_TRANSFER");
+
+  // Only expose fields that a recipient needs. Bank details are only public
+  // when Bank Transfer is actually enabled for this invoice.
   const safe = {
     id: invoice.id,
     invoiceNumber: invoice.invoiceNumber,
@@ -24,7 +27,7 @@ export async function GET(req: NextRequest) {
       email: invoice.business.email,
       address: invoice.business.address,
       logoUrl: invoice.business.logoUrl,
-      paymentSetting: invoice.business.paymentSetting
+      paymentSetting: bankTransferEnabled && invoice.business.paymentSetting?.bankTransferEnabled
         ? {
             bankName: invoice.business.paymentSetting.bankName,
             accountName: invoice.business.paymentSetting.accountName,
@@ -34,8 +37,8 @@ export async function GET(req: NextRequest) {
     },
     customer: { name: invoice.customer.name },
     items: invoice.items,
-    paymentMethods: invoice.paymentMethods,
+    paymentMethods: invoice.paymentMethods.filter((pm) => ["BANK_TRANSFER", "CASH", "POS"].includes(pm.method)),
     amountPaid: invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0),
   };
-  return NextResponse.json(safe);
+  return NextResponse.json(safe, { headers: { "Cache-Control": "private, no-store" } });
 }
