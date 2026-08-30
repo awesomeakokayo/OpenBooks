@@ -1,12 +1,9 @@
 import { prisma } from "@/lib/db/prisma";
 import { roundMoney } from "@/lib/invoices/utils";
+import { getNigeriaReportPeriods } from "./periods";
 
 export async function getDashboardMetrics(businessId: string) {
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - 7);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const { startOfDay, startOfWeek, startOfMonth } = getNigeriaReportPeriods();
 
   const [
     todayDirectSales,
@@ -15,17 +12,19 @@ export async function getDashboardMetrics(businessId: string) {
     todayPayments,
     weekPayments,
     monthPayments,
+    monthExpenses,
     outstandingAgg,
     customerCount,
     recentSales,
     recentPayments,
   ] = await Promise.all([
-    prisma.sale.aggregate({ where: { businessId, createdAt: { gte: startOfDay } }, _sum: { totalAmount: true } }),
-    prisma.sale.aggregate({ where: { businessId, createdAt: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
-    prisma.sale.aggregate({ where: { businessId, createdAt: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { businessId, expenseDate: { gte: startOfMonth } }, _sum: { amount: true } }),
     Promise.all([
       prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
       prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", invoiceId: { not: null } }, _sum: { amount: true } }),
@@ -56,9 +55,6 @@ export async function getDashboardMetrics(businessId: string) {
     month: roundMoney(Number(monthPayments._sum.amount ?? 0)),
   };
 
-  // Dashboard sales represent money recorded as received/completed in the
-  // selected period. This includes direct sales and every successful payment,
-  // including payments recorded independently from an invoice.
   const combinedActivity = [
     ...recentSales.map((sale) => ({
       id: `sale:${sale.id}`,
@@ -86,6 +82,7 @@ export async function getDashboardMetrics(businessId: string) {
     todaySales: roundMoney(directSales.today + payments.today),
     weekSales: roundMoney(directSales.week + payments.week),
     monthSales: roundMoney(directSales.month + payments.month),
+    monthExpenses: roundMoney(Number(monthExpenses._sum.amount ?? 0)),
     outstanding,
     totalInvoiced,
     totalPaid: totalInvoicePaid,
