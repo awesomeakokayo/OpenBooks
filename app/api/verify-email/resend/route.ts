@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || user.emailVerified) return NextResponse.json({ ok: true, message: "If that account needs verification, a new email has been sent." });
+    if (!user || user.emailVerified || !user.email) return NextResponse.json({ ok: true, message: "If that account needs verification, a new email has been sent." });
     const token = await createEmailVerificationToken(user.id);
     await sendVerificationEmail({ to: user.email, name: user.name || "there", token });
     return NextResponse.json({ ok: true, message: "Verification email sent." });
