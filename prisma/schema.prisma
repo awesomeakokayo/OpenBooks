@@ -3,68 +3,23 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-enum InvoiceStatus {
-  DRAFT
-  SENT
-  VIEWED
-  PARTIALLY_PAID
-  PAID
-  OVERDUE
-  CANCELLED
-}
-
-enum PaymentMethod {
-  CASH
-  BANK_TRANSFER
-  POS
-  PAYSTACK
-  OTHER
-  ONLINE
-}
-
-enum PaymentProvider {
-  MANUAL
-  PAYSTACK
-}
-
-enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
-  CANCELLED
-  REFUNDED
-}
-
-enum VerificationType {
-  MANUAL
-  AUTOMATIC
-}
-
-enum ExpenseCategory {
-  TRANSPORT
-  MATERIALS
-  ELECTRICITY
-  RENT
-  DATA
-  SUPPLIES
-  OTHER
-}
-
-enum MemberRole {
-  OWNER
-  ADMIN
-  STAFF
-}
+enum InvoiceStatus { DRAFT SENT VIEWED PARTIALLY_PAID PAID OVERDUE CANCELLED }
+enum PaymentMethod { CASH BANK_TRANSFER POS PAYSTACK OTHER ONLINE }
+enum PaymentProvider { MANUAL PAYSTACK }
+enum PaymentStatus { PENDING SUCCESS FAILED CANCELLED REFUNDED }
+enum VerificationType { MANUAL AUTOMATIC }
+enum ExpenseCategory { TRANSPORT MATERIALS ELECTRICITY RENT DATA SUPPLIES OTHER }
+enum MemberRole { OWNER ADMIN STAFF }
 
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
   password      String?
@@ -72,10 +27,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts        Account[]
-  sessions        Session[]
-  ownedBusinesses Business[]       @relation("BusinessOwner")
-  memberships     BusinessMember[]
+  accounts  Account[]
+  sessions  Session[]
+  businesses Business[]
+  memberships BusinessMember[]
+  auditEvents AuditEvent[]
 
   @@map("users")
 }
@@ -86,17 +42,16 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([provider, providerAccountId])
+  @@index([userId])
   @@map("accounts")
 }
 
@@ -105,36 +60,35 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
   @@map("sessions")
 }
 
 model VerificationToken {
   identifier String
-  token      String
+  token      String   @unique
   expires    DateTime
-
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
 
 model Business {
-  id                     String   @id @default(cuid())
-  ownerId                String
-  owner                  User     @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  name                   String
-  phone                  String
-  email                  String?
-  address                String?
+  id                    String   @id @default(cuid())
+  ownerId               String
+  owner                 User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name                  String
+  phone                 String
+  email                 String?
+  address               String?
   logoUrl                String?
   description            String?
   currency               String   @default("NGN")
   paystackSubaccountCode String?
   invoiceSequence       Int      @default(0)
   receiptSequence       Int      @default(0)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   members         BusinessMember[]
   paymentSetting  BusinessPaymentSetting?
@@ -243,6 +197,7 @@ model Invoice {
   @@unique([businessId, invoiceNumber])
   @@index([businessId])
   @@index([customerId])
+  @@map("invoices")
 }
 
 model InvoiceItem {
