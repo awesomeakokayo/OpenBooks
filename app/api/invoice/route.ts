@@ -9,10 +9,10 @@ export async function GET(req: NextRequest) {
 
   const bankTransferEnabled = invoice.paymentMethods.some((pm) => pm.method === "BANK_TRANSFER");
 
-  // Only expose fields that a recipient needs. Bank details are only public
-  // when Bank Transfer is actually enabled for this invoice.
+  // Public response contains only recipient-facing fields. Internal IDs,
+  // provider data, payment metadata and database relations never cross the
+  // public invoice boundary.
   const safe = {
-    id: invoice.id,
     invoiceNumber: invoice.invoiceNumber,
     status: invoice.status,
     total: invoice.total,
@@ -36,8 +36,15 @@ export async function GET(req: NextRequest) {
         : null,
     },
     customer: { name: invoice.customer.name },
-    items: invoice.items,
-    paymentMethods: invoice.paymentMethods.filter((pm) => ["BANK_TRANSFER", "CASH", "POS"].includes(pm.method)),
+    items: invoice.items.map((item) => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      lineTotal: item.lineTotal,
+    })),
+    paymentMethods: invoice.paymentMethods
+      .filter((pm) => ["BANK_TRANSFER", "CASH", "POS"].includes(pm.method))
+      .map((pm) => ({ method: pm.method })),
     amountPaid: invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0),
   };
   return NextResponse.json(safe, { headers: { "Cache-Control": "private, no-store" } });
