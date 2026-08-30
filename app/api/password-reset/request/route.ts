@@ -13,22 +13,19 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
 
   const email = parsed.data.email.toLowerCase().trim();
-  const rl = checkRateLimit(`password-reset:${ip}:${email}`, LIMITS.auth);
+  const rl = await checkRateLimit(`password-reset:${ip}:${email}`, LIMITS.passwordReset);
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests. Please try again shortly." }, { status: 429, headers: rateLimitHeaders(rl.remaining, rl.resetAt) });
   }
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-
-    // Keep the response identical for unknown accounts and OAuth-only users.
     if (!user || !user.password) {
       return NextResponse.json({ ok: true, message: "If an account uses email/password, a reset link has been sent." });
     }
 
     const token = await createPasswordResetToken(user.id);
     await sendPasswordResetEmail({ to: user.email, name: user.name || "there", token });
-
     return NextResponse.json({ ok: true, message: "If an account uses email/password, a reset link has been sent." });
   } catch (error) {
     const requestId = logError("password-reset-request", error, { ip });
