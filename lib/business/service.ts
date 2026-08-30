@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { businessSchema, paymentSettingsSchema } from "@/lib/validation/schemas";
 import { logAuditEvent } from "@/lib/audit/logger";
 
