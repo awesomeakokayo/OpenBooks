@@ -45,11 +45,12 @@ export const invoiceItemSchema = z.object({
 });
 
 export const invoiceCreateSchema = z.object({
+  businessId: z.string().min(1),
   customerId: z.string().min(1),
   items: z.array(invoiceItemSchema).min(1),
   discount: z.number().finite().min(0).default(0),
   dueDate: z.string().datetime().optional().or(z.literal("")),
-  notes: z.string().max(1000).optional(),
+  notes: z.string().trim().max(1000).optional(),
   paymentMethods: z.array(z.enum(["CASH", "BANK_TRANSFER", "POS"])).optional(),
 });
 
