@@ -6,14 +6,11 @@ import { checkRateLimit, LIMITS, rateLimitHeaders } from "@/lib/security/rateLim
 import { passwordResetIdentifier } from "@/lib/email/password-reset";
 import { logError } from "@/lib/security/error";
 
-const schema = z.object({
-  token: z.string().length(64),
-  password: z.string().min(8).max(100),
-});
+const schema = z.object({ token: z.string().length(64), password: z.string().min(8).max(100) });
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const rl = checkRateLimit(`password-reset-confirm:${ip}`, LIMITS.auth);
+  const rl = await checkRateLimit(`password-reset-confirm:${ip}`, LIMITS.passwordReset);
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many attempts. Please try again shortly." }, { status: 429, headers: rateLimitHeaders(rl.remaining, rl.resetAt) });
   }
@@ -21,25 +18,18 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: "Use a valid reset link and a password of at least 8 characters." }, { status: 400 });
-
     const { token, password } = parsed.data;
-    const reset = await prisma.verificationToken.findFirst({
-      where: { token, expires: { gt: new Date() }, identifier: { startsWith: "password-reset:" } },
-    });
-
+    const reset = await prisma.verificationToken.findFirst({ where: { token, expires: { gt: new Date() }, identifier: { startsWith: "password-reset:" } } });
     if (!reset) return NextResponse.json({ error: "This reset link is invalid or has expired." }, { status: 400 });
-
     const userId = reset.identifier.slice("password-reset:".length);
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.password) return NextResponse.json({ error: "This reset link is invalid or has expired." }, { status: 400 });
-
     const hashed = await bcrypt.hash(password, 10);
     await prisma.$transaction([
       prisma.user.update({ where: { id: user.id }, data: { password: hashed } }),
       prisma.verificationToken.deleteMany({ where: { identifier: passwordResetIdentifier(user.id) } }),
       prisma.session.deleteMany({ where: { userId: user.id } }),
     ]);
-
     return NextResponse.json({ ok: true });
   } catch (error) {
     const requestId = logError("password-reset-confirm", error, { ip });
