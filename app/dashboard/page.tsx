@@ -36,7 +36,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="mx-auto flex max-w-[1180px] flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-8">
       <section className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
           <p className="openbooks-eyebrow text-terracotta">{business.name}</p>
@@ -48,9 +48,9 @@ export default async function DashboardPage() {
         </Link>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid w-full gap-4 md:grid-cols-3">
         {metricsCards.map(({ label, value, detail, icon: Icon, tone, detailClass }) => (
-          <div key={label} className={`rounded-3xl p-6 shadow-[0_12px_32px_rgba(80,48,71,0.05)] ${tone}`}>
+          <div key={label} className={`w-full rounded-3xl p-6 shadow-[0_12px_32px_rgba(80,48,71,0.05)] ${tone}`}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.12em] opacity-60">{label}</p>
@@ -65,8 +65,8 @@ export default async function DashboardPage() {
         ))}
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
-        <div className="openbooks-card p-6 sm:p-7">
+      <section className="grid w-full justify-items-stretch gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+        <div className="openbooks-card mx-auto w-full max-w-full p-6 sm:p-7">
           <div className="flex items-end justify-between gap-4 border-b border-plum/10 pb-5">
             <div>
               <p className="openbooks-eyebrow text-plum/40">Activity</p>
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        <div className="rounded-3xl bg-plum p-6 text-white sm:p-7">
+        <div className="mx-auto w-full max-w-full rounded-3xl bg-plum p-6 text-white sm:p-7">
           <p className="openbooks-eyebrow text-pale-sage">This month</p>
           <p className="mt-4 font-heading text-3xl font-extrabold tracking-tight">{money(metrics.monthSales)}</p>
           <div className="mt-5 space-y-3 border-t border-white/10 pt-5 text-sm">
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section>
+      <section className="w-full">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <p className="openbooks-eyebrow text-plum/40">Quick actions</p>
