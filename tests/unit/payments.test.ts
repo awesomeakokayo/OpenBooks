@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { invoiceAmountPaid, invoiceOutstanding, canApplyPaymentToInvoice } from "@/lib/finance/contract";
 
 // Simulate manual payment validation logic from lib/payments/service.ts
 function validateManual(method: string, amount: number, outstanding: number) {
@@ -41,6 +42,38 @@ describe("invoice status after payment", () => {
   });
   it("SENT when zero", () => {
     expect(deriveStatus(150000, 0)).toBe("SENT");
+  });
+});
+
+describe("financial invariants", () => {
+  it("matches the real-world 300k invoice / 200k + 100k payment case", () => {
+    const payments = [
+      { amount: 200000, status: "SUCCESS" as const },
+      { amount: 100000, status: "SUCCESS" as const },
+    ];
+    expect(invoiceAmountPaid(300000, payments)).toBe(300000);
+    expect(invoiceOutstanding(300000, payments)).toBe(0);
+  });
+
+  it("keeps a partially paid invoice at its true outstanding balance", () => {
+    const payments = [{ amount: 200000, status: "SUCCESS" as const }];
+    expect(invoiceAmountPaid(300000, payments)).toBe(200000);
+    expect(invoiceOutstanding(300000, payments)).toBe(100000);
+  });
+
+  it("ignores failed and cancelled payments when calculating paid amount", () => {
+    const payments = [
+      { amount: 100000, status: "SUCCESS" as const },
+      { amount: 100000, status: "FAILED" as const },
+      { amount: 100000, status: "CANCELLED" as const },
+    ];
+    expect(invoiceAmountPaid(300000, payments)).toBe(100000);
+    expect(invoiceOutstanding(300000, payments)).toBe(200000);
+  });
+
+  it("does not allow a standalone payment to settle an invoice", () => {
+    expect(canApplyPaymentToInvoice({ paymentInvoiceId: null, invoiceId: "inv_123" })).toBe(false);
+    expect(canApplyPaymentToInvoice({ paymentInvoiceId: "inv_123", invoiceId: "inv_123" })).toBe(true);
   });
 });
 
