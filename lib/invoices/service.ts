@@ -18,17 +18,25 @@ export function canTransition(from: string, to: string): boolean {
 }
 
 /**
- * Atomically increments the per-business invoice sequence. The returned
- * sequence value is the source of truth for the next invoice number.
+ * Atomically advances the per-business invoice sequence and skips numbers
+ * already present in legacy data. The increment is atomic, so concurrent
+ * invoice creation requests cannot receive the same sequence value.
  */
 export async function nextInvoiceNumber(tx: Prisma.TransactionClient, businessId: string): Promise<string> {
-  const business = await tx.business.update({
-    where: { id: businessId },
-    data: { invoiceSequence: { increment: 1 } },
-    select: { invoiceSequence: true },
-  });
+  for (;;) {
+    const business = await tx.business.update({
+      where: { id: businessId },
+      data: { invoiceSequence: { increment: 1 } },
+      select: { invoiceSequence: true },
+    });
 
-  return `INV-${String(business.invoiceSequence).padStart(6, "0")}`;
+    const invoiceNumber = `INV-${String(business.invoiceSequence).padStart(6, "0")}`;
+    const exists = await tx.invoice.findUnique({
+      where: { businessId_invoiceNumber: { businessId, invoiceNumber } },
+      select: { id: true },
+    });
+    if (!exists) return invoiceNumber;
+  }
 }
 
 const V1_PAYMENT_METHODS: PaymentMethod[] = ["CASH", "BANK_TRANSFER", "POS"];
