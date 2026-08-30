@@ -33,6 +33,11 @@
 - Sales history now uses page-based pagination instead of rendering an unbounded merged transaction list in one request; the total money received summary is calculated independently from the current page.
 - Payment history page now uses stable page-based pagination with a fixed page size and total-page navigation instead of a legacy 50-record ceiling.
 - Payment-list service now accepts bounded `page`/`limit` arguments and returns pagination metadata for future API consumers.
+- Deferred Paystack is no longer exposed in the invoice creation payment-method UI or direct-sale payment-method UI; V1 user-facing payment methods remain Bank Transfer, Cash and POS.
+- Manual invoice payments now run inside a serializable database transaction with retry handling for serialization conflicts, preventing concurrent payments from bypassing the invoice outstanding cap.
+- Dashboard and report sales totals now exclude direct sales recorded as "Unpaid / later" while continuing to show them in activity/history.
+- Added centralized Nigeria date-only parsing for browser form dates and applied it to invoice due dates, sale dates, and expense dates.
+- Direct sales now reject discounts greater than the sale subtotal and verify that the selected payment method is enabled for the business.
 
 ## Remaining critical remediation
 - Audit every remaining business-scoped mutation for direct object-reference access outside tenant scope.
@@ -48,6 +53,11 @@
 
 ## V1 payment rule
 User-facing V1 methods are Bank Transfer, Cash and POS. Paystack is deferred and must not be exposed or required.
+
+## Current continuation checkpoint
+- **Completed in this continuation:** Paystack removed from invoice/sale user-facing selectors; manual invoice payment concurrency hardened; received-sales semantics corrected; browser date-only inputs normalized for invoices/sales/expenses; direct-sale payment-method enforcement and discount bounds added.
+- **Verification status:** Changes are committed to `main`, but the GitHub commit checks for the latest revision are still pending. Do not treat pending checks as a passed production build.
+- **Next task:** API/data-quality hardening — audit remaining mutation routes, standardize error responses/request IDs, remove unsafe casts in financial/auth paths where practical, and verify tenant/role enforcement before moving to final UX and deployment hardening.
 
 ## Release gate
 Do not publish OpenBooks as a public production financial-record product until all P0 remediation items in `docs/FULL-AUDIT-AND-REMEDIATION-PLAN.md` are closed and tested, and Vercel/Pxxl production builds succeed from the same `main` revision.
