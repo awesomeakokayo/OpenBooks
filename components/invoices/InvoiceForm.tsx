@@ -221,7 +221,7 @@ export function InvoiceForm({ businessId, customers }: { businessId: string; cus
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-plum">Payment methods *</label>
         <p className="text-xs text-plum/50">Only selected methods will appear to the customer. Defaults from Business Settings.</p>
-        {["BANK_TRANSFER", "CASH", "POS", "PAYSTACK"].map((m) => <label key={m} className="flex items-center justify-between rounded-[12px] border border-plum/10 px-4 py-2.5"><span className="text-sm font-medium text-plum">{m.replaceAll("_", " ")}</span><input type="checkbox" checked={paymentMethods.includes(m)} onChange={() => toggleMethod(m)} className="h-5 w-5 accent-plum" /></label>)}
+        {["BANK_TRANSFER", "CASH", "POS"].map((m) => <label key={m} className="flex items-center justify-between rounded-[12px] border border-plum/10 px-4 py-2.5"><span className="text-sm font-medium text-plum">{m.replaceAll("_", " ")}</span><input type="checkbox" checked={paymentMethods.includes(m)} onChange={() => toggleMethod(m)} className="h-5 w-5 accent-plum" /></label>)}
       </div>
 
       {error && <p role="alert" className="text-sm text-terracotta">{error}</p>}
