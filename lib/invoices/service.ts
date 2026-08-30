@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { generatePublicToken, calculateInvoiceTotal, calculateLineTotal } from "./utils";
 import { logAuditEvent } from "@/lib/audit/logger";
-import type { InvoiceStatus, PaymentMethod } from "@prisma/client";
+import type { InvoiceStatus, PaymentMethod, Prisma } from "@prisma/client";
 
 export const VALID_TRANSITIONS: Record<string, string[]> = {
   DRAFT: ["SENT", "CANCELLED"],
@@ -17,15 +17,18 @@ export function canTransition(from: string, to: string): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-export async function nextInvoiceNumber(businessId: string): Promise<string> {
-  return prisma.$transaction(async (tx) => {
-    const count = await tx.invoice.count({ where: { businessId } });
-    const n = count + 1;
-    const candidate = `INV-${String(n).padStart(6, "0")}`;
-    const exists = await tx.invoice.findFirst({ where: { businessId, invoiceNumber: candidate } });
-    if (exists) return `INV-${String(n).padStart(6, "0")}-${Date.now().toString().slice(-4)}`;
-    return candidate;
+/**
+ * Atomically increments the per-business invoice sequence. The returned
+ * sequence value is the source of truth for the next invoice number.
+ */
+export async function nextInvoiceNumber(tx: Prisma.TransactionClient, businessId: string): Promise<string> {
+  const business = await tx.business.update({
+    where: { id: businessId },
+    data: { invoiceSequence: { increment: 1 } },
+    select: { invoiceSequence: true },
   });
+
+  return `INV-${String(business.invoiceSequence).padStart(6, "0")}`;
 }
 
 const V1_PAYMENT_METHODS: PaymentMethod[] = ["CASH", "BANK_TRANSFER", "POS"];
@@ -78,33 +81,36 @@ export async function createInvoice(params: {
 
   const discount = Number.isFinite(params.discount ?? 0) ? params.discount ?? 0 : 0;
   const { subtotal, total } = calculateInvoiceTotal(params.items, discount);
-  const invoiceNumber = await nextInvoiceNumber(params.businessId);
   const publicToken = generatePublicToken();
 
-  const invoice = await prisma.invoice.create({
-    data: {
-      businessId: params.businessId,
-      customerId: params.customerId,
-      invoiceNumber,
-      publicToken,
-      subtotal,
-      discount,
-      total,
-      issueDate: new Date(),
-      dueDate: params.dueDate ? new Date(params.dueDate) : null,
-      notes: params.notes?.trim() || null,
-      status: "DRAFT" as InvoiceStatus,
-      items: {
-        create: params.items.map((it) => ({
-          description: it.description.trim(),
-          quantity: it.quantity,
-          unitPrice: it.unitPrice,
-          lineTotal: calculateLineTotal(it.quantity, it.unitPrice),
-        })),
+  const invoice = await prisma.$transaction(async (tx) => {
+    const invoiceNumber = await nextInvoiceNumber(tx, params.businessId);
+
+    return tx.invoice.create({
+      data: {
+        businessId: params.businessId,
+        customerId: params.customerId,
+        invoiceNumber,
+        publicToken,
+        subtotal,
+        discount,
+        total,
+        issueDate: new Date(),
+        dueDate: params.dueDate ? new Date(params.dueDate) : null,
+        notes: params.notes?.trim() || null,
+        status: "DRAFT" as InvoiceStatus,
+        items: {
+          create: params.items.map((it) => ({
+            description: it.description.trim(),
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+            lineTotal: calculateLineTotal(it.quantity, it.unitPrice),
+          })),
+        },
+        paymentMethods: { create: methods.map((m) => ({ method: m })) },
       },
-      paymentMethods: { create: methods.map((m) => ({ method: m })) },
-    },
-    include: { items: true, paymentMethods: true, customer: true },
+      include: { items: true, paymentMethods: true, customer: true },
+    });
   });
 
   await logAuditEvent({
@@ -113,7 +119,7 @@ export async function createInvoice(params: {
     action: "INVOICE_CREATED",
     entityType: "Invoice",
     entityId: invoice.id,
-    metadata: { invoiceNumber, total, paymentMethods: methods },
+    metadata: { invoiceNumber: invoice.invoiceNumber, total, paymentMethods: methods },
   });
 
   return invoice;
