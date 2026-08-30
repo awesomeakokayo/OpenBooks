@@ -87,9 +87,6 @@ export async function checkRateLimit(key: string, opts: RateLimitOpts): Promise<
   return distributed ?? checkMemoryRateLimit(key, opts);
 }
 
-// V1 presets. Sensitive endpoints are intentionally much stricter than the
-// normal API budget. These are applied at the proxy boundary as a first line
-// of defense, with route-level limits available for future high-cost handlers.
 export const LIMITS = {
   api: { windowMs: 60_000, max: 120 },
   auth: { windowMs: 60_000, max: 30 },
@@ -121,6 +118,16 @@ export function getRateLimitForPath(pathname: string): RateLimitOpts | null {
   if (pathname === "/api/auth" || pathname.startsWith("/api/auth/")) return LIMITS.auth;
   if (pathname.startsWith("/api/")) return LIMITS.api;
   if (pathname === "/invoice" || pathname.startsWith("/invoice/")) return LIMITS.publicInvoice;
+  return null;
+}
+
+export function getRateLimitScope(pathname: string): string | null {
+  if (pathname === "/api/register" || pathname.startsWith("/api/register/")) return "register";
+  if (pathname === "/api/verify-email" || pathname.startsWith("/api/verify-email/")) return "verify-email";
+  if (pathname === "/api/password-reset" || pathname.startsWith("/api/password-reset/")) return "password-reset";
+  if (pathname === "/api/auth" || pathname.startsWith("/api/auth/")) return "auth";
+  if (pathname.startsWith("/api/")) return "api";
+  if (pathname === "/invoice" || pathname.startsWith("/invoice/")) return "public-invoice";
   return null;
 }
 
