@@ -1,46 +1,62 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db/prisma";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { createCustomer, listCustomers } from "@/lib/customers/service";
+import { customerSchema } from "@/lib/validation/schemas";
+import { userError } from "@/lib/security/error";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const userId = (session.user as unknown as { id: string }).id;
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return userError("Unauthorized", 401);
+
   const businessId = req.nextUrl.searchParams.get("businessId");
   const search = req.nextUrl.searchParams.get("search") || undefined;
-  if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
+  if (!businessId) return userError("businessId required", 400);
+
   try {
     await requireBusinessMember(userId, businessId);
   } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return userError("Forbidden", 403);
   }
-  const customers = await listCustomers(businessId, search);
-  return NextResponse.json(customers);
+
+  try {
+    const customers = await listCustomers(businessId, search);
+    return Response.json(customers);
+  } catch {
+    return userError("Could not load customers", 500);
+  }
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const userId = (session.user as unknown as { id: string }).id;
-  const body = await req.json();
-  const { businessId, name, phone, email, notes } = body;
-  if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return userError("Unauthorized", 401);
+
+  const body = await req.json().catch(() => ({}));
+  const parsed = customerSchema.safeParse(body);
+  if (!parsed.success) return userError(parsed.error.issues[0]?.message || "Invalid customer details", 400);
+
+  const { businessId } = body as { businessId?: unknown };
+  if (typeof businessId !== "string" || !businessId.trim()) return userError("businessId required", 400);
+
   try {
     await requireBusinessMember(userId, businessId);
   } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return userError("Forbidden", 403);
   }
-  // Ensure business exists
-  const business = await prisma.business.findUnique({ where: { id: businessId } });
-  if (!business) return NextResponse.json({ error: "Business not found" }, { status: 404 });
 
   try {
-    const customer = await createCustomer({ businessId, userId, name, phone, email, notes });
-    return NextResponse.json(customer, { status: 201 });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Could not create customer";
-    return NextResponse.json({ error: msg }, { status: 400 });
+    const customer = await createCustomer({
+      businessId,
+      userId,
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      email: parsed.data.email,
+      notes: parsed.data.notes,
+    });
+    return Response.json(customer, { status: 201 });
+  } catch {
+    return userError("Could not create customer", 400);
   }
 }
