@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { recordSale, listSales } from "@/lib/sales/service";
+import { saleCreateSchema } from "@/lib/validation/schemas";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -22,27 +23,30 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = (session.user as unknown as { id: string }).id;
-  const body = await req.json();
-  const { businessId, customerId, description, quantity, unitPrice, discount, paymentMethod, saleDate, notes } = body;
-  if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const parsed = saleCreateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid sale" }, { status: 400 });
+  }
+  const data = parsed.data;
   try {
-    await requireBusinessMember(userId, businessId);
+    await requireBusinessMember(userId, data.businessId);
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
     const sale = await recordSale({
-      businessId,
+      businessId: data.businessId,
       userId,
-      customerId: customerId || null,
-      description,
-      quantity: Number(quantity),
-      unitPrice: Number(unitPrice),
-      discount: discount ? Number(discount) : 0,
-      paymentMethod,
-      saleDate: saleDate ? new Date(saleDate) : undefined,
-      notes,
+      customerId: data.customerId || null,
+      description: data.description,
+      quantity: data.quantity,
+      unitPrice: data.unitPrice,
+      discount: data.discount,
+      paymentMethod: data.paymentMethod || undefined,
+      saleDate: data.saleDate ? new Date(data.saleDate) : undefined,
+      notes: data.notes,
     });
     return NextResponse.json(sale, { status: 201 });
   } catch (e: unknown) {
