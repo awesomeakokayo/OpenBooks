@@ -23,9 +23,7 @@ export default async function DashboardPage() {
 
   const business = member.business;
   const metrics = await getDashboardMetrics(business.id);
-  const totalExpenses = (await prisma.expense.aggregate({ where: { businessId: business.id }, _sum: { amount: true } }))._sum.amount;
   const invoiceCount = await prisma.invoice.count({ where: { businessId: business.id } });
-  const totalExpensesNum = Number(totalExpenses ?? 0);
   const name = session.user?.name?.split(" ")[0] ?? "there";
   const money = (value: number) => `₦${Number(value ?? 0).toLocaleString("en-NG")}`;
 
@@ -105,7 +103,7 @@ export default async function DashboardPage() {
           <p className="mt-4 font-heading text-3xl font-extrabold tracking-tight">{money(metrics.monthSales)}</p>
           <div className="mt-5 space-y-3 border-t border-white/10 pt-5 text-sm">
             <div className="flex items-center justify-between"><span className="text-white/55">Today</span><span className="font-bold">{money(metrics.todaySales)}</span></div>
-            <div className="flex items-center justify-between"><span className="text-white/55">Expenses</span><span className="font-bold">{money(totalExpensesNum)}</span></div>
+            <div className="flex items-center justify-between"><span className="text-white/55">Expenses</span><span className="font-bold">{money(metrics.monthExpenses)}</span></div>
             <div className="flex items-center justify-between"><span className="text-white/55">Invoices</span><span className="font-bold">{invoiceCount}</span></div>
           </div>
           <Link href="/reports" className="mt-7 inline-flex items-center gap-2 text-xs font-bold text-pale-sage hover:text-white">View business reports <ArrowRight size={14} /></Link>
