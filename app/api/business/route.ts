@@ -1,82 +1,52 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { createBusiness, getBusinessesForUser, updateBusiness } from "@/lib/business/service";
 import { requireBusinessAdmin } from "@/lib/security/roles";
-import { z } from "zod";
+import { businessSchema } from "@/lib/validation/schemas";
+import { userError } from "@/lib/security/error";
 
 function sessionUserId(session: { user?: unknown } | null) {
   return (session?.user as { id?: string } | undefined)?.id;
 }
 
-const updateBusinessSchema = z.object({
-  businessId: z.string().min(1),
-  name: z.string().trim().min(2).max(100),
-  phone: z.string().trim().min(8).max(20),
-  email: z.string().trim().email().optional().or(z.literal("")),
-  address: z.string().trim().max(200),
-  description: z.string().trim().max(500),
-});
+const updateBusinessSchema = businessSchema.extend({ businessId: businessSchema.shape.name.optional() }).omit({ businessId: true });
 
 export async function GET() {
   const session = await auth();
   const userId = sessionUserId(session);
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const businesses = await getBusinessesForUser(userId);
-  return NextResponse.json(businesses);
+  if (!userId) return userError("Unauthorized", 401);
+  try { return Response.json(await getBusinessesForUser(userId)); } catch { return userError("Could not load businesses", 500); }
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   const userId = sessionUserId(session);
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+  if (!userId) return userError("Unauthorized", 401);
+  const body = await req.json().catch(() => ({}));
+  const parsed = businessSchema.safeParse(body);
+  if (!parsed.success) return userError(parsed.error.issues[0]?.message || "Invalid business details", 400);
   try {
-    const body = await req.json().catch(() => ({}));
-    const business = await createBusiness({
-      userId,
-      name: body.name,
-      phone: body.phone,
-      email: body.email,
-      address: body.address,
-      description: body.description,
-      logoUrl: body.logoUrl,
-      paymentSettings: body.paymentSettings,
-    });
-
-    return NextResponse.json(business, { status: 201 });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Could not create business";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
+    const business = await createBusiness({ userId, ...parsed.data, email: parsed.data.email || undefined, address: parsed.data.address || undefined, description: parsed.data.description || undefined, paymentSettings: body.paymentSettings });
+    return Response.json(business, { status: 201 });
+  } catch { return userError("Could not create business", 400); }
 }
 
 export async function PATCH(req: NextRequest) {
   const session = await auth();
   const userId = sessionUserId(session);
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+  if (!userId) return userError("Unauthorized", 401);
+  const body = await req.json().catch(() => ({}));
+  if (typeof body.businessId !== "string" || !body.businessId.trim()) return userError("businessId required", 400);
+  const parsed = businessSchema.safeParse(body);
+  if (!parsed.success) return userError(parsed.error.issues[0]?.message || "Invalid business details", 400);
   try {
-    const body = await req.json().catch(() => ({}));
-    const parsed = updateBusinessSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid business details" }, { status: 400 });
-    }
-
-    const { businessId, ...data } = parsed.data;
-    await requireBusinessAdmin(userId, businessId);
-
-    const business = await updateBusiness(businessId, userId, {
-      ...data,
-      email: data.email || "",
-      address: data.address || "",
-      description: data.description || "",
-    });
-
-    return NextResponse.json(business);
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Could not update business";
-    const status = message === "Insufficient permissions" || message === "Not a member of this business" ? 403 : 400;
-    return NextResponse.json({ error: message }, { status });
+    await requireBusinessAdmin(userId, body.businessId);
+    const business = await updateBusiness(body.businessId, userId, { ...parsed.data, email: parsed.data.email || "", address: parsed.data.address || "", description: parsed.data.description || "" });
+    return Response.json(business);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not update business";
+    if (message === "Insufficient permissions") return userError(message, 403);
+    if (message === "Not a member of this business") return userError("Forbidden", 403);
+    return userError("Could not update business", 400);
   }
 }
