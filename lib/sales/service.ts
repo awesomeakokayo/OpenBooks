@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db/prisma";
 import { logAuditEvent } from "@/lib/audit/logger";
 import { roundMoney } from "@/lib/invoices/utils";
+import type { PaymentMethod } from "@prisma/client";
+
+const V1_PAYMENT_METHODS: PaymentMethod[] = ["CASH", "BANK_TRANSFER", "POS"];
 
 export async function recordSale(params: {
   businessId: string;
@@ -10,7 +13,7 @@ export async function recordSale(params: {
   quantity: number;
   unitPrice: number;
   discount?: number;
-  paymentMethod?: string;
+  paymentMethod?: PaymentMethod | null;
   saleDate?: Date;
   notes?: string;
 }) {
@@ -18,12 +21,29 @@ export async function recordSale(params: {
   if (!Number.isFinite(params.quantity) || params.quantity <= 0) throw new Error("Quantity must be > 0");
   if (!Number.isFinite(params.unitPrice) || params.unitPrice <= 0) throw new Error("Unit price must be > 0");
 
+  const subtotal = roundMoney(params.quantity * params.unitPrice);
   const discount = roundMoney(params.discount ?? 0);
-  const totalAmount = Math.max(0, roundMoney(params.quantity * params.unitPrice - discount));
+  if (discount > subtotal) throw new Error("Discount cannot exceed the sale subtotal");
+  const totalAmount = roundMoney(subtotal - discount);
+
+  if (params.paymentMethod && !V1_PAYMENT_METHODS.includes(params.paymentMethod)) {
+    throw new Error("Payment method is not supported in OpenBooks V1");
+  }
 
   if (params.customerId) {
     const cust = await prisma.customer.findFirst({ where: { id: params.customerId, businessId: params.businessId } });
     if (!cust) throw new Error("Customer not found in this business");
+  }
+
+  if (params.paymentMethod) {
+    const setting = await prisma.businessPaymentSetting.findUnique({ where: { businessId: params.businessId } });
+    if (!setting) throw new Error("Payment settings are not configured for this business");
+
+    const methodEnabled =
+      (params.paymentMethod === "CASH" && setting.cashEnabled) ||
+      (params.paymentMethod === "BANK_TRANSFER" && setting.bankTransferEnabled) ||
+      (params.paymentMethod === "POS" && setting.posEnabled);
+    if (!methodEnabled) throw new Error("This payment method is not enabled for the business");
   }
 
   const sale = await prisma.sale.create({
@@ -35,7 +55,7 @@ export async function recordSale(params: {
       unitPrice: roundMoney(params.unitPrice),
       discount,
       totalAmount,
-      paymentMethod: params.paymentMethod as never,
+      paymentMethod: params.paymentMethod || null,
       saleDate: params.saleDate ?? new Date(),
       notes: params.notes?.trim() || null,
     },
@@ -57,7 +77,7 @@ export async function listSales(businessId: string) {
   return prisma.sale.findMany({
     where: { businessId },
     include: { customer: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ saleDate: "desc" }, { id: "desc" }],
     take: 50,
   });
 }
