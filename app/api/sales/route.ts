@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { recordSale, listSales } from "@/lib/sales/service";
 import { saleCreateSchema } from "@/lib/validation/schemas";
+import { parseNigeriaDateInput } from "@/lib/dates/nigeria";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const saleDate = data.saleDate ? parseNigeriaDateInput(data.saleDate) : undefined;
     const sale = await recordSale({
       businessId: data.businessId,
       userId,
@@ -45,7 +47,7 @@ export async function POST(req: NextRequest) {
       unitPrice: data.unitPrice,
       discount: data.discount,
       paymentMethod: data.paymentMethod || undefined,
-      saleDate: data.saleDate ? new Date(data.saleDate) : undefined,
+      saleDate,
       notes: data.notes,
     });
     return NextResponse.json(sale, { status: 201 });
