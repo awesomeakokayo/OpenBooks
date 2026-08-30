@@ -13,8 +13,8 @@ export const authConfig: NextAuthConfig = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email = (credentials?.email as string)?.toLowerCase().trim();
-        const password = credentials?.password as string;
+        const email = typeof credentials?.email === "string" ? credentials.email.toLowerCase().trim() : "";
+        const password = typeof credentials?.password === "string" ? credentials.password : "";
         if (!email || !password) return null;
 
         const user = await prisma.user.findUnique({ where: { email } });
@@ -23,35 +23,25 @@ export const authConfig: NextAuthConfig = {
         const ok = await bcrypt.compare(password, user.password);
         if (!ok) return null;
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-        };
+        return { id: user.id, email: user.email, name: user.name, image: user.image };
       },
     }),
     GitHub,
     Google,
   ],
-  pages: {
-    signIn: "/login",
-    error: "/auth-error",
-  },
+  pages: { signIn: "/login", error: "/auth-error" },
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "google" || account?.provider === "github") {
-        return Boolean(user.email);
-      }
+      if (account?.provider === "google" || account?.provider === "github") return Boolean(user.email);
       return true;
     },
     jwt({ token, user }) {
-      if (user) token.sub = user.id;
+      if (user?.id) token.sub = user.id;
       return token;
     },
     session({ session, token }) {
-      if (token.sub) (session.user as unknown as { id: string }).id = token.sub;
+      if (token.sub) session.user.id = token.sub;
       return session;
     },
   },
