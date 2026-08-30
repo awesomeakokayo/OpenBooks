@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     const message = "If an account uses email/password, a reset link has been sent.";
-    if (!user || !user.password) return NextResponse.json({ ok: true, message });
+    if (!user || !user.password || !user.email) return NextResponse.json({ ok: true, message });
     const token = await createPasswordResetToken(user.id);
     await sendPasswordResetEmail({ to: user.email, name: user.name || "there", token });
     return NextResponse.json({ ok: true, message });
