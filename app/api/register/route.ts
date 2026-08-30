@@ -7,10 +7,19 @@ import { logError } from "@/lib/security/error";
 import { createEmailVerificationToken, sendVerificationEmail } from "@/lib/email/verification";
 
 const registerSchema = z.object({
-  name: z.string().min(2).max(100),
+  name: z.string().trim().min(2).max(100),
   email: z.string().email(),
   password: z.string().min(8).max(100),
+  confirmPassword: z.string().min(8).max(100),
   phone: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["confirmPassword"],
+      message: "Passwords do not match",
+    });
+  }
 });
 
 export async function POST(req: NextRequest) {
@@ -24,14 +33,15 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+      const firstIssue = parsed.error.issues[0];
+      return NextResponse.json({ error: firstIssue?.message || "Please check your information" }, { status: 400 });
     }
 
     const { name, email, password, phone } = parsed.data;
     const lowerEmail = email.toLowerCase().trim();
     const existing = await prisma.user.findUnique({ where: { email: lowerEmail } });
     if (existing) {
-      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+      return NextResponse.json({ error: "Email already registered. Sign in or resend your verification email." }, { status: 409 });
     }
 
     const hashed = await bcrypt.hash(password, 10);
@@ -43,8 +53,15 @@ export async function POST(req: NextRequest) {
       const token = await createEmailVerificationToken(user.id);
       await sendVerificationEmail({ to: user.email, name: user.name || "there", token });
     } catch (emailError) {
-      await prisma.user.delete({ where: { id: user.id } }).catch(() => undefined);
-      throw emailError;
+      // Keep the unverified account so a transient email-provider failure does
+      // not discard the user's registration. They can use the resend flow once
+      // email delivery is configured/available.
+      logError("register-email", emailError, { ip, userId: user.id });
+      return NextResponse.json({
+        error: "Your account was created, but we could not send the verification email. Please use the resend option.",
+        verificationRequired: true,
+        email: user.email,
+      }, { status: 503 });
     }
 
     return NextResponse.json({ id: user.id, email: user.email, verificationRequired: true }, { status: 201 });
