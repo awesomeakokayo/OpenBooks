@@ -8,13 +8,58 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum InvoiceStatus { DRAFT SENT VIEWED PARTIALLY_PAID PAID OVERDUE CANCELLED }
-enum PaymentMethod { CASH BANK_TRANSFER POS PAYSTACK OTHER ONLINE }
-enum PaymentProvider { MANUAL PAYSTACK }
-enum PaymentStatus { PENDING SUCCESS FAILED CANCELLED REFUNDED }
-enum VerificationType { MANUAL AUTOMATIC }
-enum ExpenseCategory { TRANSPORT MATERIALS ELECTRICITY RENT DATA SUPPLIES OTHER }
-enum MemberRole { OWNER ADMIN STAFF }
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  POS
+  PAYSTACK
+  OTHER
+  ONLINE
+}
+
+enum PaymentProvider {
+  MANUAL
+  PAYSTACK
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum VerificationType {
+  MANUAL
+  AUTOMATIC
+}
+
+enum ExpenseCategory {
+  TRANSPORT
+  MATERIALS
+  ELECTRICITY
+  RENT
+  DATA
+  SUPPLIES
+  OTHER
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  STAFF
+}
 
 model User {
   id            String    @id @default(cuid())
@@ -81,9 +126,9 @@ model Business {
   phone                 String
   email                 String?
   address               String?
-  logoUrl                String?
-  description            String?
-  currency               String   @default("NGN")
+  logoUrl               String?
+  description           String?
+  currency              String   @default("NGN")
   paystackSubaccountCode String?
   invoiceSequence       Int      @default(0)
   receiptSequence       Int      @default(0)
