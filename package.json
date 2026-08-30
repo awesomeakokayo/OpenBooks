@@ -21,7 +21,8 @@
     "zod": "^4.1.13",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.563.0",
-    "resend": "^6.24.0"
+    "resend": "^6.24.0",
+    "@vercel/analytics": "^1.5.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -34,7 +35,7 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.5",
-    "@testing-library/react": "^16.3.2",
+    "@testing-library/react": "^16.3.0",
     "@testing-library/jest-dom": "^6.9.1",
     "jsdom": "^27.3.0",
     "@playwright/test": "^1.57.0"
