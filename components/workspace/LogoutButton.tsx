@@ -12,14 +12,13 @@ export function LogoutButton({ compact = false }: { compact?: boolean }) {
     setLoading(true);
 
     try {
-      // Clear browser-side OpenBooks state so a logged-out visitor does not
-      // retain navigation/UI state that could make the next visit feel like
-      // an authenticated session.
+      // Remove all browser-side OpenBooks state. The actual authentication
+      // session is invalidated by Auth.js signOut below.
       try {
         sessionStorage.clear();
-        localStorage.removeItem("openbooks:last-business");
+        localStorage.clear();
       } catch {
-        // Storage may be unavailable in privacy-restricted browser contexts.
+        // Storage may be unavailable in restricted browser contexts.
       }
 
       await signOut({ callbackUrl: "/" });
