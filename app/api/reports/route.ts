@@ -1,19 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { getReports } from "@/lib/reports/reports";
+import { userError } from "@/lib/security/error";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const userId = (session.user as unknown as { id: string }).id;
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return userError("Unauthorized", 401);
   const businessId = req.nextUrl.searchParams.get("businessId");
-  if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
-  try {
-    await requireBusinessMember(userId, businessId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  const reports = await getReports(businessId);
-  return NextResponse.json(reports);
+  if (!businessId) return userError("businessId required", 400);
+  try { await requireBusinessMember(userId, businessId); } catch { return userError("Forbidden", 403); }
+  try { return Response.json(await getReports(businessId)); } catch { return userError("Could not load reports", 500); }
 }
