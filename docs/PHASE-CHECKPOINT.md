@@ -41,8 +41,13 @@
 - V1 expense payment options no longer expose Paystack and the filled expense action buttons explicitly use readable white text.
 - Guide navigation is account-aware for authenticated business users and directs them back to the dashboard instead of the public start flow.
 - Authenticated users visiting the public landing page `/` are redirected to `/dashboard`; authenticated users visiting `/login` are also redirected to `/dashboard`, keeping the landing page as an entrance rather than the authenticated home.
-- Business invoice view now displays the configured Bank Transfer bank name, account name and account number when Bank Transfer is enabled.
-- Public invoice view now displays the same complete Bank Transfer details to customers and filters stale Paystack/online payment methods from the V1 customer-facing experience.
+- Public invoices display configured Bank Transfer details: bank name, account name and account number.
+- Downloadable/printable invoice output includes the same Bank Transfer details when Bank Transfer is enabled.
+- Public invoice and internal invoice payment-method rendering filters out deferred Paystack/online methods from the V1 user-facing surface.
+- Manual payment records are used as the V1 source for dashboard sales, recent activity, sales history and reporting metrics.
+- Sales history combines direct sales and successful recorded payments so View All reflects the same financial activity shown in the dashboard.
+- Reports sales totals include successful recorded payments as well as direct sales.
+- Invoice bank-detail rendering uses an explicit null-safe `bankDetails` object so strict TypeScript builds can compile on both Vercel and Pxxl when business payment settings are absent.
 
 ## Remaining before Phase 1 can be declared release-ready
 - Configure and test Resend with a real verified sending domain/API key.
@@ -52,13 +57,14 @@
 - Perform final accessibility/UX review of authentication and onboarding screens.
 - Verify that protected business APIs consistently enforce tenant membership and do not leak records across businesses.
 - Complete a focused manual-payment audit before Phase 2 relies on the payment model.
-- Verify the shared workspace shell, dashboard payment metrics, editable business settings, invoice bank details and landing-page authentication redirect in the production deployment after the automatic deployment completes.
+- Verify the shared workspace shell, dashboard payment metrics, reports payment metrics, editable business settings, invoice bank details, PDF output and landing-page authentication redirect in both Vercel and Pxxl deployments.
 
 ## Production issues addressed in this checkpoint
 - Production previously failed with `TypeError: Invalid URL` because a production URL value lacked the `https://` protocol; the operator corrected `AUTH_URL`/`APP_URL` accordingly.
 - Production Google/GitHub OAuth requests then failed because the Prisma adapter queried `public.accounts`, which did not exist in the production database. The Vercel build now synchronizes the Prisma schema before the Next.js build.
 - The hero image was present in `public/openbooks-market-woman.webp`, but `proxy.ts` was intercepting the static asset request and redirecting it to `/login`; the proxy now explicitly bypasses static asset paths.
 - The previous dashboard navigation lived only in `app/dashboard/layout.tsx`, so top-level business routes lost the workspace chrome. The shared workspace shell is now applied at each authenticated top-level route boundary.
+- Pxxl previously attempted to build an older `main` snapshot where `setting` could still be narrowed as nullable inside JSX. The current invoice implementation derives a null-safe `bankDetails` object before rendering, eliminating the strict TypeScript `TS18047` error.
 
 ## Not started
 - Customers and sales as a formally completed V1 phase.
@@ -75,11 +81,10 @@
 - Business onboarding and payment setup are implemented in the existing `/create-business` flow. A duplicate standalone `/onboarding/payments` flow was removed.
 - The shared workspace shell is intentionally implemented through reusable components plus route-level layouts rather than moving every business page into a route group. This keeps the existing URL structure stable while giving all authenticated business sections a consistent shell.
 - Dashboard "Sales" means recorded money received/recorded for the selected period: direct sales plus successful payments. Invoice outstanding is calculated separately from invoice-linked payments only.
-- The business invoice and public invoice both render Bank Transfer payment details only when that payment method is enabled and all three required bank fields are present.
-- V1 customer-facing invoice/payment UI intentionally excludes Paystack and stale legacy `ONLINE`/`PAYSTACK` invoice payment-method entries.
+- The V1 deployment target is provider-agnostic: the same `main` branch should build on Vercel and Pxxl. Do not introduce provider-specific application behavior unless explicitly documented and required.
 
 ## Next task
-Finish the remaining Phase 1 runtime verification tasks. Do not start Phase 2 customers/sales until identity, onboarding, payment settings, dashboard payment accounting, invoice bank details, and authenticated navigation have been exercised end-to-end and any regressions are corrected.
+Finish the remaining Phase 1 runtime verification tasks. Do not start Phase 2 customers/sales until identity, onboarding, payment settings, dashboard payment accounting, authenticated navigation, and cross-host production builds have been exercised end-to-end and any regressions are corrected.
 
 ## Recovery rule
 If later work diverges from the V1 implementation plan, stop feature work, compare the affected code with `docs/V1-IMPLEMENTATION-PLAN.md`, correct the deviation, test the corrected behaviour, and update this checkpoint before continuing.
