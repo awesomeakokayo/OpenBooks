@@ -18,6 +18,8 @@ export async function getReports(businessId: string) {
     expensesTotal,
     expensesByCategory,
     outstandingAgg,
+    customers,
+    invoiceOutstandingRecords,
   ] = await Promise.all([
     prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
@@ -39,6 +41,20 @@ export async function getReports(businessId: string) {
       prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
       prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", invoiceId: { not: null } }, _sum: { amount: true } }),
     ]),
+    prisma.customer.findMany({ where: { businessId }, select: { id: true, name: true, phone: true } }),
+    prisma.invoice.findMany({
+      where: { businessId, status: { notIn: ["PAID", "CANCELLED"] } },
+      select: {
+        id: true,
+        invoiceNumber: true,
+        total: true,
+        status: true,
+        dueDate: true,
+        customer: { select: { name: true } },
+        payments: { where: { status: "SUCCESS" }, select: { amount: true } },
+      },
+      orderBy: { dueDate: "asc" },
+    }),
   ]);
 
   const totalInvoiced = roundMoney(Number(outstandingAgg[0]._sum.total ?? 0));
@@ -67,26 +83,53 @@ export async function getReports(businessId: string) {
     total: roundMoney(directSales.total + payments.total),
   };
 
-  const customers = await prisma.customer.findMany({
-    where: { businessId },
-    select: { id: true, name: true, phone: true },
-  });
-  const outstandingByCustomer = await Promise.all(
-    customers.map(async (c) => {
-      const [invAgg, payAgg] = await Promise.all([
-        prisma.invoice.aggregate({ where: { businessId, customerId: c.id, status: { not: "CANCELLED" } }, _sum: { total: true } }),
-        prisma.payment.aggregate({ where: { businessId, customerId: c.id, status: "SUCCESS", invoiceId: { not: null } }, _sum: { amount: true } }),
-      ]);
-      const inv = roundMoney(Number(invAgg._sum.total ?? 0));
-      const pay = roundMoney(Number(payAgg._sum.amount ?? 0));
-      return { ...c, outstanding: Math.max(0, roundMoney(inv - pay)), totalInvoiced: inv, totalPaid: pay };
-    })
-  );
+  const [invoiceTotalsByCustomer, paymentTotalsByCustomer] = await Promise.all([
+    prisma.invoice.groupBy({
+      by: ["customerId"],
+      where: { businessId, status: { not: "CANCELLED" } },
+      _sum: { total: true },
+    }),
+    prisma.payment.groupBy({
+      by: ["customerId"],
+      where: { businessId, status: "SUCCESS", invoiceId: { not: null } },
+      _sum: { amount: true },
+    }),
+  ]);
 
-  const outstandingByInvoice = await prisma.invoice.findMany({
-    where: { businessId, status: { notIn: ["PAID", "CANCELLED"] } },
-    select: { id: true, invoiceNumber: true, total: true, status: true, dueDate: true, customer: { select: { name: true } } },
-    orderBy: { dueDate: "asc" },
+  const invoiceTotals = new Map(invoiceTotalsByCustomer.map((row) => [row.customerId, Number(row._sum.total ?? 0)]));
+  const paymentTotals = new Map(paymentTotalsByCustomer.map((row) => [row.customerId, Number(row._sum.amount ?? 0)]));
+
+  const outstandingByCustomer = customers.map((customer) => {
+    const totalCustomerInvoiced = roundMoney(invoiceTotals.get(customer.id) ?? 0);
+    const totalCustomerPaid = roundMoney(paymentTotals.get(customer.id) ?? 0);
+    return {
+      ...customer,
+      outstanding: Math.max(0, roundMoney(totalCustomerInvoiced - totalCustomerPaid)),
+      totalInvoiced: totalCustomerInvoiced,
+      totalPaid: totalCustomerPaid,
+    };
+  });
+
+  const now = new Date();
+  const outstandingByInvoice = invoiceOutstandingRecords.map((invoice) => {
+    const total = roundMoney(Number(invoice.total));
+    const paid = roundMoney(invoice.payments.reduce((sum, payment) => sum + Number(payment.amount), 0));
+    const amountOutstanding = Math.max(0, roundMoney(total - paid));
+    const status = amountOutstanding === 0
+      ? "PAID"
+      : invoice.dueDate && invoice.dueDate < now
+        ? "OVERDUE"
+        : invoice.status;
+    return {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      total,
+      amountPaid: paid,
+      outstanding: amountOutstanding,
+      status,
+      dueDate: invoice.dueDate,
+      customer: invoice.customer,
+    };
   });
 
   const net = roundMoney(sales.total - totalExpenses);
@@ -101,7 +144,7 @@ export async function getReports(businessId: string) {
     outstanding: {
       total: outstanding,
       byCustomer: outstandingByCustomer.filter((c) => c.outstanding > 0).sort((a, b) => b.outstanding - a.outstanding),
-      byInvoice: outstandingByInvoice,
+      byInvoice: outstandingByInvoice.filter((invoice) => invoice.outstanding > 0),
     },
     net,
   };
