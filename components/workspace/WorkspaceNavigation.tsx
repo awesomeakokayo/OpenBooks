@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
+import { LogoutButton } from "@/components/workspace/LogoutButton";
 
 const navigation = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -42,9 +43,6 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
   const navRef = useRef<HTMLElement | null>(null);
   const businessInitial = (businessName[0] ?? "O").toUpperCase();
 
-  // Preserve the sidebar's scroll position when navigating between workspace
-  // pages. The lower navigation items (Reports/Settings) should not disappear
-  // simply because the route changed.
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
@@ -105,6 +103,7 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
             <BookOpen size={17} strokeWidth={1.9} />
             <span>OpenBooks guide</span>
           </Link>
+          <LogoutButton />
           <p className="px-3 pt-2 text-[10px] leading-4 text-white/35">Simple records. Clear payments. Less guessing.</p>
         </div>
       </aside>
@@ -124,6 +123,7 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
                 return <Link prefetch key={href} href={href} onClick={() => setMobileOpen(false)} aria-current={active ? "page" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}><Icon size={17} strokeWidth={1.9} /><span>{label}</span>{active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}</Link>;
               })}
               <Link prefetch href="/guide" onClick={() => setMobileOpen(false)} className="mt-4 flex items-center gap-3 rounded-xl border-t border-white/10 px-3 py-4 text-sm font-semibold text-white/65 hover:text-white"><BookOpen size={17} strokeWidth={1.9} /><span>OpenBooks guide</span></Link>
+              <LogoutButton compact />
             </nav>
           </div>
         </div>
