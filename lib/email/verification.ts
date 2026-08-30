@@ -5,8 +5,10 @@ import { randomBytes } from "node:crypto";
 const TOKEN_TTL_MS = 60 * 60 * 1000;
 
 function verificationUrl(token: string) {
-  const baseUrl = process.env.APP_URL || process.env.AUTH_URL || "http://localhost:3000";
-  return `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
+  const configuredBaseUrl = process.env.APP_URL || process.env.AUTH_URL;
+  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const baseUrl = configuredBaseUrl || (vercelProductionUrl ? `https://${vercelProductionUrl}` : "https://openbooks-olive.vercel.app");
+  return `${baseUrl.replace(/\/$/, "")}/verify-email?token=${encodeURIComponent(token)}`;
 }
 
 function escapeHtml(value: string) {
