@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
+import { requireBusinessAdmin } from "@/lib/security/roles";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { logAuditEvent } from "@/lib/audit/logger";
 import { canTransition } from "@/lib/invoices/service";
+import { z } from "zod";
 import type { InvoiceStatus } from "@prisma/client";
+
+const invoiceUpdateSchema = z.object({
+  businessId: z.string().min(1),
+  status: z.enum(["DRAFT", "SENT", "VIEWED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"]).optional(),
+  notes: z.string().trim().max(1000).optional().nullable(),
+});
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -32,25 +40,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = (session.user as unknown as { id: string }).id;
   const body = await req.json().catch(() => ({}));
-  const { businessId, status, notes } = body;
-  if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
+  const parsed = invoiceUpdateSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid invoice update" }, { status: 400 });
+  const { businessId, status, notes } = parsed.data;
+
   try {
-    await requireBusinessMember(userId, businessId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    await requireBusinessAdmin(userId, businessId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Forbidden";
+    return NextResponse.json({ error: message === "Insufficient permissions" ? message : "Forbidden" }, { status: 403 });
   }
 
   const existing = await prisma.invoice.findFirst({ where: { id, businessId } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const data: { status?: InvoiceStatus; notes?: string | null } = {};
-  if (notes !== undefined) data.notes = typeof notes === "string" ? notes : null;
+  if (notes !== undefined) data.notes = notes ?? null;
 
   if (status !== undefined) {
-    const allowedStatuses = ["DRAFT", "SENT", "VIEWED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"] as const;
-    if (!allowedStatuses.includes(status)) {
-      return NextResponse.json({ error: "Invalid invoice status" }, { status: 400 });
-    }
     if (!canTransition(existing.status, status)) {
       return NextResponse.json({ error: `Cannot change invoice from ${existing.status} to ${status}` }, { status: 400 });
     }
