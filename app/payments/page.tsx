@@ -5,6 +5,13 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 
 const PAGE_SIZE = 25;
 
+function formatPaymentMethod(method: string) {
+  return method
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 type PaymentsPageProps = {
   searchParams: Promise<{ page?: string }>;
 };
@@ -53,7 +60,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             {payments.map((p) => (
               <div key={p.id} className="flex items-center justify-between gap-4 rounded-[16px] border border-plum/10 bg-white px-5 py-4">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-plum">{p.customer.name} • {p.method}</p>
+                  <p className="truncate text-sm font-semibold text-plum">{p.customer.name} • {formatPaymentMethod(p.method)}</p>
                   <p className="mt-1 text-xs text-plum/50">
                     {new Date(p.createdAt).toLocaleDateString("en-NG")} {p.invoice ? `• ${p.invoice.invoiceNumber}` : "• no invoice"} • {p.verificationType}
                   </p>
