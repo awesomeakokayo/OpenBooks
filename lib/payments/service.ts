@@ -2,9 +2,9 @@ import { prisma } from "@/lib/db/prisma";
 import { logAuditEvent } from "@/lib/audit/logger";
 import { issueReceipt } from "@/lib/receipts/service";
 import { roundMoney } from "@/lib/invoices/utils";
-import { Prisma, type PaymentMethod } from "@prisma/client";
+import { Prisma, type InvoiceStatus, type PaymentMethod } from "@prisma/client";
 
-function deriveInvoiceStatus(total: number, totalPaid: number, dueDate: Date | null): string {
+function deriveInvoiceStatus(total: number, totalPaid: number, dueDate: Date | null): InvoiceStatus {
   const safeTotal = roundMoney(total);
   const safePaid = roundMoney(totalPaid);
   if (safePaid >= safeTotal && safeTotal > 0) return "PAID";
@@ -46,7 +46,7 @@ export async function recordManualPayment(params: {
   let result: {
     payment: Awaited<ReturnType<typeof prisma.payment.create>>;
     receipt: Awaited<ReturnType<typeof prisma.receipt.create>>;
-    nextStatus: string | null;
+    nextStatus: InvoiceStatus | null;
   } | null = null;
 
   for (let attempt = 1; attempt <= MAX_SERIALIZATION_RETRIES; attempt += 1) {
@@ -65,7 +65,7 @@ export async function recordManualPayment(params: {
           (params.method === "POS" && setting.posEnabled);
         if (!methodEnabled) throw new Error("This payment method is not enabled for the business");
 
-        let invoice: { id: string; total: unknown; status: string; dueDate: Date | null } | null = null;
+        let invoice: { id: string; total: unknown; status: InvoiceStatus; dueDate: Date | null } | null = null;
         if (params.invoiceId) {
           const inv = await tx.invoice.findFirst({
             where: { id: params.invoiceId, businessId: params.businessId, customerId: params.customerId },
@@ -78,11 +78,13 @@ export async function recordManualPayment(params: {
           const total = roundMoney(Number(inv.total));
           const totalPaid = roundMoney(inv.payments.reduce((sum, payment) => sum + Number(payment.amount), 0));
           const outstanding = Math.max(0, roundMoney(total - totalPaid));
-          if (amount > outstanding) {
-            throw new Error(`Amount exceeds outstanding ₦${outstanding.toLocaleString("en-NG")}`);
-          }
+          if (amount > outstanding) throw new Error(`Amount exceeds outstanding ₦${outstanding.toLocaleString("en-NG")}`);
           invoice = { id: inv.id, total: inv.total, status: inv.status, dueDate: inv.dueDate };
         }
+
+        const metadata: Prisma.InputJsonValue | undefined = params.notes || params.reference
+          ? { notes: params.notes ?? null, reference: params.reference ?? null }
+          : undefined;
 
         const payment = await tx.payment.create({
           data: {
@@ -96,9 +98,7 @@ export async function recordManualPayment(params: {
             status: "SUCCESS",
             verificationType: "MANUAL",
             verifiedAt: new Date(),
-            metadata: params.notes || params.reference
-              ? ({ notes: params.notes, reference: params.reference } as never)
-              : undefined,
+            metadata,
           },
         });
 
@@ -112,21 +112,17 @@ export async function recordManualPayment(params: {
         });
 
         if (invoice) {
-          const allPayments = await tx.payment.findMany({
-            where: { invoiceId: invoice.id, status: "SUCCESS" },
-            select: { amount: true },
-          });
+          const allPayments = await tx.payment.findMany({ where: { invoiceId: invoice.id, status: "SUCCESS" }, select: { amount: true } });
           const total = roundMoney(Number(invoice.total));
           const totalPaid = roundMoney(allPayments.reduce((sum, payment) => sum + Number(payment.amount), 0));
           let nextStatus = deriveInvoiceStatus(total, totalPaid, invoice.dueDate);
           if (nextStatus === "SENT" && invoice.status === "VIEWED") nextStatus = "VIEWED";
-          await tx.invoice.update({ where: { id: invoice.id }, data: { status: nextStatus as never } });
+          await tx.invoice.update({ where: { id: invoice.id }, data: { status: nextStatus } });
           return { payment, receipt, nextStatus };
         }
 
         return { payment, receipt, nextStatus: null };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-
       break;
     } catch (error) {
       if (!isSerializationConflict(error) || attempt === MAX_SERIALIZATION_RETRIES) throw error;
@@ -135,44 +131,18 @@ export async function recordManualPayment(params: {
   }
 
   if (!result) throw new Error("Could not record payment");
-
-  await logAuditEvent({
-    businessId: params.businessId,
-    userId: params.userId,
-    action: "PAYMENT_RECORDED",
-    entityType: "Payment",
-    entityId: result.payment.id,
-    metadata: { amount, method: params.method, invoiceId: params.invoiceId },
-  });
-
+  await logAuditEvent({ businessId: params.businessId, userId: params.userId, action: "PAYMENT_RECORDED", entityType: "Payment", entityId: result.payment.id, metadata: { amount, method: params.method, invoiceId: params.invoiceId } });
   return result;
 }
 
-export async function listPayments(
-  businessId: string,
-  options: { page?: number; limit?: number } = {}
-) {
+export async function listPayments(businessId: string, options: { page?: number; limit?: number } = {}) {
   const rawPage = options.page ?? 1;
   const rawLimit = options.limit ?? 25;
   const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
   const limit = Number.isInteger(rawLimit) && rawLimit > 0 && rawLimit <= 100 ? rawLimit : 25;
-
   const [items, total] = await Promise.all([
-    prisma.payment.findMany({
-      where: { businessId },
-      include: { customer: true, invoice: true },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
+    prisma.payment.findMany({ where: { businessId }, include: { customer: true, invoice: true }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (page - 1) * limit, take: limit }),
     prisma.payment.count({ where: { businessId } }),
   ]);
-
-  return {
-    items,
-    total,
-    page,
-    limit,
-    totalPages: Math.max(1, Math.ceil(total / limit)),
-  };
+  return { items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) };
 }
