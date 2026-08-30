@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+const dateInputSchema = z.union([
+  z.string().datetime(),
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date"),
+]);
+
 export const businessSchema = z.object({
   name: z.string().trim().min(2, "Business name is required").max(100),
   phone: z.string().trim().min(8, "Business phone is required").max(20),
@@ -49,7 +54,7 @@ export const invoiceCreateSchema = z.object({
   customerId: z.string().min(1),
   items: z.array(invoiceItemSchema).min(1),
   discount: z.number().finite().min(0).default(0),
-  dueDate: z.string().datetime().optional().or(z.literal("")),
+  dueDate: dateInputSchema.optional().or(z.literal("")),
   notes: z.string().trim().max(1000).optional(),
   paymentMethods: z.array(z.enum(["CASH", "BANK_TRANSFER", "POS"])).optional(),
 });
@@ -72,7 +77,7 @@ export const saleCreateSchema = z.object({
   unitPrice: moneySchema,
   discount: z.number().finite().min(0).default(0),
   paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "POS"]).optional().nullable(),
-  saleDate: z.string().datetime().optional(),
+  saleDate: dateInputSchema.optional(),
   notes: z.string().trim().max(1000).optional(),
 });
 
@@ -82,5 +87,5 @@ export const expenseCreateSchema = z.object({
   amount: moneySchema,
   description: z.string().trim().max(1000).optional(),
   paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "POS"]).optional().nullable(),
-  expenseDate: z.string().datetime().optional(),
+  expenseDate: dateInputSchema.optional(),
 });
