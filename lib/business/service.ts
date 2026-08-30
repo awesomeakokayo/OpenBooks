@@ -20,13 +20,7 @@ export async function createBusiness(params: {
     accountNumber?: string;
   };
 }) {
-  const parsedBusiness = businessSchema.safeParse({
-    name: params.name,
-    phone: params.phone,
-    email: params.email,
-    address: params.address,
-    description: params.description,
-  });
+  const parsedBusiness = businessSchema.safeParse({ name: params.name, phone: params.phone, email: params.email, address: params.address, description: params.description });
   if (!parsedBusiness.success) throw new Error(parsedBusiness.error.issues[0]?.message || "Invalid business details");
 
   const paymentSettings = {
@@ -37,7 +31,6 @@ export async function createBusiness(params: {
     accountName: params.paymentSettings?.accountName,
     accountNumber: params.paymentSettings?.accountNumber,
   };
-
   const parsedPayments = paymentSettingsSchema.safeParse(paymentSettings);
   if (!parsedPayments.success) throw new Error(parsedPayments.error.issues[0]?.message || "Invalid payment settings");
 
@@ -45,41 +38,32 @@ export async function createBusiness(params: {
     const b = await tx.business.create({
       data: {
         ownerId: params.userId,
-        name: params.name.trim(),
-        phone: params.phone.trim(),
-        email: params.email?.trim() || null,
-        address: params.address?.trim() || null,
+        name: parsedBusiness.data.name,
+        phone: parsedBusiness.data.phone,
+        email: parsedBusiness.data.email || null,
+        address: parsedBusiness.data.address || null,
         logoUrl: params.logoUrl || null,
-        description: params.description?.trim() || null,
+        description: parsedBusiness.data.description || null,
         currency: "NGN",
       },
     });
-    await tx.businessMember.create({
-      data: { userId: params.userId, businessId: b.id, role: "OWNER" },
-    });
+    await tx.businessMember.create({ data: { userId: params.userId, businessId: b.id, role: "OWNER" } });
     await tx.businessPaymentSetting.create({
       data: {
         businessId: b.id,
-        bankTransferEnabled: paymentSettings.bankTransferEnabled,
-        cashEnabled: paymentSettings.cashEnabled,
-        posEnabled: paymentSettings.posEnabled,
+        bankTransferEnabled: parsedPayments.data.bankTransferEnabled,
+        cashEnabled: parsedPayments.data.cashEnabled,
+        posEnabled: parsedPayments.data.posEnabled,
         paystackEnabled: false,
-        bankName: paymentSettings.bankName?.trim() || null,
-        accountName: paymentSettings.accountName?.trim() || null,
-        accountNumber: paymentSettings.accountNumber?.trim() || null,
+        bankName: parsedPayments.data.bankName || null,
+        accountName: parsedPayments.data.accountName || null,
+        accountNumber: parsedPayments.data.accountNumber || null,
       },
     });
     return b;
   });
 
-  await logAuditEvent({
-    businessId: business.id,
-    userId: params.userId,
-    action: "BUSINESS_CREATED",
-    entityType: "Business",
-    entityId: business.id,
-  });
-
+  await logAuditEvent({ businessId: business.id, userId: params.userId, action: "BUSINESS_CREATED", entityType: "Business", entityId: business.id });
   return business;
 }
 
@@ -88,14 +72,11 @@ export async function getBusinessesForUser(userId: string) {
     where: { userId },
     include: { business: { include: { paymentSetting: true } } },
   });
-  return members.map((m: { business: unknown }) => m.business as Awaited<ReturnType<typeof getBusinessById>>);
+  return members.map((member) => member.business);
 }
 
 export async function getBusinessById(businessId: string) {
-  return prisma.business.findUnique({
-    where: { id: businessId },
-    include: { paymentSetting: true, members: true },
-  });
+  return prisma.business.findUnique({ where: { id: businessId }, include: { paymentSetting: true, members: true } });
 }
 
 export async function updateBusiness(
@@ -104,13 +85,6 @@ export async function updateBusiness(
   data: Partial<{ name: string; phone: string; email: string; address: string; description: string; logoUrl: string }>
 ) {
   const b = await prisma.business.update({ where: { id: businessId }, data });
-  await logAuditEvent({
-    businessId,
-    userId,
-    action: "BUSINESS_SETTINGS_CHANGED",
-    entityType: "Business",
-    entityId: b.id,
-    metadata: { fields: Object.keys(data) },
-  });
+  await logAuditEvent({ businessId, userId, action: "BUSINESS_SETTINGS_CHANGED", entityType: "Business", entityId: b.id, metadata: { fields: Object.keys(data) } });
   return b;
 }
