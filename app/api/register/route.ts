@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
 import { z } from "zod";
 import { checkRateLimit, LIMITS, rateLimitHeaders } from "@/lib/security/rateLimit";
-import { logError, userError } from "@/lib/security/error";
+import { logError, requestId, userError } from "@/lib/security/error";
 import { createEmailVerificationToken, sendVerificationEmail } from "@/lib/email/verification";
 
 const registerSchema = z.object({
@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
       const token = await createEmailVerificationToken(user.id);
       await sendVerificationEmail({ to: user.email, name: user.name || "there", token });
     } catch (emailError) {
-      logError("register-email", emailError, { ip, userId: user.id });
-      return NextResponse.json({ error: "Your account was created, but we could not send the verification email. Please use the resend option.", verificationRequired: true, email: user.email, requestId: user.id }, { status: 503, headers: { "X-Request-ID": user.id, "Cache-Control": "no-store" } });
+      const id = logError("register-email", emailError, { ip, userId: user.id });
+      return NextResponse.json({ error: "Your account was created, but we could not send the verification email. Please use the resend option.", verificationRequired: true, email: user.email, requestId: id }, { status: 503, headers: { "X-Request-ID": id, "Cache-Control": "no-store" } });
     }
 
     return NextResponse.json({ id: user.id, email: user.email, verificationRequired: true });
