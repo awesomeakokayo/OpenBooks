@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { recordExpense, listExpenses } from "@/lib/expenses/service";
 import { expenseCreateSchema } from "@/lib/validation/schemas";
+import { parseNigeriaDateInput } from "@/lib/dates/nigeria";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   try {
+    const expenseDate = data.expenseDate ? parseNigeriaDateInput(data.expenseDate) : undefined;
     const expense = await recordExpense({
       businessId: data.businessId,
       userId,
@@ -42,7 +44,7 @@ export async function POST(req: NextRequest) {
       amount: data.amount,
       description: data.description,
       paymentMethod: data.paymentMethod || undefined,
-      expenseDate: data.expenseDate ? new Date(data.expenseDate) : undefined,
+      expenseDate,
     });
     return NextResponse.json(expense, { status: 201 });
   } catch (e: unknown) {
