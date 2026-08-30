@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
-import { requireBusinessMember } from "@/lib/security/tenant";
+import { requireBusinessAdmin } from "@/lib/security/roles";
 import { logAuditEvent } from "@/lib/audit/logger";
 import { paymentSettingsSchema } from "@/lib/validation/schemas";
 
@@ -16,9 +16,10 @@ export async function GET(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "No user id" }, { status: 400 });
 
   try {
-    await requireBusinessMember(userId, businessId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    await requireBusinessAdmin(userId, businessId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Forbidden";
+    return NextResponse.json({ error: message === "Insufficient permissions" ? message : "Forbidden" }, { status: 403 });
   }
 
   const setting = await prisma.businessPaymentSetting.findUnique({ where: { businessId } });
@@ -37,13 +38,12 @@ export async function PATCH(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "No user id" }, { status: 400 });
 
   try {
-    await requireBusinessMember(userId, businessId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    await requireBusinessAdmin(userId, businessId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Forbidden";
+    return NextResponse.json({ error: message === "Insufficient permissions" ? message : "Forbidden" }, { status: 403 });
   }
 
-  // Paystack is intentionally deferred from V1. This endpoint only accepts
-  // the three manual payment methods currently supported by OpenBooks.
   const parsed = paymentSettingsSchema.safeParse({
     bankTransferEnabled: data.bankTransferEnabled ?? true,
     cashEnabled: data.cashEnabled ?? true,
