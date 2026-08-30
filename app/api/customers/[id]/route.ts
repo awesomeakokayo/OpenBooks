@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
 import { requireBusinessMember } from "@/lib/security/tenant";
+import { requireBusinessAdmin } from "@/lib/security/roles";
 import { calculateCustomerOutstanding } from "@/lib/customers/service";
 import { customerSchema } from "@/lib/validation/schemas";
 
@@ -47,12 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
   try {
     await getAuthorizedContext(userId, businessId, id);
-    const parsed = customerSchema.safeParse({
-      name: body.name,
-      phone: body.phone,
-      email: body.email,
-      notes: body.notes,
-    });
+    const parsed = customerSchema.safeParse({ name: body.name, phone: body.phone, email: body.email, notes: body.notes });
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid customer details" }, { status: 400 });
 
     const updated = await prisma.customer.update({
@@ -78,6 +74,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const businessId = req.nextUrl.searchParams.get("businessId");
   if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
   try {
+    await requireBusinessAdmin(userId, businessId);
     await getAuthorizedContext(userId, businessId, id);
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
