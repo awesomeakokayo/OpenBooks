@@ -37,13 +37,13 @@ export async function POST(req: NextRequest) {
 
     try {
       const token = await createEmailVerificationToken(user.id);
-      await sendVerificationEmail({ to: user.email, name: user.name || "there", token });
+      await sendVerificationEmail({ to: lowerEmail, name: user.name || "there", token });
     } catch (emailError) {
       const id = logError("register-email", emailError, { ip, userId: user.id });
-      return NextResponse.json({ error: "Your account was created, but we could not send the verification email. Please use the resend option.", verificationRequired: true, email: user.email, requestId: id }, { status: 503, headers: { "X-Request-ID": id, "Cache-Control": "no-store" } });
+      return NextResponse.json({ error: "Your account was created, but we could not send the verification email. Please use the resend option.", verificationRequired: true, email: lowerEmail, requestId: id }, { status: 503, headers: { "X-Request-ID": id, "Cache-Control": "no-store" } });
     }
 
-    return NextResponse.json({ id: user.id, email: user.email, verificationRequired: true });
+    return NextResponse.json({ id: user.id, email: lowerEmail, verificationRequired: true });
   } catch (e) {
     const id = logError("register", e, { ip });
     return userError("Could not create account", 500, id);
