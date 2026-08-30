@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createBusiness, getBusinessesForUser, updateBusiness } from "@/lib/business/service";
-import { requireBusinessMember } from "@/lib/security/tenant";
+import { requireBusinessAdmin } from "@/lib/security/roles";
 import { z } from "zod";
 
 function sessionUserId(session: { user?: unknown } | null) {
@@ -10,11 +10,11 @@ function sessionUserId(session: { user?: unknown } | null) {
 
 const updateBusinessSchema = z.object({
   businessId: z.string().min(1),
-  name: z.string().min(2).max(100),
-  phone: z.string().min(8).max(20),
-  email: z.string().email().optional().or(z.literal("")),
-  address: z.string().max(200),
-  description: z.string().max(500),
+  name: z.string().trim().min(2).max(100),
+  phone: z.string().trim().min(8).max(20),
+  email: z.string().trim().email().optional().or(z.literal("")),
+  address: z.string().trim().max(200),
+  description: z.string().trim().max(500),
 });
 
 export async function GET() {
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const business = await createBusiness({
       userId,
       name: body.name,
@@ -57,14 +57,14 @@ export async function PATCH(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const parsed = updateBusinessSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid business details" }, { status: 400 });
     }
 
     const { businessId, ...data } = parsed.data;
-    await requireBusinessMember(userId, businessId);
+    await requireBusinessAdmin(userId, businessId);
 
     const business = await updateBusiness(businessId, userId, {
       ...data,
@@ -76,7 +76,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json(business);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Could not update business";
-    const status = message === "Forbidden" || message.includes("not found") ? 403 : 400;
+    const status = message === "Insufficient permissions" || message === "Not a member of this business" ? 403 : 400;
     return NextResponse.json({ error: message }, { status });
   }
 }
