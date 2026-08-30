@@ -6,12 +6,13 @@ import { ResendVerificationForm } from "./ResendVerificationForm";
 export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; email?: string }>;
+  searchParams: Promise<{ status?: string; email?: string; delivery?: string }>;
 }) {
-  const { status, email } = await searchParams;
+  const { status, email, delivery } = await searchParams;
   const success = status === "success";
   const invalid = status === "invalid";
   const rateLimited = status === "rate-limited";
+  const deliveryFailed = delivery === "failed";
 
   return (
     <main className="min-h-screen bg-[#F8F8F6] text-[#503047]">
@@ -45,6 +46,16 @@ export default async function VerifyEmailPage({
               <h1 className="mt-6 font-heading text-3xl font-extrabold tracking-[-0.04em]">Please wait a moment.</h1>
               <p className="mx-auto mt-4 max-w-[40ch] text-sm leading-6 text-[#6F6670]">Too many verification attempts were made. Please try again shortly.</p>
               <Link href={`/verify-email${email ? `?email=${encodeURIComponent(email)}` : ""}`} className="mt-8 inline-flex h-12 items-center justify-center rounded-2xl border border-[#E5E3DF] bg-white px-6 text-sm font-semibold text-[#503047]">Try again</Link>
+            </>
+          ) : deliveryFailed ? (
+            <>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FDECEC] text-[#B42318]"><MailCheck size={30} /></div>
+              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#C05746]">Email delivery issue</p>
+              <h1 className="mt-3 font-heading text-3xl font-extrabold tracking-[-0.04em]">Your account was created.</h1>
+              <p className="mx-auto mt-4 max-w-[40ch] text-sm leading-6 text-[#6F6670]">We couldn't deliver the verification email yet. You can request a fresh verification email below.</p>
+              <ResendVerificationForm email={email} />
+              <p className="mt-4 text-xs leading-5 text-[#918A91]">If the resend also fails, the email service may need to be configured by the OpenBooks administrator.</p>
+              <Link href="/login" className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl border border-[#E5E3DF] bg-white px-5 text-sm font-semibold text-[#503047] hover:bg-[#F8F8F6]">Back to sign in</Link>
             </>
           ) : (
             <>
