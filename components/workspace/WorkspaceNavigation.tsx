@@ -19,7 +19,11 @@ const navigation = [
   { href: "/business/settings", label: "Settings", icon: Settings },
 ] as const;
 
-function isActivePath(pathname: string, href: string) { return href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`); }
+function isActivePath(pathname: string, href: string) {
+  return href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+const NAV_SCROLL_KEY = "openbooks:workspace-nav-scroll";
 
 export function WorkspaceNavigation({ businessName, firstName }: { businessName: string; firstName: string }) {
   const pathname = usePathname();
@@ -27,15 +31,35 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
   const navRef = useRef<HTMLElement | null>(null);
   const businessInitial = (businessName[0] ?? "O").toUpperCase();
 
+  const saveNavScroll = () => {
+    const nav = navRef.current;
+    if (nav) sessionStorage.setItem(NAV_SCROLL_KEY, String(nav.scrollTop));
+  };
+
+  const restoreNavScroll = () => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const saved = Number(sessionStorage.getItem(NAV_SCROLL_KEY) ?? "0");
+    if (!Number.isFinite(saved) || saved <= 0) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => nav.scrollTo({ top: saved, behavior: "auto" }));
+    });
+  };
+
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
-    const saved = sessionStorage.getItem("openbooks:workspace-nav-scroll");
-    if (saved) { const top = Number(saved); if (Number.isFinite(top)) requestAnimationFrame(() => nav.scrollTo({ top, behavior: "auto" })); }
-    const save = () => sessionStorage.setItem("openbooks:workspace-nav-scroll", String(nav.scrollTop));
+    const save = () => sessionStorage.setItem(NAV_SCROLL_KEY, String(nav.scrollTop));
     nav.addEventListener("scroll", save, { passive: true });
     window.addEventListener("pagehide", save);
-    return () => { save(); nav.removeEventListener("scroll", save); window.removeEventListener("pagehide", save); };
+    restoreNavScroll();
+    const restoreTimer = window.setTimeout(restoreNavScroll, 80);
+    return () => {
+      save();
+      window.clearTimeout(restoreTimer);
+      nav.removeEventListener("scroll", save);
+      window.removeEventListener("pagehide", save);
+    };
   }, []);
 
   useEffect(() => {
@@ -55,8 +79,8 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
       <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-plum/10 bg-plum text-white lg:flex print:hidden">
         <div className="flex h-[84px] shrink-0 items-center gap-3 border-b border-white/10 px-5"><OpenBooksBrandMark size={36} light /><div className="min-w-0"><p className="font-heading text-[15px] font-extrabold tracking-tight">OpenBooks</p><p className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-white/50">Business workspace</p></div></div>
         <div className="px-4 pb-4 pt-6"><div className="rounded-2xl border border-white/10 bg-white/5 p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pale-sage text-sm font-extrabold text-plum">{businessInitial}</div><div className="min-w-0"><p className="truncate text-sm font-bold text-white">{businessName}</p><p className="truncate text-xs text-white/50">NGN · {firstName}</p></div></div></div></div>
-        <div className="openbooks-nav-scroll-region min-h-0 flex-1"><nav ref={navRef} className="openbooks-scrollbar-hidden h-full space-y-1 overflow-y-auto px-3 pb-5" aria-label="Workspace navigation"><p className="px-3 pb-3 pt-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/35">Workspace</p>{navigation.map(({ href, label, icon: Icon }) => { const active = isActivePath(pathname, href); return <Link prefetch key={href} href={href} aria-current={active ? "page" : undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}><Icon size={17} strokeWidth={1.9} /><span>{label}</span>{active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}</Link>; })}</nav></div>
-        <div className="shrink-0 border-t border-white/10 p-4"><Link prefetch href="/guide" className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/65 transition-colors hover:bg-white/6 hover:text-white"><BookOpen size={17} strokeWidth={1.9} /><span>OpenBooks guide</span></Link><LogoutButton /><p className="px-3 pt-2 text-[10px] leading-4 text-white/35">Simple records. Clear payments. Less guessing.</p></div>
+        <div className="openbooks-nav-scroll-region min-h-0 flex-1"><nav ref={navRef} className="openbooks-scrollbar-hidden h-full space-y-1 overflow-y-auto px-3 pb-5" aria-label="Workspace navigation"><p className="px-3 pb-3 pt-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/35">Workspace</p>{navigation.map(({ href, label, icon: Icon }) => { const active = isActivePath(pathname, href); return <Link prefetch key={href} href={href} onClick={saveNavScroll} aria-current={active ? "page" : undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}><Icon size={17} strokeWidth={1.9} /><span>{label}</span>{active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}</Link>; })}</nav></div>
+        <div className="shrink-0 border-t border-white/10 p-4"><Link prefetch href="/guide" onClick={saveNavScroll} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/65 transition-colors hover:bg-white/6 hover:text-white"><BookOpen size={17} strokeWidth={1.9} /><span>OpenBooks guide</span></Link><LogoutButton /><p className="px-3 pt-2 text-[10px] leading-4 text-white/35">Simple records. Clear payments. Less guessing.</p></div>
       </aside>
 
       <div className="fixed inset-0 z-[60] lg:hidden" hidden={!mobileOpen} aria-hidden={!mobileOpen}>
@@ -64,7 +88,7 @@ export function WorkspaceNavigation({ businessName, firstName }: { businessName:
         <div className="absolute inset-y-0 left-0 flex w-[min(88vw,320px)] flex-col bg-plum text-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Workspace navigation">
           <div className="flex h-[84px] shrink-0 items-center justify-between border-b border-white/10 px-5"><div className="flex items-center gap-3"><OpenBooksBrandMark size={34} light /><div><p className="font-heading text-[15px] font-extrabold">OpenBooks</p><p className="text-[10px] uppercase tracking-[0.14em] text-white/45">Workspace</p></div></div><button type="button" onClick={() => setMobileOpen(false)} className="rounded-xl p-2 text-white/65 hover:bg-white/10 hover:text-white" aria-label="Close workspace navigation"><X size={19} /></button></div>
           <div className="px-4 py-5"><div className="rounded-2xl border border-white/10 bg-white/5 p-4"><p className="truncate text-sm font-bold">{businessName}</p><p className="mt-1 text-xs text-white/50">NGN · {firstName}</p></div></div>
-          <div className="openbooks-nav-scroll-region min-h-0 flex-1"><nav className="openbooks-scrollbar-hidden h-full space-y-1 overflow-y-auto px-3 pb-5" aria-label="Mobile workspace navigation">{navigation.map(({ href, label, icon: Icon }) => { const active = isActivePath(pathname, href); return <Link prefetch key={href} href={href} onClick={() => setMobileOpen(false)} aria-current={active ? "page" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}><Icon size={17} strokeWidth={1.9} /><span>{label}</span>{active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}</Link>; })}<Link prefetch href="/guide" onClick={() => setMobileOpen(false)} className="mt-4 flex items-center gap-3 rounded-xl border-t border-white/10 px-3 py-4 text-sm font-semibold text-white/65 hover:text-white"><BookOpen size={17} strokeWidth={1.9} /><span>OpenBooks guide</span></Link><LogoutButton compact /></nav></div>
+          <div className="openbooks-nav-scroll-region min-h-0 flex-1"><nav className="openbooks-scrollbar-hidden h-full space-y-1 overflow-y-auto px-3 pb-5" aria-label="Mobile workspace navigation">{navigation.map(({ href, label, icon: Icon }) => { const active = isActivePath(pathname, href); return <Link prefetch key={href} href={href} onClick={() => { saveNavScroll(); setMobileOpen(false); }} aria-current={active ? "page" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/6 hover:text-white"}`}><Icon size={17} strokeWidth={1.9} /><span>{label}</span>{active && <ChevronRight className="ml-auto text-pale-sage" size={15} />}</Link>; })}<Link prefetch href="/guide" onClick={() => { saveNavScroll(); setMobileOpen(false); }} className="mt-4 flex items-center gap-3 rounded-xl border-t border-white/10 px-3 py-4 text-sm font-semibold text-white/65 hover:text-white"><BookOpen size={17} strokeWidth={1.9} /><span>OpenBooks guide</span></Link><LogoutButton compact /></nav></div>
         </div>
       </div>
 
