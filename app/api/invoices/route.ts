@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { createInvoice } from "@/lib/invoices/service";
 import { invoiceCreateSchema } from "@/lib/validation/schemas";
+import { parseNigeriaDateInput } from "@/lib/dates/nigeria";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -45,13 +46,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   try {
+    const dueDate = data.dueDate ? parseNigeriaDateInput(data.dueDate).toISOString() : null;
     const invoice = await createInvoice({
       businessId: data.businessId,
       userId,
       customerId: data.customerId,
       items: data.items,
       discount: data.discount,
-      dueDate: data.dueDate || null,
+      dueDate,
       notes: data.notes,
       paymentMethods: data.paymentMethods,
     });
