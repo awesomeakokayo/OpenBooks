@@ -28,6 +28,8 @@ export async function nextInvoiceNumber(businessId: string): Promise<string> {
   });
 }
 
+const V1_PAYMENT_METHODS: PaymentMethod[] = ["CASH", "BANK_TRANSFER", "POS"];
+
 export async function createInvoice(params: {
   businessId: string;
   userId: string;
@@ -50,25 +52,34 @@ export async function createInvoice(params: {
   });
   if (!customer) throw new Error("Customer not found in this business");
 
+  const setting = await prisma.businessPaymentSetting.findUnique({ where: { businessId: params.businessId } });
+  if (!setting) throw new Error("Payment settings are not configured for this business");
+
+  const enabledByBusiness = new Set<PaymentMethod>();
+  if (setting.bankTransferEnabled) enabledByBusiness.add("BANK_TRANSFER");
+  if (setting.cashEnabled) enabledByBusiness.add("CASH");
+  if (setting.posEnabled) enabledByBusiness.add("POS");
+
+  let methods = params.paymentMethods;
+  if (!methods || methods.length === 0) {
+    methods = V1_PAYMENT_METHODS.filter((method) => enabledByBusiness.has(method));
+  }
+
+  if (!methods.length) throw new Error("Enable at least one payment method before creating an invoice");
+  if (methods.some((method) => !V1_PAYMENT_METHODS.includes(method) || !enabledByBusiness.has(method))) {
+    throw new Error("Invoice contains a payment method that is not enabled for this business");
+  }
+
+  if (methods.includes("BANK_TRANSFER")) {
+    if (!setting.bankTransferEnabled || !setting.bankName || !setting.accountName || !setting.accountNumber) {
+      throw new Error("Complete bank transfer details before enabling bank transfer on an invoice");
+    }
+  }
+
   const discount = Number.isFinite(params.discount ?? 0) ? params.discount ?? 0 : 0;
   const { subtotal, total } = calculateInvoiceTotal(params.items, discount);
   const invoiceNumber = await nextInvoiceNumber(params.businessId);
   const publicToken = generatePublicToken();
-
-  let methods = params.paymentMethods;
-  if (!methods || methods.length === 0) {
-    const setting = await prisma.businessPaymentSetting.findUnique({ where: { businessId: params.businessId } });
-    if (setting) {
-      methods = [];
-      if (setting.bankTransferEnabled) methods.push("BANK_TRANSFER" as PaymentMethod);
-      if (setting.cashEnabled) methods.push("CASH" as PaymentMethod);
-      if (setting.posEnabled) methods.push("POS" as PaymentMethod);
-      if (setting.paystackEnabled) methods.push("PAYSTACK" as PaymentMethod);
-      if (methods.length === 0) methods.push("BANK_TRANSFER" as PaymentMethod);
-    } else {
-      methods = ["BANK_TRANSFER" as PaymentMethod];
-    }
-  }
 
   const invoice = await prisma.invoice.create({
     data: {
@@ -91,7 +102,7 @@ export async function createInvoice(params: {
           lineTotal: calculateLineTotal(it.quantity, it.unitPrice),
         })),
       },
-      paymentMethods: { create: methods!.map((m) => ({ method: m })) },
+      paymentMethods: { create: methods.map((m) => ({ method: m })) },
     },
     include: { items: true, paymentMethods: true, customer: true },
   });
@@ -102,7 +113,7 @@ export async function createInvoice(params: {
     action: "INVOICE_CREATED",
     entityType: "Invoice",
     entityId: invoice.id,
-    metadata: { invoiceNumber, total },
+    metadata: { invoiceNumber, total, paymentMethods: methods },
   });
 
   return invoice;
