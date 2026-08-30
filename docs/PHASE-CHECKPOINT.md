@@ -10,6 +10,8 @@
 - Email verification token generation and verification email template added.
 - Credential registration creates a verification token and sends the verification email.
 - Credential registration redirects the user to the verification screen instead of signing them in immediately.
+- Registration requires a matching confirmation password at both client and server validation layers.
+- If registration email delivery fails, the unverified account is retained so the user can use the resend verification flow instead of losing the account.
 - Verification result page and resend flow added.
 - Verification endpoint has token expiry, token deletion, transaction-safe user verification, rate limiting, and non-sensitive error logging.
 - Credentials sign-in requires `emailVerified` before authentication succeeds.
@@ -48,16 +50,17 @@
 - Sales history combines direct sales and successful recorded payments so View All reflects the same financial activity shown in the dashboard.
 - Reports sales totals include successful recorded payments as well as direct sales.
 - Invoice bank-detail rendering uses an explicit null-safe `bankDetails` object so strict TypeScript builds can compile on both Vercel and Pxxl when business payment settings are absent.
+- Landing-page mobile navigation explicitly uses the Plum background and white text for all menu links and actions.
 
 ## Remaining before Phase 1 can be declared release-ready
 - Configure and test Resend with a real verified sending domain/API key.
-- Configure and test Google OAuth with the documented callback URL.
-- Configure and test GitHub OAuth with the documented callback URL.
+- Configure and test Google OAuth with the documented callback URL(s) for Vercel and Pxxl/custom production domain.
+- Configure and test GitHub OAuth with the documented callback URL(s) for Vercel and Pxxl/custom production domain.
 - Run all Phase 1 exit tests in `docs/PHASE-1-EXIT-TESTS.md`.
 - Perform final accessibility/UX review of authentication and onboarding screens.
 - Verify that protected business APIs consistently enforce tenant membership and do not leak records across businesses.
 - Complete a focused manual-payment audit before Phase 2 relies on the payment model.
-- Verify the shared workspace shell, dashboard payment metrics, reports payment metrics, editable business settings, invoice bank details, PDF output and landing-page authentication redirect in both Vercel and Pxxl deployments.
+- Verify the shared workspace shell, dashboard payment metrics, reports payment metrics, editable business settings, invoice bank details, PDF output, registration flow, mobile landing navigation and landing-page authentication redirect in both Vercel and Pxxl deployments.
 
 ## Production issues addressed in this checkpoint
 - Production previously failed with `TypeError: Invalid URL` because a production URL value lacked the `https://` protocol; the operator corrected `AUTH_URL`/`APP_URL` accordingly.
