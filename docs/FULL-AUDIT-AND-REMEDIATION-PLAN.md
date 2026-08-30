@@ -96,3 +96,18 @@ The implementation is intentionally sequential:
 P0 security/authorization → P0 financial correctness → API/data quality → authentication hardening → UX hardening → production/deployment → final end-to-end release audit.
 
 Every completed group must update `docs/PHASE-CHECKPOINT.md` and this plan with the commit reference and verification status.
+
+## Current remediation log
+
+### Remediation group 1 — P0 authorization/validation (in progress)
+
+- Customer mutation tenant scoping: implemented in the working tree/recent commits.
+- Invoice payment-method V1 restriction: implemented in validation/service paths.
+- Strict create schemas for payment/sale/expense/invoice: implemented.
+- Customer outstanding semantics: corrected to use invoice-linked successful payments.
+
+Remaining in this group:
+
+- Reconcile the exact latest `main` revision after concurrent repository updates.
+- Complete audit of every business-scoped mutation and role-sensitive action.
+- Verify invoice PATCH transition enforcement and cron fail-closed behavior in the live branch.
