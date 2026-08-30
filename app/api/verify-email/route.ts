@@ -1,44 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { checkRateLimit, LIMITS, rateLimitHeaders } from "@/lib/security/rateLimit";
+import { checkRateLimit, LIMITS } from "@/lib/security/rateLimit";
 import { logError } from "@/lib/security/error";
 
 export async function GET(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const rl = checkRateLimit(`verify-email:${ip}`, LIMITS.auth);
+  const rl = await checkRateLimit(`verify-email:${ip}`, LIMITS.verifyEmail);
   const baseUrl = process.env.APP_URL || process.env.AUTH_URL || req.nextUrl.origin;
 
-  if (!rl.allowed) {
-    return NextResponse.redirect(new URL(`/verify-email?status=rate-limited`, baseUrl));
-  }
+  if (!rl.allowed) return NextResponse.redirect(new URL(`/verify-email?status=rate-limited`, baseUrl));
 
   const token = req.nextUrl.searchParams.get("token");
-  if (!token) {
-    return NextResponse.redirect(new URL(`/verify-email?status=invalid`, baseUrl));
-  }
+  if (!token) return NextResponse.redirect(new URL(`/verify-email?status=invalid`, baseUrl));
 
   try {
-    const verification = await prisma.verificationToken.findFirst({
-      where: {
-        token,
-        expires: { gt: new Date() },
-      },
-    });
-
-    if (!verification) {
-      return NextResponse.redirect(new URL(`/verify-email?status=invalid`, baseUrl));
-    }
+    const verification = await prisma.verificationToken.findFirst({ where: { token, expires: { gt: new Date() } } });
+    if (!verification) return NextResponse.redirect(new URL(`/verify-email?status=invalid`, baseUrl));
 
     await prisma.$transaction([
-      prisma.user.update({
-        where: { id: verification.identifier },
-        data: { emailVerified: new Date() },
-      }),
-      prisma.verificationToken.deleteMany({
-        where: { identifier: verification.identifier },
-      }),
+      prisma.user.update({ where: { id: verification.identifier }, data: { emailVerified: new Date() } }),
+      prisma.verificationToken.deleteMany({ where: { identifier: verification.identifier } }),
     ]);
-
     return NextResponse.redirect(new URL(`/verify-email?status=success`, baseUrl));
   } catch (error) {
     const requestId = logError("verify-email", error, { ip, tokenPrefix: token.slice(0, 8) });
