@@ -105,9 +105,28 @@ Every completed group must update `docs/PHASE-CHECKPOINT.md` and this plan with 
 - Invoice payment-method V1 restriction: implemented in validation/service paths.
 - Strict create schemas for payment/sale/expense/invoice: implemented.
 - Customer outstanding semantics: corrected to use invoice-linked successful payments.
+- Reusable OWNER/ADMIN/STAFF authorization helpers added; business profile/payment settings/invoice status mutations use admin-level authorization.
+- Cron endpoint now fails closed when `CRON_SECRET` is missing.
+- Public invoice API no longer exposes bank details unless Bank Transfer is enabled.
 
 Remaining in this group:
 
 - Reconcile the exact latest `main` revision after concurrent repository updates.
 - Complete audit of every business-scoped mutation and role-sensitive action.
-- Verify invoice PATCH transition enforcement and cron fail-closed behavior in the live branch.
+- Verify all affected production branches/deployments build from the same revision.
+
+### Remediation group 2 — P1 financial integrity (started)
+
+- Centralized financial invariants added at `lib/finance/contract.ts`.
+- Regression tests added for the real-world `₦300,000 → ₦200,000 → ₦100,000` invoice/payment case.
+- Regression tests added to ensure failed/cancelled payments do not count as money received.
+- Regression tests added to ensure a standalone payment cannot settle an unrelated invoice.
+- Dashboard and reports use the same recorded-sales definition and Nigeria-local reporting periods.
+- Dashboard/report customer outstanding calculations use only invoice-linked payments.
+- Atomic business-scoped invoice and receipt sequencing implemented.
+
+Remaining in group 2:
+
+- Complete the direct-sale versus invoice-payment anti-double-counting policy in the UI and service layer.
+- Add integration/end-to-end tests against a real test database for invoice/payment/report consistency.
+- Audit refunds/cancellations and any future payment reversal semantics before launch.
