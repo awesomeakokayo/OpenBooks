@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { createInvoice } from "@/lib/invoices/service";
+import { invoiceCreateSchema } from "@/lib/validation/schemas";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -31,24 +32,28 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = (session.user as unknown as { id: string }).id;
-  const body = await req.json();
-  const { businessId, customerId, items, discount, dueDate, notes, paymentMethods } = body;
-  if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const parsed = invoiceCreateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid invoice" }, { status: 400 });
+  }
+  const data = parsed.data;
+  if (!data.businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
   try {
-    await requireBusinessMember(userId, businessId);
+    await requireBusinessMember(userId, data.businessId);
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   try {
     const invoice = await createInvoice({
-      businessId,
+      businessId: data.businessId,
       userId,
-      customerId,
-      items,
-      discount: discount ? Number(discount) : 0,
-      dueDate,
-      notes,
-      paymentMethods,
+      customerId: data.customerId,
+      items: data.items,
+      discount: data.discount,
+      dueDate: data.dueDate || null,
+      notes: data.notes,
+      paymentMethods: data.paymentMethods,
     });
     return NextResponse.json(invoice, { status: 201 });
   } catch (e: unknown) {
