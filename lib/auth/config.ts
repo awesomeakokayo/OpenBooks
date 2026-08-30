@@ -38,16 +38,10 @@ export const authConfig: NextAuthConfig = {
     signIn: "/login",
     error: "/auth-error",
   },
-  // Keep sessions finite. A user who has not opened OpenBooks for 30 days
-  // must authenticate again. Explicit logout always ends the session earlier.
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" || account?.provider === "github") {
-        // OAuth providers are responsible for authenticating the provider-side
-        // identity. We intentionally do NOT auto-link an OAuth account to an
-        // existing OpenBooks credentials account by matching email alone.
-        // This avoids account takeover via unsafe automatic linking.
         return Boolean(user.email);
       }
       return true;
