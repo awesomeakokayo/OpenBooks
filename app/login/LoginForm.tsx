@@ -13,10 +13,13 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    setResendMessage("");
     setLoading(true);
     const form = new FormData(e.currentTarget);
     const email = String(form.get("email") || "").trim();
@@ -25,11 +28,40 @@ export function LoginForm() {
     const res = await signIn("credentials", { email, password, redirect: false });
     setLoading(false);
     if (res?.error) {
-      setError("Invalid email or password. Make sure your email is verified.");
+      setError("Invalid email or password. If your account is not verified, you can resend the verification email below.");
       return;
     }
     router.push("/dashboard");
     router.refresh();
+  }
+
+  async function resendVerification() {
+    const emailInput = document.querySelector<HTMLInputElement>('input[name="email"]');
+    const email = emailInput?.value.trim() || "";
+    if (!email) {
+      setResendMessage("Enter your email address first.");
+      return;
+    }
+
+    setResending(true);
+    setResendMessage("");
+    try {
+      const response = await fetch("/api/verify-email/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json().catch(() => ({}));
+      setResendMessage(
+        response.ok
+          ? "If this account needs verification, a new email has been sent. Check your inbox and spam folder."
+          : data?.error || "We could not resend the verification email. Please try again shortly."
+      );
+    } catch {
+      setResendMessage("We could not resend the verification email. Please try again shortly.");
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
@@ -58,7 +90,15 @@ export function LoginForm() {
         </span>
       </label>
 
-      {error && <div role="alert" className="rounded-2xl border border-[#C05746]/15 bg-[#C05746]/5 px-4 py-3 text-sm leading-6 text-[#C05746]">{error}</div>}
+      {error && (
+        <div role="alert" className="rounded-2xl border border-[#C05746]/15 bg-[#C05746]/5 px-4 py-3 text-sm leading-6 text-[#C05746]">
+          <p>{error}</p>
+          <button type="button" onClick={resendVerification} disabled={resending} className="mt-3 text-sm font-semibold text-[#503047] underline decoration-[#503047]/30 underline-offset-4 hover:decoration-[#503047] disabled:opacity-50">
+            {resending ? "Sending…" : "Resend verification email"}
+          </button>
+          {resendMessage && <p role="status" className="mt-2 text-xs leading-5 text-[#6F6670]">{resendMessage}</p>}
+        </div>
+      )}
 
       <button type="submit" disabled={loading} className="mt-1 inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#C05746] px-7 text-sm font-semibold text-white shadow-[0_18px_50px_rgba(192,87,70,0.28)] transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60">
         {loading ? "Signing in…" : <>Sign in <ArrowRight size={17} strokeWidth={2.2} /></>}
