@@ -12,16 +12,13 @@ export async function GET(req: NextRequest) {
 
   const businessId = req.nextUrl.searchParams.get("businessId");
   const search = req.nextUrl.searchParams.get("search") || undefined;
+  const page = Number(req.nextUrl.searchParams.get("page") || 1);
+  const limit = Number(req.nextUrl.searchParams.get("limit") || 25);
   if (!businessId) return userError("businessId required", 400);
 
   try {
     await requireBusinessMember(userId, businessId);
-  } catch {
-    return userError("Forbidden", 403);
-  }
-
-  try {
-    const customers = await listCustomers(businessId, search);
+    const customers = await listCustomers(businessId, search, { page, limit });
     return Response.json(customers);
   } catch {
     return userError("Could not load customers", 500);
@@ -34,19 +31,14 @@ export async function POST(req: NextRequest) {
   if (!userId) return userError("Unauthorized", 401);
 
   const body = await req.json().catch(() => ({}));
+  const businessId = typeof body.businessId === "string" ? body.businessId.trim() : "";
+  if (!businessId) return userError("businessId required", 400);
+
   const parsed = customerSchema.safeParse(body);
   if (!parsed.success) return userError(parsed.error.issues[0]?.message || "Invalid customer details", 400);
 
-  const { businessId } = body as { businessId?: unknown };
-  if (typeof businessId !== "string" || !businessId.trim()) return userError("businessId required", 400);
-
   try {
     await requireBusinessMember(userId, businessId);
-  } catch {
-    return userError("Forbidden", 403);
-  }
-
-  try {
     const customer = await createCustomer({
       businessId,
       userId,
