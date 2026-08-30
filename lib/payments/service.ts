@@ -122,11 +122,31 @@ export async function recordManualPayment(params: {
   return result;
 }
 
-export async function listPayments(businessId: string) {
-  return prisma.payment.findMany({
-    where: { businessId },
-    include: { customer: true, invoice: true },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+export async function listPayments(
+  businessId: string,
+  options: { page?: number; limit?: number } = {}
+) {
+  const rawPage = options.page ?? 1;
+  const rawLimit = options.limit ?? 25;
+  const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
+  const limit = Number.isInteger(rawLimit) && rawLimit > 0 && rawLimit <= 100 ? rawLimit : 25;
+
+  const [items, total] = await Promise.all([
+    prisma.payment.findMany({
+      where: { businessId },
+      include: { customer: true, invoice: true },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.payment.count({ where: { businessId } }),
+  ]);
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
 }
