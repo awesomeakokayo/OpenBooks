@@ -60,7 +60,7 @@ export default async function ReportsPage() {
             <div className="mt-3 flex flex-col gap-2">
               {reports.paymentsByMethod.map((p) => (
                 <div key={p.method} className="flex justify-between rounded-[12px] border border-plum/10 px-4 py-2.5">
-                  <span className="text-sm text-plum">{p.method} • {p.count}</span>
+                  <span className="text-sm text-plum">{p.method.replaceAll("_", " ")} • {p.count}</span>
                   <span className="text-sm font-semibold text-plum">₦{p.amount.toLocaleString("en-NG")}</span>
                 </div>
               ))}
@@ -110,7 +110,7 @@ export default async function ReportsPage() {
             {reports.outstanding.byInvoice.map((inv) => (
               <div key={inv.id} className="flex justify-between rounded-[12px] border border-plum/10 px-4 py-2.5">
                 <span className="text-sm text-plum">{inv.invoiceNumber} • {inv.customer.name} • {inv.status}</span>
-                <span className="text-sm font-semibold text-plum">₦{Number(inv.total).toLocaleString("en-NG")}</span>
+                <span className="text-sm font-semibold text-plum">₦{inv.outstanding.toLocaleString("en-NG")}</span>
               </div>
             ))}
           </div>
