@@ -14,17 +14,13 @@ const registerSchema = z.object({
   phone: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.password !== data.confirmPassword) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["confirmPassword"],
-      message: "Passwords do not match",
-    });
+    ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: "Passwords do not match" });
   }
 });
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const rl = checkRateLimit(`register:${ip}`, LIMITS.auth);
+  const rl = await checkRateLimit(`register:${ip}`, LIMITS.register);
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many attempts, try again shortly" }, { status: 429, headers: rateLimitHeaders(rl.remaining, rl.resetAt) });
   }
@@ -45,23 +41,14 @@ export async function POST(req: NextRequest) {
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: { name, email: lowerEmail, password: hashed, phone: phone || null },
-    });
+    const user = await prisma.user.create({ data: { name, email: lowerEmail, password: hashed, phone: phone || null } });
 
     try {
       const token = await createEmailVerificationToken(user.id);
       await sendVerificationEmail({ to: user.email, name: user.name || "there", token });
     } catch (emailError) {
-      // Keep the unverified account so a transient email-provider failure does
-      // not discard the user's registration. They can use the resend flow once
-      // email delivery is configured/available.
       logError("register-email", emailError, { ip, userId: user.id });
-      return NextResponse.json({
-        error: "Your account was created, but we could not send the verification email. Please use the resend option.",
-        verificationRequired: true,
-        email: user.email,
-      }, { status: 503 });
+      return NextResponse.json({ error: "Your account was created, but we could not send the verification email. Please use the resend option.", verificationRequired: true, email: user.email }, { status: 503 });
     }
 
     return NextResponse.json({ id: user.id, email: user.email, verificationRequired: true }, { status: 201 });
