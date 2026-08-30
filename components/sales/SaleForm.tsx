@@ -93,7 +93,6 @@ export function SaleForm({
             <option value="CASH">Cash</option>
             <option value="BANK_TRANSFER">Bank Transfer</option>
             <option value="POS">POS</option>
-            <option value="PAYSTACK">Paystack</option>
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
