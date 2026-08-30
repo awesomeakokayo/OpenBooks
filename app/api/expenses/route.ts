@@ -1,54 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { recordExpense, listExpenses } from "@/lib/expenses/service";
 import { expenseCreateSchema } from "@/lib/validation/schemas";
 import { parseNigeriaDateInput } from "@/lib/dates/nigeria";
+import { userError } from "@/lib/security/error";
+
+function parsePage(value: string | null) { const n = Number(value ?? 1); return Number.isInteger(n) && n > 0 ? n : 1; }
+function parseLimit(value: string | null) { const n = Number(value ?? 25); return Number.isInteger(n) && n > 0 && n <= 100 ? n : 25; }
 
 export async function GET(req: NextRequest) {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const userId = (session.user as unknown as { id: string }).id;
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return userError("Unauthorized", 401);
   const businessId = req.nextUrl.searchParams.get("businessId");
-  if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
+  if (!businessId) return userError("businessId required", 400);
   try {
     await requireBusinessMember(userId, businessId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  const expenses = await listExpenses(businessId);
-  return NextResponse.json(expenses);
+    return Response.json(await listExpenses(businessId, { page: parsePage(req.nextUrl.searchParams.get("page")), limit: parseLimit(req.nextUrl.searchParams.get("limit")) }));
+  } catch { return userError("Could not load expenses", 500); }
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const userId = (session.user as unknown as { id: string }).id;
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return userError("Unauthorized", 401);
   const body = await req.json().catch(() => ({}));
   const parsed = expenseCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid expense" }, { status: 400 });
-  }
-  const data = parsed.data;
+  if (!parsed.success) return userError(parsed.error.issues[0]?.message || "Invalid expense", 400);
+  try { await requireBusinessMember(userId, parsed.data.businessId); } catch { return userError("Forbidden", 403); }
   try {
-    await requireBusinessMember(userId, data.businessId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  try {
-    const expenseDate = data.expenseDate ? parseNigeriaDateInput(data.expenseDate) : undefined;
-    const expense = await recordExpense({
-      businessId: data.businessId,
-      userId,
-      category: data.category,
-      amount: data.amount,
-      description: data.description,
-      paymentMethod: data.paymentMethod || undefined,
-      expenseDate,
-    });
-    return NextResponse.json(expense, { status: 201 });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Could not record expense";
-    return NextResponse.json({ error: msg }, { status: 400 });
-  }
+    const expense = await recordExpense({ ...parsed.data, userId, expenseDate: parsed.data.expenseDate ? parseNigeriaDateInput(parsed.data.expenseDate) : undefined, paymentMethod: parsed.data.paymentMethod || undefined });
+    return Response.json(expense, { status: 201 });
+  } catch { return userError("Could not record expense", 400); }
 }
