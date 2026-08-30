@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { requireBusinessMember } from "@/lib/security/tenant";
 import { recordExpense, listExpenses } from "@/lib/expenses/service";
+import { expenseCreateSchema } from "@/lib/validation/schemas";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -22,23 +23,26 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = (session.user as unknown as { id: string }).id;
-  const body = await req.json();
-  const { businessId, category, amount, description, paymentMethod, expenseDate } = body;
-  if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const parsed = expenseCreateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid expense" }, { status: 400 });
+  }
+  const data = parsed.data;
   try {
-    await requireBusinessMember(userId, businessId);
+    await requireBusinessMember(userId, data.businessId);
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   try {
     const expense = await recordExpense({
-      businessId,
+      businessId: data.businessId,
       userId,
-      category,
-      amount: Number(amount),
-      description,
-      paymentMethod,
-      expenseDate: expenseDate ? new Date(expenseDate) : undefined,
+      category: data.category,
+      amount: data.amount,
+      description: data.description,
+      paymentMethod: data.paymentMethod || undefined,
+      expenseDate: data.expenseDate ? new Date(data.expenseDate) : undefined,
     });
     return NextResponse.json(expense, { status: 201 });
   } catch (e: unknown) {
