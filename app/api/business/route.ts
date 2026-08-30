@@ -9,8 +9,6 @@ function sessionUserId(session: { user?: unknown } | null) {
   return (session?.user as { id?: string } | undefined)?.id;
 }
 
-const updateBusinessSchema = businessSchema.extend({ businessId: businessSchema.shape.name.optional() }).omit({ businessId: true });
-
 export async function GET() {
   const session = await auth();
   const userId = sessionUserId(session);
