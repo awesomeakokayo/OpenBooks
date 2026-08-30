@@ -38,7 +38,9 @@ export const authConfig: NextAuthConfig = {
     signIn: "/login",
     error: "/auth-error",
   },
-  session: { strategy: "jwt" },
+  // Keep sessions finite. A user who has not opened OpenBooks for 30 days
+  // must authenticate again. Explicit logout always ends the session earlier.
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" || account?.provider === "github") {
