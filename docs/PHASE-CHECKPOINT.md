@@ -1,7 +1,7 @@
 # OpenBooks NG — Current Build Checkpoint
 
 **Current phase:** Production audit and remediation
-**Implementation status:** Remediation in progress. Critical authorization, invoice-state, public-data, customer-balance, payment-method, write-input validation, role permissions, date semantics, and report-query fixes have begun. Full runtime/build verification is still pending operator run and CI/deployment checks.
+**Implementation status:** Remediation in progress. Critical authorization, invoice-state, public-data, customer-balance, payment-method, write-input validation, role permissions, date semantics, report-query, and financial-sequence fixes have begun. Full runtime/build verification is still pending operator run and CI/deployment checks.
 
 ## Latest remediation work completed
 - Added `docs/FULL-AUDIT-AND-REMEDIATION-PLAN.md` as the release gate and ordered implementation roadmap.
@@ -26,13 +26,15 @@
 - Reports now aggregate customer invoice/payment totals instead of issuing invoice/payment queries once per customer.
 - Reports outstanding-invoice records now expose actual outstanding amounts and dynamically show overdue status where applicable.
 - Reports page now displays the actual outstanding amount per invoice instead of the original invoice total.
+- Business schema now has per-business `invoiceSequence` and `receiptSequence` counters.
+- Invoice numbering now atomically increments the business sequence and skips invoice numbers already present in legacy data.
+- Receipt numbering now atomically increments the business sequence and skips receipt numbers already present in legacy data.
 
 ## Remaining critical remediation
 - Audit every remaining business-scoped mutation for direct object-reference access outside tenant scope.
 - Decide and enforce exact role policy for every OWNER/ADMIN/STAFF action across the application.
 - Standardize all API validation and error responses.
 - Resolve direct-sale versus invoice-payment double-counting risks with a documented transaction model and tests.
-- Replace invoice/receipt count+1 numbering with atomic business-scoped sequences.
 - Add pagination/cursors to all growing list endpoints.
 - Complete OAuth/account-linking and session security audit.
 - Complete production rate-limit configuration and trusted-proxy/IP review.
