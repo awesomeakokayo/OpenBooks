@@ -31,6 +31,8 @@
 - Receipt numbering now atomically increments the business sequence and skips receipt numbers already present in legacy data.
 - Added explicit financial invariant regression coverage for partial/final payments, failed/cancelled/refunded payments, and invoice payment caps.
 - Sales history now uses page-based pagination instead of rendering an unbounded merged transaction list in one request; the total money received summary is calculated independently from the current page.
+- Payment history page now uses stable page-based pagination with a fixed page size and total-page navigation instead of a legacy 50-record ceiling.
+- Payment-list service now accepts bounded `page`/`limit` arguments and returns pagination metadata for future API consumers.
 
 ## Remaining critical remediation
 - Audit every remaining business-scoped mutation for direct object-reference access outside tenant scope.
