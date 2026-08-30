@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { checkRateLimit, getClientIdentifier, getRateLimitForPath } from "@/lib/security/rateLimit";
+import { checkRateLimit, getClientIdentifier, getRateLimitForPath, getRateLimitScope } from "@/lib/security/rateLimit";
 
 export default auth(async (req) => {
   const isAuth = !!req.auth;
@@ -13,10 +13,11 @@ export default auth(async (req) => {
   // Rate-limit API and public invoice traffic before application handlers run.
   // Sensitive authentication/recovery endpoints use tighter limits.
   const limit = getRateLimitForPath(pathname);
-  if (limit) {
+  const scope = getRateLimitScope(pathname);
+  if (limit && scope) {
     const ip = getClientIdentifier(req);
     const identity = req.auth?.user?.id ? `user:${req.auth.user.id}` : `ip:${ip}`;
-    const result = await checkRateLimit(`${identity}:${pathname}`, limit);
+    const result = await checkRateLimit(`${identity}:${scope}`, limit);
 
     if (!result.allowed) {
       return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
