@@ -85,6 +85,21 @@ main > div.sticky nav a:hover {
   color: var(--color-white) !important;
 }
 
+/* Mobile landing-page menu: keep the drawer explicitly plum with white labels. */
+@media (max-width: 639px) {
+  main > div.sticky > div[class*="sm:hidden"] {
+    background: var(--color-plum) !important;
+  }
+
+  main > div.sticky > div[class*="sm:hidden"] a {
+    color: var(--color-white) !important;
+  }
+
+  main > div.sticky > div[class*="sm:hidden"] a:hover {
+    color: var(--color-white) !important;
+  }
+}
+
 /* Terracotta is a filled action surface; never allow a terracotta-on-terracotta label. */
 .bg-terracotta.text-terracotta,
 .bg-terracotta .text-terracotta,
