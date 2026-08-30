@@ -34,7 +34,15 @@ export async function createBusiness(params: {
   const parsedPayments = paymentSettingsSchema.safeParse(paymentSettings);
   if (!parsedPayments.success) throw new Error(parsedPayments.error.issues[0]?.message || "Invalid payment settings");
 
+  const existingMembership = await prisma.businessMember.findFirst({ where: { userId: params.userId }, select: { id: true } });
+  if (existingMembership) throw new Error("You already have an OpenBooks business workspace");
+
   const business = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Re-check inside the transaction so concurrent create requests cannot
+    // silently create multiple V1 workspaces for one user.
+    const existing = await tx.businessMember.findFirst({ where: { userId: params.userId }, select: { id: true } });
+    if (existing) throw new Error("You already have an OpenBooks business workspace");
+
     const b = await tx.business.create({
       data: {
         ownerId: params.userId,
@@ -61,17 +69,14 @@ export async function createBusiness(params: {
       },
     });
     return b;
-  });
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
   await logAuditEvent({ businessId: business.id, userId: params.userId, action: "BUSINESS_CREATED", entityType: "Business", entityId: business.id });
   return business;
 }
 
 export async function getBusinessesForUser(userId: string) {
-  const members = await prisma.businessMember.findMany({
-    where: { userId },
-    include: { business: { include: { paymentSetting: true } } },
-  });
+  const members = await prisma.businessMember.findMany({ where: { userId }, include: { business: { include: { paymentSetting: true } } } });
   return members.map((member) => member.business);
 }
 
