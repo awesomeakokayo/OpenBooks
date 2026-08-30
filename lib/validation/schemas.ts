@@ -30,25 +30,56 @@ export const paymentSettingsSchema = z
   });
 
 export const customerSchema = z.object({
-  name: z.string().min(2).max(100),
-  phone: z.string().min(8).max(20),
-  email: z.string().email().optional().or(z.literal("")),
-  notes: z.string().max(500).optional(),
+  name: z.string().trim().min(2).max(100),
+  phone: z.string().trim().min(8).max(20),
+  email: z.string().trim().email().optional().or(z.literal("")),
+  notes: z.string().trim().max(500).optional(),
 });
 
-export const moneySchema = z.number().positive("Amount must be greater than 0");
+export const moneySchema = z.number().finite().positive("Amount must be greater than 0");
 
 export const invoiceItemSchema = z.object({
-  description: z.string().min(1),
-  quantity: z.number().positive(),
-  unitPrice: z.number().positive(),
+  description: z.string().trim().min(1).max(500),
+  quantity: z.number().finite().positive(),
+  unitPrice: z.number().finite().positive(),
 });
 
 export const invoiceCreateSchema = z.object({
   customerId: z.string().min(1),
   items: z.array(invoiceItemSchema).min(1),
-  discount: z.number().min(0).default(0),
-  dueDate: z.string().optional(),
+  discount: z.number().finite().min(0).default(0),
+  dueDate: z.string().datetime().optional().or(z.literal("")),
   notes: z.string().max(1000).optional(),
-  paymentMethods: z.array(z.enum(["CASH", "BANK_TRANSFER", "POS", "PAYSTACK", "OTHER", "ONLINE"])).optional(),
+  paymentMethods: z.array(z.enum(["CASH", "BANK_TRANSFER", "POS"])).optional(),
+});
+
+export const paymentCreateSchema = z.object({
+  businessId: z.string().min(1),
+  customerId: z.string().min(1),
+  invoiceId: z.string().min(1).optional().nullable(),
+  amount: moneySchema,
+  method: z.enum(["CASH", "BANK_TRANSFER", "POS"]),
+  reference: z.string().trim().max(200).optional(),
+  notes: z.string().trim().max(1000).optional(),
+});
+
+export const saleCreateSchema = z.object({
+  businessId: z.string().min(1),
+  customerId: z.string().min(1).optional().nullable(),
+  description: z.string().trim().min(1).max(500),
+  quantity: z.number().finite().positive(),
+  unitPrice: moneySchema,
+  discount: z.number().finite().min(0).default(0),
+  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "POS"]).optional().nullable(),
+  saleDate: z.string().datetime().optional(),
+  notes: z.string().trim().max(1000).optional(),
+});
+
+export const expenseCreateSchema = z.object({
+  businessId: z.string().min(1),
+  category: z.enum(["TRANSPORT", "MATERIALS", "ELECTRICITY", "RENT", "DATA", "SUPPLIES", "OTHER"]),
+  amount: moneySchema,
+  description: z.string().trim().max(1000).optional(),
+  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "POS"]).optional().nullable(),
+  expenseDate: z.string().datetime().optional(),
 });
