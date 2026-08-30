@@ -3,7 +3,7 @@ import { generatePublicToken, calculateInvoiceTotal, calculateLineTotal } from "
 import { logAuditEvent } from "@/lib/audit/logger";
 import type { InvoiceStatus, PaymentMethod, Prisma } from "@prisma/client";
 
-export const VALID_TRANSITIONS: Record<string, string[]> = {
+export const VALID_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
   DRAFT: ["SENT", "CANCELLED"],
   SENT: ["VIEWED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"],
   VIEWED: ["PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"],
@@ -13,28 +13,15 @@ export const VALID_TRANSITIONS: Record<string, string[]> = {
   CANCELLED: [],
 };
 
-export function canTransition(from: string, to: string): boolean {
+export function canTransition(from: InvoiceStatus, to: InvoiceStatus): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-/**
- * Atomically advances the per-business invoice sequence and skips numbers
- * already present in legacy data. The increment is atomic, so concurrent
- * invoice creation requests cannot receive the same sequence value.
- */
 export async function nextInvoiceNumber(tx: Prisma.TransactionClient, businessId: string): Promise<string> {
   for (;;) {
-    const business = await tx.business.update({
-      where: { id: businessId },
-      data: { invoiceSequence: { increment: 1 } },
-      select: { invoiceSequence: true },
-    });
-
+    const business = await tx.business.update({ where: { id: businessId }, data: { invoiceSequence: { increment: 1 } }, select: { invoiceSequence: true } });
     const invoiceNumber = `INV-${String(business.invoiceSequence).padStart(6, "0")}`;
-    const exists = await tx.invoice.findUnique({
-      where: { businessId_invoiceNumber: { businessId, invoiceNumber } },
-      select: { id: true },
-    });
+    const exists = await tx.invoice.findUnique({ where: { businessId_invoiceNumber: { businessId, invoiceNumber } }, select: { id: true } });
     if (!exists) return invoiceNumber;
   }
 }
@@ -58,11 +45,8 @@ export async function createInvoice(params: {
     if (!Number.isFinite(it.unitPrice) || it.unitPrice <= 0) throw new Error("Unit price must be > 0");
   });
 
-  const customer = await prisma.customer.findFirst({
-    where: { id: params.customerId, businessId: params.businessId },
-  });
+  const customer = await prisma.customer.findFirst({ where: { id: params.customerId, businessId: params.businessId } });
   if (!customer) throw new Error("Customer not found in this business");
-
   const setting = await prisma.businessPaymentSetting.findUnique({ where: { businessId: params.businessId } });
   if (!setting) throw new Error("Payment settings are not configured for this business");
 
@@ -72,28 +56,18 @@ export async function createInvoice(params: {
   if (setting.posEnabled) enabledByBusiness.add("POS");
 
   let methods = params.paymentMethods;
-  if (!methods || methods.length === 0) {
-    methods = V1_PAYMENT_METHODS.filter((method) => enabledByBusiness.has(method));
-  }
-
+  if (!methods || methods.length === 0) methods = V1_PAYMENT_METHODS.filter((method) => enabledByBusiness.has(method));
   if (!methods.length) throw new Error("Enable at least one payment method before creating an invoice");
-  if (methods.some((method) => !V1_PAYMENT_METHODS.includes(method) || !enabledByBusiness.has(method))) {
-    throw new Error("Invoice contains a payment method that is not enabled for this business");
-  }
-
-  if (methods.includes("BANK_TRANSFER")) {
-    if (!setting.bankTransferEnabled || !setting.bankName || !setting.accountName || !setting.accountNumber) {
-      throw new Error("Complete bank transfer details before enabling bank transfer on an invoice");
-    }
-  }
+  if (methods.some((method) => !V1_PAYMENT_METHODS.includes(method) || !enabledByBusiness.has(method))) throw new Error("Invoice contains a payment method that is not enabled for this business");
+  if (methods.includes("BANK_TRANSFER") && (!setting.bankTransferEnabled || !setting.bankName || !setting.accountName || !setting.accountNumber)) throw new Error("Complete bank transfer details before enabling bank transfer on an invoice");
 
   const discount = Number.isFinite(params.discount ?? 0) ? params.discount ?? 0 : 0;
   const { subtotal, total } = calculateInvoiceTotal(params.items, discount);
+  if (discount > subtotal) throw new Error("Discount cannot exceed invoice subtotal");
   const publicToken = generatePublicToken();
 
   const invoice = await prisma.$transaction(async (tx) => {
     const invoiceNumber = await nextInvoiceNumber(tx, params.businessId);
-
     return tx.invoice.create({
       data: {
         businessId: params.businessId,
@@ -106,30 +80,15 @@ export async function createInvoice(params: {
         issueDate: new Date(),
         dueDate: params.dueDate ? new Date(params.dueDate) : null,
         notes: params.notes?.trim() || null,
-        status: "DRAFT" as InvoiceStatus,
-        items: {
-          create: params.items.map((it) => ({
-            description: it.description.trim(),
-            quantity: it.quantity,
-            unitPrice: it.unitPrice,
-            lineTotal: calculateLineTotal(it.quantity, it.unitPrice),
-          })),
-        },
-        paymentMethods: { create: methods.map((m) => ({ method: m })) },
+        status: "DRAFT",
+        items: { create: params.items.map((it) => ({ description: it.description.trim(), quantity: it.quantity, unitPrice: it.unitPrice, lineTotal: calculateLineTotal(it.quantity, it.unitPrice) })) },
+        paymentMethods: { create: methods.map((method) => ({ method })) },
       },
       include: { items: true, paymentMethods: true, customer: true },
     });
   });
 
-  await logAuditEvent({
-    businessId: params.businessId,
-    userId: params.userId,
-    action: "INVOICE_CREATED",
-    entityType: "Invoice",
-    entityId: invoice.id,
-    metadata: { invoiceNumber: invoice.invoiceNumber, total, paymentMethods: methods },
-  });
-
+  await logAuditEvent({ businessId: params.businessId, userId: params.userId, action: "INVOICE_CREATED", entityType: "Invoice", entityId: invoice.id, metadata: { invoiceNumber: invoice.invoiceNumber, total, paymentMethods: methods } });
   return invoice;
 }
 
@@ -141,14 +100,5 @@ export async function transitionInvoiceStatus(invoiceId: string, to: InvoiceStat
 }
 
 export async function getInvoiceByPublicToken(token: string) {
-  return prisma.invoice.findUnique({
-    where: { publicToken: token },
-    include: {
-      business: { include: { paymentSetting: true } },
-      customer: true,
-      items: true,
-      paymentMethods: true,
-      payments: { where: { status: "SUCCESS" } },
-    },
-  });
+  return prisma.invoice.findUnique({ where: { publicToken: token }, include: { business: { include: { paymentSetting: true } }, customer: true, items: true, paymentMethods: true, payments: { where: { status: "SUCCESS" } } } });
 }
