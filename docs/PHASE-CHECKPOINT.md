@@ -54,16 +54,25 @@
 - Workspace logout is available on desktop and mobile navigation, invalidates the Auth.js session through `signOut`, redirects to the public landing page, and clears browser-side OpenBooks navigation/UI state where storage is available.
 - Credentials sessions have an explicit 30-day maximum lifetime, requiring re-authentication after prolonged inactivity.
 - Dashboard activity and month-summary cards explicitly use the full available mobile width and are centered within the workspace content column.
+- Rate limiting is implemented at the application proxy boundary for API and public-invoice traffic.
+- Rate limiting uses shared Upstash Redis state when configured, so Vercel and Pxxl can enforce the same counters across separate instances.
+- Rate limiting has stricter presets for registration, email verification, password reset and authentication traffic, plus a general API budget and public-invoice budget.
+- Rate-limit responses use HTTP 429 with `Retry-After` and standard/custom rate-limit headers.
+- An in-memory fallback remains available for local development or temporary Redis failure; production should configure Upstash for distributed enforcement.
+- Rate-limiting strategy and operations guidance added at `docs/RATE-LIMITING.md`.
+- Rate-limiting unit coverage added at `tests/security/rateLimit.test.ts`.
 
 ## Remaining before Phase 1 can be declared release-ready
 - Configure and test Resend with a real verified sending domain/API key.
 - Configure and test Google OAuth with the documented callback URL(s) for Vercel and Pxxl/custom production domain.
 - Configure and test GitHub OAuth with the documented callback URL(s) for Vercel and Pxxl/custom production domain.
+- Configure Upstash Redis and add its REST URL/token to both Vercel and Pxxl production environments.
 - Run all Phase 1 exit tests in `docs/PHASE-1-EXIT-TESTS.md`.
+- Run the new rate-limit tests and exercise the 429 path in a deployed environment.
 - Perform final accessibility/UX review of authentication and onboarding screens.
 - Verify that protected business APIs consistently enforce tenant membership and do not leak records across businesses.
 - Complete a focused manual-payment audit before Phase 2 relies on the payment model.
-- Verify the shared workspace shell, dashboard payment metrics, reports payment metrics, editable business settings, invoice bank details, PDF output, registration flow, mobile landing navigation, logout/session handling and landing-page authentication redirect in both Vercel and Pxxl deployments.
+- Verify the shared workspace shell, dashboard payment metrics, reports payment metrics, editable business settings, invoice bank details, PDF output, registration flow, mobile landing navigation, logout/session handling, landing-page authentication redirect and rate limiting in both Vercel and Pxxl deployments.
 
 ## Production issues addressed in this checkpoint
 - Production previously failed with `TypeError: Invalid URL` because a production URL value lacked the `https://` protocol; the operator corrected `AUTH_URL`/`APP_URL` accordingly.
@@ -90,9 +99,11 @@
 - The V1 deployment target is provider-agnostic: the same `main` branch should build on Vercel and Pxxl. Do not introduce provider-specific application behavior unless explicitly documented and required.
 - Logout clears browser storage where possible, but the actual authentication session is controlled by the Auth.js session cookie and is invalidated by `signOut`.
 - The 30-day session lifetime is an explicit security/UX compromise for V1; it can be shortened or adjusted later without changing the logout architecture.
+- Rate limiting is provider-agnostic at the application layer and uses Upstash Redis over HTTPS so it works in serverless/edge environments without a persistent TCP connection. The Upstash free Redis tier currently includes 500K commands/month, but production usage must still be monitored against that allowance. citeturn121805search0
+- Application-level rate limiting reduces endpoint abuse but is not a full DDoS/WAF solution; production should also use the hosting provider's edge security controls as traffic grows.
 
 ## Next task
-Finish the remaining Phase 1 runtime verification tasks. Do not start Phase 2 customers/sales until identity, onboarding, payment settings, dashboard payment accounting, authenticated navigation, logout/session handling, and cross-host production builds have been exercised end-to-end and any regressions are corrected.
+Finish the remaining Phase 1 runtime verification tasks. Do not start Phase 2 customers/sales until identity, onboarding, payment settings, dashboard payment accounting, authenticated navigation, logout/session handling, rate limiting and cross-host production builds have been exercised end-to-end and any regressions are corrected.
 
 ## Recovery rule
 If later work diverges from the V1 implementation plan, stop feature work, compare the affected code with `docs/V1-IMPLEMENTATION-PLAN.md`, correct the deviation, test the corrected behaviour, and update this checkpoint before continuing.
