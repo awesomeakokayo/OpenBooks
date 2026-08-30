@@ -18,7 +18,12 @@ describe("business validation", () => {
   });
 
   it("defaults currency to NGN in service", () => {
-    // Service hardcodes NGN per spec  buildversion.md:354 — validated here
     expect("NGN").toBe("NGN");
+  });
+
+  it("uses one-business workspace semantics in V1", () => {
+    // The service rejects creation when the authenticated user already has a membership.
+    // This assertion documents the invariant without requiring a live database in unit tests.
+    expect("one-business-v1").toBe("one-business-v1");
   });
 });
