@@ -32,17 +32,17 @@
 - Vercel build runs `prisma generate && prisma db push` before `next build` so the production database is synchronized with the current Prisma schema, including Auth.js tables required for OAuth.
 - Shared authenticated workspace shell added so sidebar/header navigation persists across dashboard, customers, invoices, sales, payments, receipts, expenses, reports and business-settings routes.
 - Workspace navigation determines active state from the current pathname and includes a complete mobile drawer.
-- Workspace navigation now preserves its own scroll position between workspace route navigations so lower items such as Reports and Settings do not disappear after navigation.
+- Workspace navigation preserves its own scroll position between workspace route navigations so lower items such as Reports and Settings do not disappear after navigation.
 - Workspace header spacing was increased and kept visible as part of the shared shell.
 - Invoice creation supports inline customer creation without leaving the invoice workflow; the new customer is automatically added to the selector and selected for the invoice.
 - Inline customer creation reuses the existing tenant-protected customer API and does not introduce a duplicate customer model or endpoint.
 - Dashboard sales metrics include successful recorded payments as well as direct sales, including standalone payments not attached to an invoice.
 - Dashboard invoice outstanding calculations use only invoice-linked payments, preventing standalone payments from incorrectly reducing invoice balances.
 - Dashboard recent activity includes recorded payments and shows the payment method where applicable.
-- Business profile information can now be edited from Business Settings through a tenant-protected PATCH endpoint and reusable form.
-- V1 expense payment options no longer expose Paystack and the filled expense action buttons explicitly use readable white text.
+- Business profile information can be edited from Business Settings through a tenant-protected PATCH endpoint and reusable form.
+- V1 expense payment options no longer expose Paystack and filled expense action buttons explicitly use readable white text.
 - Guide navigation is account-aware for authenticated business users and directs them back to the dashboard instead of the public start flow.
-- Authenticated users visiting the public landing page `/` are redirected to `/dashboard`; authenticated users visiting `/login` are also redirected to `/dashboard`, keeping the landing page as an entrance rather than the authenticated home.
+- Authenticated users visiting `/` are redirected to `/dashboard`; authenticated users visiting `/login` are also redirected to `/dashboard`, keeping the landing page as an entrance rather than the authenticated home.
 - Public invoices display configured Bank Transfer details: bank name, account name and account number.
 - Downloadable/printable invoice output includes the same Bank Transfer details when Bank Transfer is enabled.
 - Public invoice and internal invoice payment-method rendering filters out deferred Paystack/online methods from the V1 user-facing surface.
@@ -51,6 +51,9 @@
 - Reports sales totals include successful recorded payments as well as direct sales.
 - Invoice bank-detail rendering uses an explicit null-safe `bankDetails` object so strict TypeScript builds can compile on both Vercel and Pxxl when business payment settings are absent.
 - Landing-page mobile navigation explicitly uses the Plum background and white text for all menu links and actions.
+- Workspace logout is available on desktop and mobile navigation, invalidates the Auth.js session through `signOut`, redirects to the public landing page, and clears browser-side OpenBooks navigation/UI state where storage is available.
+- Credentials sessions have an explicit 30-day maximum lifetime, requiring re-authentication after prolonged inactivity.
+- Dashboard activity and month-summary cards explicitly use the full available mobile width and are centered within the workspace content column.
 
 ## Remaining before Phase 1 can be declared release-ready
 - Configure and test Resend with a real verified sending domain/API key.
@@ -60,7 +63,7 @@
 - Perform final accessibility/UX review of authentication and onboarding screens.
 - Verify that protected business APIs consistently enforce tenant membership and do not leak records across businesses.
 - Complete a focused manual-payment audit before Phase 2 relies on the payment model.
-- Verify the shared workspace shell, dashboard payment metrics, reports payment metrics, editable business settings, invoice bank details, PDF output, registration flow, mobile landing navigation and landing-page authentication redirect in both Vercel and Pxxl deployments.
+- Verify the shared workspace shell, dashboard payment metrics, reports payment metrics, editable business settings, invoice bank details, PDF output, registration flow, mobile landing navigation, logout/session handling and landing-page authentication redirect in both Vercel and Pxxl deployments.
 
 ## Production issues addressed in this checkpoint
 - Production previously failed with `TypeError: Invalid URL` because a production URL value lacked the `https://` protocol; the operator corrected `AUTH_URL`/`APP_URL` accordingly.
@@ -85,9 +88,11 @@
 - The shared workspace shell is intentionally implemented through reusable components plus route-level layouts rather than moving every business page into a route group. This keeps the existing URL structure stable while giving all authenticated business sections a consistent shell.
 - Dashboard "Sales" means recorded money received/recorded for the selected period: direct sales plus successful payments. Invoice outstanding is calculated separately from invoice-linked payments only.
 - The V1 deployment target is provider-agnostic: the same `main` branch should build on Vercel and Pxxl. Do not introduce provider-specific application behavior unless explicitly documented and required.
+- Logout clears browser storage where possible, but the actual authentication session is controlled by the Auth.js session cookie and is invalidated by `signOut`.
+- The 30-day session lifetime is an explicit security/UX compromise for V1; it can be shortened or adjusted later without changing the logout architecture.
 
 ## Next task
-Finish the remaining Phase 1 runtime verification tasks. Do not start Phase 2 customers/sales until identity, onboarding, payment settings, dashboard payment accounting, authenticated navigation, and cross-host production builds have been exercised end-to-end and any regressions are corrected.
+Finish the remaining Phase 1 runtime verification tasks. Do not start Phase 2 customers/sales until identity, onboarding, payment settings, dashboard payment accounting, authenticated navigation, logout/session handling, and cross-host production builds have been exercised end-to-end and any regressions are corrected.
 
 ## Recovery rule
 If later work diverges from the V1 implementation plan, stop feature work, compare the affected code with `docs/V1-IMPLEMENTATION-PLAN.md`, correct the deviation, test the corrected behaviour, and update this checkpoint before continuing.
