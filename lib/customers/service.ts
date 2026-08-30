@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { customerSchema } from "@/lib/validation/schemas";
 import { logAuditEvent } from "@/lib/audit/logger";
+import { roundMoney } from "@/lib/invoices/utils";
 
 export async function createCustomer(params: {
   businessId: string;
@@ -62,8 +63,9 @@ export async function getCustomer(businessId: string, customerId: string) {
 }
 
 /**
- * Derived outstanding = sum(invoice totals) - sum(SUCCESS payments)
- * Records are authoritative, not cached balance.
+ * Outstanding debt is derived only from invoice totals minus SUCCESS payments
+ * attached to invoices for this customer. Standalone payments cannot reduce
+ * an invoice balance.
  */
 export async function calculateCustomerOutstanding(businessId: string, customerId: string) {
   const [invoiceAgg, paymentAgg] = await Promise.all([
@@ -72,13 +74,13 @@ export async function calculateCustomerOutstanding(businessId: string, customerI
       _sum: { total: true },
     }),
     prisma.payment.aggregate({
-      where: { businessId, customerId, status: "SUCCESS" },
+      where: { businessId, customerId, invoiceId: { not: null }, status: "SUCCESS" },
       _sum: { amount: true },
     }),
   ]);
-  const totalInvoiced = Number(invoiceAgg._sum.total ?? 0);
-  const totalPaid = Number(paymentAgg._sum.amount ?? 0);
-  const outstanding = Math.max(0, totalInvoiced - totalPaid);
+  const totalInvoiced = roundMoney(Number(invoiceAgg._sum.total ?? 0));
+  const totalPaid = roundMoney(Number(paymentAgg._sum.amount ?? 0));
+  const outstanding = Math.max(0, roundMoney(totalInvoiced - totalPaid));
   return { totalInvoiced, totalPaid, outstanding };
 }
 
@@ -94,7 +96,7 @@ export async function getCustomerStats(businessId: string, customerId: string) {
   ]);
   return {
     ...outstanding,
-    totalSales: Number(salesAgg._sum.totalAmount ?? 0),
+    totalSales: roundMoney(Number(salesAgg._sum.totalAmount ?? 0)),
     salesCount: salesAgg._count,
     invoiceCount,
   };
