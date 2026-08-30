@@ -1,9 +1,15 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db/prisma";
+import prisma from "@/lib/db/prisma";
 import Link from "next/link";
 
-export default async function SalesPage() {
+const PAGE_SIZE = 25;
+
+type SalesPageProps = {
+  searchParams: Promise<{ page?: string }>;
+};
+
+export default async function SalesPage({ searchParams }: SalesPageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const userId = (session.user as unknown as { id: string }).id;
@@ -11,24 +17,37 @@ export default async function SalesPage() {
   if (!member) redirect("/create-business");
   const businessId = member.business.id;
 
-  // This page is the complete money-received history. Direct sales live in
-  // Sale, while invoice/manual payments live in Payment, so both sources must
-  // be shown here. The dashboard's Recent Activity is only a preview.
-  const [sales, payments] = await Promise.all([
+  const params = await searchParams;
+  const parsedPage = Number.parseInt(params.page ?? "1", 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const fetchLimit = page * PAGE_SIZE + 1;
+
+  const [sales, payments, salesCount, paymentsCount, totalSalesAgg, totalPaymentsAgg] = await Promise.all([
     prisma.sale.findMany({
       where: { businessId },
       include: { customer: true },
+      orderBy: { saleDate: "desc" },
+      take: fetchLimit,
     }),
     prisma.payment.findMany({
       where: { businessId, status: "SUCCESS" },
       include: { customer: true, invoice: true },
+      orderBy: { createdAt: "desc" },
+      take: fetchLimit,
     }),
+    prisma.sale.count({ where: { businessId } }),
+    prisma.payment.count({ where: { businessId, status: "SUCCESS" } }),
+    prisma.sale.aggregate({ where: { businessId }, _sum: { totalAmount: true } }),
+    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS" }, _sum: { amount: true } }),
   ]);
 
-  const transactions = [
+  // Sales is a combined view over two financial event sources. Fetch enough
+  // records from each source to build the requested merged page without the
+  // previous arbitrary 50-record ceiling.
+  const allTransactions = [
     ...sales.map((sale) => ({
       id: `sale:${sale.id}`,
-      date: sale.createdAt,
+      date: sale.saleDate,
       description: sale.description,
       customer: sale.customer?.name ?? "Walk-in",
       method: sale.paymentMethod ?? "—",
@@ -48,7 +67,11 @@ export default async function SalesPage() {
     })),
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
-  const total = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+  const start = (page - 1) * PAGE_SIZE;
+  const transactions = allTransactions.slice(start, start + PAGE_SIZE);
+  const totalCount = salesCount + paymentsCount;
+  const hasNextPage = page * PAGE_SIZE < totalCount;
+  const total = Number(totalSalesAgg._sum.totalAmount ?? 0) + Number(totalPaymentsAgg._sum.amount ?? 0);
   const money = (value: number) => `₦${value.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
@@ -56,7 +79,7 @@ export default async function SalesPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl font-bold text-plum">Sales</h1>
-          <p className="text-sm text-plum/60">{transactions.length} recorded transactions</p>
+          <p className="text-sm text-plum/60">{totalCount} recorded transactions</p>
         </div>
         <Link href="/sales/new" className="inline-flex h-11 items-center justify-center rounded-[12px] bg-terracotta px-6 text-sm font-semibold text-white hover:bg-terracotta/90">
           + Record Sale
@@ -78,19 +101,35 @@ export default async function SalesPage() {
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          {transactions.map((transaction) => (
-            <div key={transaction.id} className="flex items-center justify-between gap-4 rounded-[16px] border border-plum/10 bg-white px-5 py-4">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-plum">{transaction.description}</p>
-                <p className="mt-1 text-xs text-plum/50">
-                  {transaction.customer} • {transaction.method.replaceAll("_", " ")} • {new Date(transaction.date).toLocaleDateString("en-NG")} • {transaction.type}
-                </p>
+        <>
+          <div className="flex flex-col gap-2">
+            {transactions.map((transaction) => (
+              <div key={transaction.id} className="flex items-center justify-between gap-4 rounded-[16px] border border-plum/10 bg-white px-5 py-4">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-plum">{transaction.description}</p>
+                  <p className="mt-1 text-xs text-plum/50">
+                    {transaction.customer} • {transaction.method.replaceAll("_", " ")} • {new Date(transaction.date).toLocaleDateString("en-NG")} • {transaction.type}
+                  </p>
+                </div>
+                <p className="shrink-0 text-sm font-bold text-plum">{money(transaction.amount)}</p>
               </div>
-              <p className="shrink-0 text-sm font-bold text-plum">{money(transaction.amount)}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-center gap-3 pt-2">
+            {page > 1 ? (
+              <Link href={`/sales?page=${page - 1}`} className="inline-flex h-10 items-center rounded-xl border border-plum/10 bg-white px-4 text-sm font-semibold text-plum hover:bg-pale-sage">
+                Previous
+              </Link>
+            ) : null}
+            <span className="text-xs font-semibold text-plum/50">Page {page}</span>
+            {hasNextPage ? (
+              <Link href={`/sales?page=${page + 1}`} className="inline-flex h-10 items-center rounded-xl border border-plum/10 bg-white px-4 text-sm font-semibold text-plum hover:bg-pale-sage">
+                Next
+              </Link>
+            ) : null}
+          </div>
+        </>
       )}
     </div>
   );
