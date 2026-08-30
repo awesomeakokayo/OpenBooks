@@ -38,7 +38,6 @@ export async function recordSale(params: {
   if (params.paymentMethod) {
     const setting = await prisma.businessPaymentSetting.findUnique({ where: { businessId: params.businessId } });
     if (!setting) throw new Error("Payment settings are not configured for this business");
-
     const methodEnabled =
       (params.paymentMethod === "CASH" && setting.cashEnabled) ||
       (params.paymentMethod === "BANK_TRANSFER" && setting.bankTransferEnabled) ||
@@ -61,23 +60,17 @@ export async function recordSale(params: {
     },
   });
 
-  await logAuditEvent({
-    businessId: params.businessId,
-    userId: params.userId,
-    action: "SALE_RECORDED",
-    entityType: "Sale",
-    entityId: sale.id,
-    metadata: { totalAmount },
-  });
-
+  await logAuditEvent({ businessId: params.businessId, userId: params.userId, action: "SALE_RECORDED", entityType: "Sale", entityId: sale.id, metadata: { totalAmount } });
   return sale;
 }
 
-export async function listSales(businessId: string) {
-  return prisma.sale.findMany({
-    where: { businessId },
-    include: { customer: true },
-    orderBy: [{ saleDate: "desc" }, { id: "desc" }],
-    take: 50,
-  });
+export async function listSales(businessId: string, options: { page?: number; limit?: number } = {}) {
+  const page = Number.isInteger(options.page) && (options.page ?? 1) > 0 ? options.page! : 1;
+  const limit = Number.isInteger(options.limit) && (options.limit ?? 25) > 0 && (options.limit ?? 25) <= 100 ? options.limit! : 25;
+  const where = { businessId };
+  const [items, total] = await Promise.all([
+    prisma.sale.findMany({ where, include: { customer: true }, orderBy: [{ saleDate: "desc" }, { id: "desc" }], skip: (page - 1) * limit, take: limit }),
+    prisma.sale.count({ where }),
+  ]);
+  return { items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) };
 }
