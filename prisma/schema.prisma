@@ -72,11 +72,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
-  businesses Business[]
-  memberships BusinessMember[]
-  auditEvents AuditEvent[]
+  accounts     Account[]
+  sessions     Session[]
+  businesses   Business[]
+  memberships  BusinessMember[]
+  auditEvents  AuditEvent[] @relation("UserAuditEvents")
 
   @@map("users")
 }
@@ -94,7 +94,9 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerAccountId])
   @@index([userId])
   @@map("accounts")
@@ -105,7 +107,9 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@map("sessions")
 }
@@ -114,6 +118,7 @@ model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
+
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
@@ -375,6 +380,7 @@ model AuditEvent {
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
   userId     String?
+  user       User?     @relation("UserAuditEvents", fields: [userId], references: [id], onDelete: SetNull)
   action     String
   entityType String
   entityId   String?
