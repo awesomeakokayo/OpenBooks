@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
 import { z } from "zod";
 import { checkRateLimit, LIMITS, rateLimitHeaders } from "@/lib/security/rateLimit";
-import { logError, requestId, userError } from "@/lib/security/error";
+import { logError, userError } from "@/lib/security/error";
 import { createEmailVerificationToken, sendVerificationEmail } from "@/lib/email/verification";
 
 const registerSchema = z.object({
@@ -30,7 +30,32 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return userError(parsed.error.issues[0]?.message || "Please check your information", 400);
     const { name, email, password, phone } = parsed.data;
     const lowerEmail = email.toLowerCase().trim();
-    if (await prisma.user.findUnique({ where: { email: lowerEmail } })) return userError("Email already registered. Sign in or resend your verification email.", 409);
+    const existingUser = await prisma.user.findUnique({ where: { email: lowerEmail } });
+
+    if (existingUser) {
+      if (!existingUser.emailVerified && existingUser.email) {
+        try {
+          const token = await createEmailVerificationToken(existingUser.id);
+          await sendVerificationEmail({ to: existingUser.email, name: existingUser.name || name || "there", token });
+          return NextResponse.json({
+            id: existingUser.id,
+            email: existingUser.email,
+            verificationRequired: true,
+            resent: true,
+          });
+        } catch (emailError) {
+          const id = logError("register-existing-user-email", emailError, { ip, userId: existingUser.id });
+          return NextResponse.json({
+            error: "This email already has an account that still needs verification. We could not send a new verification email. Please use the resend option on the verification or sign-in page.",
+            verificationRequired: true,
+            email: existingUser.email,
+            requestId: id,
+          }, { status: 503, headers: { "X-Request-ID": id, "Cache-Control": "no-store" } });
+        }
+      }
+
+      return userError("Email already registered. Sign in to continue.", 409);
+    }
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({ data: { name, email: lowerEmail, password: hashed, phone: phone || null } });
