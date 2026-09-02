@@ -131,7 +131,7 @@ main > div.sticky nav a:hover {
   color: var(--color-white) !important;
 }
 
-/* Plum is a filled action surface; never allow plum-on-plum */
+/* Plum is a filled action surface; never allow plum-on-plum labels. */
 .bg-plum.text-plum,
 .bg-plum .text-plum,
 .bg-\[\#503047\].text-\[\#503047\],
@@ -140,6 +140,44 @@ main > div.sticky nav a:hover {
 .bg-\[\#503047\] .text-plum,
 .bg-plum.text-\[\#503047\],
 .bg-plum .text-\[\#503047\] {
+  color: var(--color-white) !important;
+}
+
+/* Filled brand buttons and action links are white-on-plum/terracotta even on hover.
+   This also protects links from the generic `a { color: inherit; }` base rule. */
+a.bg-plum,
+button.bg-plum,
+a.bg-terracotta,
+button.bg-terracotta,
+a.bg-\[\#503047\],
+button.bg-\[\#503047\],
+a.bg-\[\#C05746\],
+button.bg-\[\#C05746\],
+a.bg-\[\#c05746\],
+button.bg-\[\#c05746\] {
+  color: var(--color-white) !important;
+}
+
+a.bg-plum:hover,
+button.bg-plum:hover,
+a.bg-plum:focus-visible,
+button.bg-plum:focus-visible,
+a.bg-terracotta:hover,
+button.bg-terracotta:hover,
+a.bg-terracotta:focus-visible,
+button.bg-terracotta:focus-visible,
+a.bg-\[\#503047\]:hover,
+button.bg-\[\#503047\]:hover,
+a.bg-\[\#503047\]:focus-visible,
+button.bg-\[\#503047\]:focus-visible,
+a.bg-\[\#C05746\]:hover,
+button.bg-\[\#C05746\]:hover,
+a.bg-\[\#C05746\]:focus-visible,
+button.bg-\[\#C05746\]:focus-visible,
+a.bg-\[\#c05746\]:hover,
+button.bg-\[\#c05746\]:hover,
+a.bg-\[\#c05746\]:focus-visible,
+button.bg-\[\#c05746\]:focus-visible {
   color: var(--color-white) !important;
 }
 
