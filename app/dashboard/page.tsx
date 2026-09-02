@@ -28,7 +28,7 @@ export default async function DashboardPage() {
   const money = (value: number) => `₦${Number(value ?? 0).toLocaleString("en-NG")}`;
 
   const metricsCards = [
-    { label: "Sales this month", value: money(metrics.monthSales), detail: "Money received or recorded", icon: WalletCards, tone: "bg-terracotta text-white", detailClass: "text-white/80" },
+    { label: "Sales this month", value: money(metrics.monthSales), detail: "Money received or recorded", icon: WalletCards, tone: "bg-plum text-white", detailClass: "text-white/80" },
     { label: "Customers owe you", value: money(metrics.outstanding), detail: "Outstanding invoice balance", icon: CircleDollarSign, tone: "bg-pale-sage text-plum", detailClass: "text-plum/55" },
     { label: "Customers", value: String(metrics.customerCount), detail: "People you do business with", icon: Users, tone: "bg-white text-plum border border-plum/10", detailClass: "text-plum/50" },
   ];
