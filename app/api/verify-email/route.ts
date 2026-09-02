@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { checkRateLimit, LIMITS } from "@/lib/security/rateLimit";
 import { logError } from "@/lib/security/error";
+import { appBaseUrl } from "@/lib/email/verification";
 
 export async function GET(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const rl = await checkRateLimit(`verify-email:${ip}`, LIMITS.verifyEmail);
-  const baseUrl = process.env.APP_URL || process.env.AUTH_URL || req.nextUrl.origin;
+  const baseUrl = appBaseUrl();
 
   if (!rl.allowed) return NextResponse.redirect(new URL(`/verify-email?status=rate-limited`, baseUrl));
 
