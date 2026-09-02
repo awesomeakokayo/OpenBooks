@@ -3,12 +3,17 @@ import { RESEND_FROM, resend } from "@/lib/email/resend";
 import { randomBytes } from "node:crypto";
 
 const TOKEN_TTL_MS = 60 * 60 * 1000;
+const CANONICAL_PRODUCTION_URL = "https://openbooks.click";
+
+function appBaseUrl() {
+  // Production verification links must always use the public OpenBooks domain,
+  // even if an old Vercel URL is still present in production environment vars.
+  if (process.env.VERCEL_ENV === "production") return CANONICAL_PRODUCTION_URL;
+  return process.env.APP_URL || process.env.AUTH_URL || CANONICAL_PRODUCTION_URL;
+}
 
 function verificationUrl(token: string) {
-  const configuredBaseUrl = process.env.APP_URL || process.env.AUTH_URL;
-  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  const baseUrl = configuredBaseUrl || (vercelProductionUrl ? `https://${vercelProductionUrl}` : "https://openbooks-olive.vercel.app");
-  return `${baseUrl.replace(/\/$/, "")}/verify-email?token=${encodeURIComponent(token)}`;
+  return `${appBaseUrl().replace(/\/$/, "")}/api/verify-email?token=${encodeURIComponent(token)}`;
 }
 
 function escapeHtml(value: string) {
@@ -66,3 +71,5 @@ export async function sendVerificationEmail({
 
   if (error) throw new Error(`Failed to send verification email: ${error.message}`);
 }
+
+export { appBaseUrl };
