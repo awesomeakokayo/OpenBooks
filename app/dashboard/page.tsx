@@ -52,7 +52,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <h1 className="mt-2 font-heading text-3xl font-extrabold tracking-tight text-plum sm:text-4xl">Good morning, {name}.</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-plum/55">Here’s the state of your business today. Keep the numbers clear and the next action obvious.</p>
         </div>
-        <Link href="/invoices" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-terracotta px-5 text-sm font-bold text-white shadow-[0_10px_28px_rgba(192,87,70,0.2)] transition-all hover:-translate-y-px hover:bg-terracotta-dark">
+        <Link href="/invoices" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-terracotta px-5 text-sm font-bold !text-white shadow-[0_10px_28px_rgba(192,87,70,0.2)] transition-all hover:-translate-y-px hover:bg-terracotta-dark">
           <Plus size={17} /> Create invoice
         </Link>
       </section>
@@ -88,7 +88,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <p className="text-sm font-bold text-plum">No sales recorded in {selectedLabel}.</p>
             <p className="mt-1 text-xs text-plum/55">Try the previous month to compare your recent activity.</p>
           </div>
-          <Link href={`/dashboard?month=${previousMonth}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-plum px-4 text-xs font-bold text-white hover:bg-plum-deep">View {monthLabels[previousMonth]} <ArrowRight size={14} /></Link>
+          <Link href={`/dashboard?month=${previousMonth}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-plum px-4 text-xs font-bold !text-white hover:bg-plum-deep">View {monthLabels[previousMonth]} <ArrowRight size={14} /></Link>
         </div>
       ) : metrics.isCurrentMonth && metrics.monthSales === 0 && previousMonth ? (
         <div className="flex flex-col justify-between gap-3 rounded-2xl border border-plum/10 bg-pale-sage px-5 py-4 sm:flex-row sm:items-center">
@@ -96,7 +96,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <p className="text-sm font-bold text-plum">No sales recorded in {selectedLabel} yet.</p>
             <p className="mt-1 text-xs text-plum/55">You can still review your previous month’s numbers.</p>
           </div>
-          <Link href={`/dashboard?month=${previousMonth}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-plum px-4 text-xs font-bold text-white hover:bg-plum-deep">View {monthLabels[previousMonth]} <ArrowRight size={14} /></Link>
+          <Link href={`/dashboard?month=${previousMonth}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-plum px-4 text-xs font-bold !text-white hover:bg-plum-deep">View {monthLabels[previousMonth]} <ArrowRight size={14} /></Link>
         </div>
       ) : null}
 
@@ -115,7 +115,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pale-sage text-plum"><ReceiptText size={20} /></span>
               <h3 className="mt-4 font-heading text-base font-extrabold">Nothing recorded in {selectedLabel}</h3>
               <p className="mt-1.5 max-w-sm text-sm leading-6 text-plum/50">Sales and successful payments for this month will appear here. Your broader history is always available in Sales.</p>
-              <Link href="/sales/new" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-plum px-4 py-2.5 text-xs font-bold text-white hover:bg-plum-deep">Record a sale <ArrowRight size={14} /></Link>
+              <Link href="/sales/new" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-plum px-4 py-2.5 text-xs font-bold !text-white hover:bg-plum-deep">Record a sale <ArrowRight size={14} /></Link>
             </div>
           ) : (
             <div className="mt-2 divide-y divide-plum/10">
