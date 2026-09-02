@@ -20,12 +20,13 @@ export async function getDashboardMetrics(businessId: string) {
     recentSales,
     recentPayments,
   ] = await Promise.all([
-    // Direct sales contribute to sales when a payment method was recorded.
-    prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
-    prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
-    prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
-    prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null } }, _sum: { totalAmount: true } }),
-    // Successful payments contribute when the money was actually received.
+    // Every recorded sale contributes to sales for the period, regardless of
+    // whether a payment method was selected. This matches the Sales page.
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId }, _sum: { totalAmount: true } }),
+    // Every successful payment contributes when the money is actually received.
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
@@ -87,10 +88,9 @@ export async function getDashboardMetrics(businessId: string) {
     .slice(0, 8);
 
   return {
-    // Dashboard sales follows the same financial-event model as Recent Activity:
-    // recorded direct sales + successful payments received. Invoice totals are
-    // intentionally not added separately because they are not an activity event
-    // and doing so can double-count invoice payments.
+    // Keep the dashboard consistent with the Sales page: all recorded sales
+    // plus all successful payments for the period. Invoice totals are not added
+    // separately because invoice payments are already represented by Payment.
     todaySales: roundMoney(directSales.today + payments.today),
     weekSales: roundMoney(directSales.week + payments.week),
     monthSales: roundMoney(directSales.month + payments.month),
