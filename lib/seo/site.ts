@@ -10,4 +10,8 @@ export const INDEXABLE_PUBLIC_PATHS = [
   "/for-businesses",
   "/for-customers",
   "/for-freelancers",
+  "/tools",
+  "/tools/invoice-generator",
+  "/tools/receipt-generator",
+  "/tools/profit-calculator",
 ] as const;
