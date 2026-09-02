@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/db/prisma";
 import { roundMoney } from "@/lib/invoices/utils";
 import { getNigeriaReportPeriods } from "./periods";
+import { getNigeriaMonthRange, getCurrentNigeriaMonthKey } from "./months";
 
-export async function getReports(businessId: string) {
-  const { startOfDay, startOfWeek, startOfMonth } = getNigeriaReportPeriods();
+export async function getReports(businessId: string, selectedMonth = getCurrentNigeriaMonthKey()) {
+  const { startOfDay, startOfWeek } = getNigeriaReportPeriods();
+  const monthRange = getNigeriaMonthRange(selectedMonth);
 
   const [
     todayDirectSales,
@@ -21,25 +23,26 @@ export async function getReports(businessId: string) {
     customers,
     invoiceOutstandingRecords,
   ] = await Promise.all([
-    // Match the Sales page: every recorded sale counts, regardless of whether
-    // a payment method was selected.
     prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
-    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: monthRange.start, lt: monthRange.end } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId }, _sum: { totalAmount: true } }),
-    // Match the Sales page: every successful payment counts as received money.
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
+    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: monthRange.start, lt: monthRange.end } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS" }, _sum: { amount: true } }),
     prisma.payment.groupBy({
       by: ["method"],
-      where: { businessId, status: "SUCCESS" },
+      where: { businessId, status: "SUCCESS", createdAt: { gte: monthRange.start, lt: monthRange.end } },
       _sum: { amount: true },
       _count: true,
     }),
-    prisma.expense.aggregate({ where: { businessId }, _sum: { amount: true } }),
-    prisma.expense.groupBy({ by: ["category"], where: { businessId }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { businessId, expenseDate: { gte: monthRange.start, lt: monthRange.end } }, _sum: { amount: true } }),
+    prisma.expense.groupBy({
+      by: ["category"],
+      where: { businessId, expenseDate: { gte: monthRange.start, lt: monthRange.end } },
+      _sum: { amount: true },
+    }),
     Promise.all([
       prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
       prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", invoiceId: { not: null } }, _sum: { amount: true } }),
@@ -79,8 +82,6 @@ export async function getReports(businessId: string) {
     total: roundMoney(Number(totalPayments._sum.amount ?? 0)),
   };
 
-  // Reports now use the exact same sales definition as the Sales page and dashboard:
-  // recorded sales + successful payments. Invoice totals are not added separately.
   const sales = {
     today: roundMoney(directSales.today + payments.today),
     week: roundMoney(directSales.week + payments.week),
@@ -137,7 +138,7 @@ export async function getReports(businessId: string) {
     };
   });
 
-  const net = roundMoney(sales.total - totalExpenses);
+  const net = roundMoney(sales.month - totalExpenses);
 
   return {
     sales,
@@ -152,5 +153,6 @@ export async function getReports(businessId: string) {
       byInvoice: outstandingByInvoice.filter((invoice) => invoice.outstanding > 0),
     },
     net,
+    selectedMonth: monthRange.key,
   };
 }
