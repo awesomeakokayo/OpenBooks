@@ -38,10 +38,23 @@ export const authConfig: NextAuthConfig = {
     GitHub({
       clientId: githubClientId,
       clientSecret: githubClientSecret,
+      // OpenBooks uses the provider email as the account identity. Request
+      // the email scope explicitly so GitHub can return a verified address
+      // even when it is not public on the user's profile.
+      authorization: {
+        params: {
+          scope: "read:user user:email",
+        },
+      },
     }),
     Google({
       clientId: googleClientId,
       clientSecret: googleClientSecret,
+      authorization: {
+        params: {
+          scope: "openid profile email",
+        },
+      },
     }),
   ],
   pages: { signIn: "/login", error: "/auth-error" },
