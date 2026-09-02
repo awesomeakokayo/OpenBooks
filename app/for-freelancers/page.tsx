@@ -1,6 +1,15 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, Check, ReceiptText } from "lucide-react";
 import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
+import Link from "next/link";
+import { createPageMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Invoicing and Bookkeeping for Freelancers in Nigeria",
+  description:
+    "Create professional invoices, track client payments, manage outstanding balances and keep simple records for freelance work with OpenBooks.",
+  path: "/for-freelancers",
+});
 
 const benefits = ["Professional invoices without design work", "Clear due dates and outstanding balances", "Simple records for every client", "Payment options that fit your workflow", "Receipts ready when a client pays"];
 
