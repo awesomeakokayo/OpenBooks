@@ -1,0 +1,15 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { createPageMetadata } from "@/lib/seo/metadata";
+import { SITE_NAME } from "@/lib/seo/site";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Bookkeeping for Consultants in Nigeria: Simple Guide",
+  description: "Learn a simple bookkeeping workflow for Nigerian consultants covering client invoices, project payments, expenses and outstanding balances.",
+  path: "/business-guides/bookkeeping-for-consultants-nigeria",
+});
+
+export default function Page() {
+  return <main className="min-h-screen bg-[#F8F8F6] text-plum"><header className="border-b border-plum/10 bg-plum text-white"><div className="mx-auto flex max-w-[900px] items-center justify-between px-5 py-5 lg:px-8"><Link href="/" className="font-heading text-xl font-bold text-white">{SITE_NAME}</Link><Link href="/business-guides" className="text-sm font-semibold text-white/70 hover:text-white">Business guides</Link></div></header><article className="mx-auto max-w-[900px] px-5 pb-20 pt-14 lg:px-8 lg:pb-28 lg:pt-20"><p className="openbooks-eyebrow text-terracotta">Consultants</p><h1 className="mt-4 font-heading text-[clamp(2.7rem,6vw,5.3rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">Bookkeeping for consultants in Nigeria.</h1><p className="mt-6 max-w-3xl text-lg leading-8 text-plum/65">Consulting businesses often work with projects, retainers, milestones and expenses. A clear record connects each client to the invoice, payment history and costs behind the work.</p><div className="mt-12 space-y-10 text-base leading-8 text-plum/70"><section><h2 className="font-heading text-2xl font-extrabold sm:text-3xl">Invoice by project or engagement</h2><p className="mt-4">Record the client, work description, agreed amount, issue date and payment terms. Use a consistent invoice reference so a project can be followed from billing through payment.</p></section><section><h2 className="font-heading text-2xl font-extrabold sm:text-3xl">Track partial and milestone payments</h2><p className="mt-4">When a client pays a deposit or milestone, record the payment against the original invoice instead of creating a new sale. This keeps the remaining balance visible.</p></section><section><h2 className="font-heading text-2xl font-extrabold sm:text-3xl">Record delivery costs and other expenses</h2><p className="mt-4">Track travel, software, contractors and other business costs connected to the engagement. Reviewing project income against these costs gives you a more useful view of profitability.</p></section></div><div className="mt-14 rounded-3xl bg-plum p-7 text-white sm:p-9"><h2 className="font-heading text-2xl font-extrabold">Keep client invoices and payments organized with OpenBooks.</h2><Link href="/register" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-terracotta px-5 py-3 text-sm font-bold text-white">Start for free <ArrowRight size={16} /></Link></div></article></main>;
+}
