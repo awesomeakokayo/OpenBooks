@@ -9,24 +9,28 @@ export async function getDashboardMetrics(businessId: string) {
     todayDirectSales,
     weekDirectSales,
     monthDirectSales,
+    totalDirectSales,
     todayPayments,
     weekPayments,
     monthPayments,
+    totalPayments,
     monthExpenses,
     outstandingAgg,
     customerCount,
     recentSales,
     recentPayments,
   ] = await Promise.all([
-    // A direct sale only contributes to "money received" when a payment
+    // A direct sale contributes to "money received" only when a payment
     // method was recorded. Unpaid/later sales remain visible in activity but
-    // must not inflate the cash-received sales metric.
+    // must not inflate cash-received sales metrics.
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null } }, _sum: { totalAmount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
+    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS" }, _sum: { amount: true } }),
     prisma.expense.aggregate({ where: { businessId, expenseDate: { gte: startOfMonth } }, _sum: { amount: true } }),
     Promise.all([
       prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
@@ -50,12 +54,14 @@ export async function getDashboardMetrics(businessId: string) {
     today: roundMoney(Number(todayDirectSales._sum.totalAmount ?? 0)),
     week: roundMoney(Number(weekDirectSales._sum.totalAmount ?? 0)),
     month: roundMoney(Number(monthDirectSales._sum.totalAmount ?? 0)),
+    total: roundMoney(Number(totalDirectSales._sum.totalAmount ?? 0)),
   };
 
   const payments = {
     today: roundMoney(Number(todayPayments._sum.amount ?? 0)),
     week: roundMoney(Number(weekPayments._sum.amount ?? 0)),
     month: roundMoney(Number(monthPayments._sum.amount ?? 0)),
+    total: roundMoney(Number(totalPayments._sum.amount ?? 0)),
   };
 
   const combinedActivity = [
@@ -85,6 +91,7 @@ export async function getDashboardMetrics(businessId: string) {
     todaySales: roundMoney(directSales.today + payments.today),
     weekSales: roundMoney(directSales.week + payments.week),
     monthSales: roundMoney(directSales.month + payments.month),
+    totalSales: roundMoney(directSales.total + payments.total),
     monthExpenses: roundMoney(Number(monthExpenses._sum.amount ?? 0)),
     outstanding,
     totalInvoiced,
