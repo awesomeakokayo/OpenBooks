@@ -2,66 +2,93 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { getReports } from "@/lib/reports/reports";
+import { getBusinessMonthOptions, formatMonthKey } from "@/lib/reports/months";
+import { MonthSelector } from "@/components/reports/MonthSelector";
 
-export default async function ReportsPage() {
+type ReportsPageProps = {
+  searchParams: Promise<{ month?: string }>;
+};
+
+export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const userId = (session.user as unknown as { id: string }).id;
   const member = await prisma.businessMember.findFirst({ where: { userId }, include: { business: true } });
   if (!member) redirect("/create-business");
+
   const businessId = member.business.id;
-  const reports = await getReports(businessId);
+  const params = await searchParams;
+  const months = await getBusinessMonthOptions(businessId);
+  const selectedMonth = params.month && months.includes(params.month) ? params.month : months[0];
+  const monthLabels = Object.fromEntries(months.map((month) => [month, formatMonthKey(month)]));
+  const selectedLabel = monthLabels[selectedMonth];
+  const reports = await getReports(businessId, selectedMonth);
+  const money = (value: number) => `₦${value.toLocaleString("en-NG")}`;
 
   return (
     <div className="mx-auto max-w-[1200px] flex flex-col gap-8">
-      <div>
-        <h1 className="font-heading text-2xl font-bold text-plum">Reports</h1>
-        <p className="text-sm text-plum/60">{member.business.name} • Sales − Expenses = Net</p>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <p className="openbooks-eyebrow text-terracotta">Business performance</p>
+          <h1 className="mt-2 font-heading text-2xl font-bold text-plum">Reports</h1>
+          <p className="mt-1 text-sm text-plum/60">{member.business.name} • Sales − Expenses = Net</p>
+        </div>
+        <MonthSelector basePath="/reports" selectedMonth={selectedMonth} months={months} labels={monthLabels} />
+      </div>
+
+      <div className="rounded-2xl border border-plum/10 bg-pale-sage px-5 py-4">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-plum/40">Selected reporting period</p>
+        <p className="mt-1 text-sm font-bold text-plum">{selectedLabel}</p>
+        <p className="mt-1 text-xs leading-5 text-plum/50">Monthly sales, payments and expenses below use this reporting window. Outstanding balances are current because they represent what customers owe you now.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-[16px] border border-plum/10 bg-white p-5">
           <p className="text-xs font-medium text-plum/50">Sales today</p>
-          <p className="mt-1 text-2xl font-extrabold text-plum">₦{reports.sales.today.toLocaleString("en-NG")}</p>
+          <p className="mt-1 text-2xl font-extrabold text-plum">{money(reports.sales.today)}</p>
         </div>
         <div className="rounded-[16px] border border-plum/10 bg-white p-5">
           <p className="text-xs font-medium text-plum/50">This week</p>
-          <p className="mt-1 text-2xl font-extrabold text-plum">₦{reports.sales.week.toLocaleString("en-NG")}</p>
+          <p className="mt-1 text-2xl font-extrabold text-plum">{money(reports.sales.week)}</p>
         </div>
-        <div className="rounded-[16px] border border-plum/10 bg-white p-5">
-          <p className="text-xs font-medium text-plum/50">This month</p>
-          <p className="mt-1 text-2xl font-extrabold text-plum">₦{reports.sales.month.toLocaleString("en-NG")}</p>
+        <div className="rounded-[16px] bg-plum p-5 text-white">
+          <p className="text-xs font-medium text-white/70">{selectedLabel}</p>
+          <p className="mt-1 text-2xl font-extrabold text-white">{money(reports.sales.month)}</p>
+          <p className="mt-1 text-xs text-pale-sage">Recorded sales + successful payments</p>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-[16px] bg-pale-sage p-5">
-          <p className="text-xs font-medium text-plum/60">Outstanding</p>
-          <p className="mt-1 text-2xl font-extrabold text-plum">₦{reports.outstanding.total.toLocaleString("en-NG")}</p>
+          <p className="text-xs font-medium text-plum/60">Current outstanding</p>
+          <p className="mt-1 text-2xl font-extrabold text-plum">{money(reports.outstanding.total)}</p>
           <p className="mt-1 text-xs text-plum/50">{reports.outstanding.byCustomer.length} customers owe you</p>
         </div>
         <div className="rounded-[16px] border border-plum/10 bg-white p-5">
-          <p className="text-xs font-medium text-plum/50">Total expenses</p>
-          <p className="mt-1 text-2xl font-extrabold text-plum">₦{reports.expenses.total.toLocaleString("en-NG")}</p>
+          <p className="text-xs font-medium text-plum/50">Expenses · {selectedLabel}</p>
+          <p className="mt-1 text-2xl font-extrabold text-plum">{money(reports.expenses.total)}</p>
         </div>
         <div className="rounded-[16px] bg-plum p-5 text-white">
-          <p className="text-xs font-medium text-white/70">Net (Sales − Expenses)</p>
-          <p className="mt-1 text-2xl font-extrabold text-white">₦{reports.net.toLocaleString("en-NG")}</p>
+          <p className="text-xs font-medium text-white/70">Net · {selectedLabel}</p>
+          <p className="mt-1 text-2xl font-extrabold text-white">{money(reports.net)}</p>
           <p className="mt-1 text-xs text-pale-sage">Not tax/accounting advice</p>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-[16px] border border-plum/10 bg-white p-6">
-          <h2 className="font-heading text-sm font-bold text-plum">Payments by method</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-heading text-sm font-bold text-plum">Payments by method</h2>
+            <span className="text-[11px] font-semibold text-plum/40">{selectedLabel}</span>
+          </div>
           {reports.paymentsByMethod.length === 0 ? (
-            <p className="mt-2 text-sm text-plum/50">No payments yet.</p>
+            <p className="mt-2 text-sm text-plum/50">No successful payments in {selectedLabel}.</p>
           ) : (
             <div className="mt-3 flex flex-col gap-2">
               {reports.paymentsByMethod.map((p) => (
                 <div key={p.method} className="flex justify-between rounded-[12px] border border-plum/10 px-4 py-2.5">
                   <span className="text-sm text-plum">{p.method.replaceAll("_", " ")} • {p.count}</span>
-                  <span className="text-sm font-semibold text-plum">₦{p.amount.toLocaleString("en-NG")}</span>
+                  <span className="text-sm font-semibold text-plum">{money(p.amount)}</span>
                 </div>
               ))}
             </div>
@@ -69,15 +96,18 @@ export default async function ReportsPage() {
         </div>
 
         <div className="rounded-[16px] border border-plum/10 bg-white p-6">
-          <h2 className="font-heading text-sm font-bold text-plum">Expenses by category</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-heading text-sm font-bold text-plum">Expenses by category</h2>
+            <span className="text-[11px] font-semibold text-plum/40">{selectedLabel}</span>
+          </div>
           {reports.expenses.byCategory.length === 0 ? (
-            <p className="mt-2 text-sm text-plum/50">No expenses yet.</p>
+            <p className="mt-2 text-sm text-plum/50">No expenses in {selectedLabel}.</p>
           ) : (
             <div className="mt-3 flex flex-col gap-2">
               {reports.expenses.byCategory.map((e) => (
                 <div key={e.category} className="flex justify-between rounded-[12px] border border-plum/10 px-4 py-2.5">
                   <span className="text-sm text-plum">{e.category}</span>
-                  <span className="text-sm font-semibold text-plum">₦{e.amount.toLocaleString("en-NG")}</span>
+                  <span className="text-sm font-semibold text-plum">{money(e.amount)}</span>
                 </div>
               ))}
             </div>
@@ -94,7 +124,7 @@ export default async function ReportsPage() {
             {reports.outstanding.byCustomer.map((c) => (
               <div key={c.id} className="flex justify-between rounded-[12px] border border-plum/10 px-4 py-2.5">
                 <span className="text-sm text-plum">{c.name} • {c.phone}</span>
-                <span className="text-sm font-semibold text-terracotta">₦{c.outstanding.toLocaleString("en-NG")}</span>
+                <span className="text-sm font-semibold text-terracotta">{money(c.outstanding)}</span>
               </div>
             ))}
           </div>
@@ -110,7 +140,7 @@ export default async function ReportsPage() {
             {reports.outstanding.byInvoice.map((inv) => (
               <div key={inv.id} className="flex justify-between rounded-[12px] border border-plum/10 px-4 py-2.5">
                 <span className="text-sm text-plum">{inv.invoiceNumber} • {inv.customer.name} • {inv.status}</span>
-                <span className="text-sm font-semibold text-plum">₦{inv.outstanding.toLocaleString("en-NG")}</span>
+                <span className="text-sm font-semibold text-plum">{money(inv.outstanding)}</span>
               </div>
             ))}
           </div>
