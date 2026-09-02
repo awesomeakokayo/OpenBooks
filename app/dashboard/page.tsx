@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
 import { redirect } from "next/navigation";
 import { getDashboardMetrics } from "@/lib/reports/metrics";
+import { getBusinessMonthOptions } from "@/lib/reports/months";
+import { MonthSelector } from "@/components/reports/MonthSelector";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -14,7 +16,11 @@ import {
   WalletCards,
 } from "lucide-react";
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<{ month?: string }>;
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const userId = (session.user as unknown as { id: string }).id;
@@ -22,14 +28,19 @@ export default async function DashboardPage() {
   if (!member) redirect("/create-business");
 
   const business = member.business;
-  const metrics = await getDashboardMetrics(business.id);
-  const invoiceCount = await prisma.invoice.count({ where: { businessId: business.id } });
+  const params = await searchParams;
+  const months = await getBusinessMonthOptions(business.id);
+  const selectedMonth = params.month && months.includes(params.month) ? params.month : months[0];
+  const metrics = await getDashboardMetrics(business.id, selectedMonth);
   const name = session.user?.name?.split(" ")[0] ?? "there";
   const money = (value: number) => `₦${Number(value ?? 0).toLocaleString("en-NG")}`;
+  const monthLabels = Object.fromEntries(months.map((month) => [month, new Intl.DateTimeFormat("en-NG", { month: "long", year: "numeric", timeZone: "Africa/Lagos" }).format(new Date(`${month}-15T12:00:00`))]));
+  const selectedLabel = monthLabels[selectedMonth];
+  const previousMonth = months[months.indexOf(selectedMonth) + 1];
 
   const metricsCards = [
-    { label: "Sales this month", value: money(metrics.monthSales), detail: "Money received or recorded", icon: WalletCards, tone: "bg-plum text-white", detailClass: "text-white/80" },
-    { label: "Customers owe you", value: money(metrics.outstanding), detail: "Outstanding invoice balance", icon: CircleDollarSign, tone: "bg-pale-sage text-plum", detailClass: "text-plum/55" },
+    { label: metrics.isCurrentMonth ? "Sales this month" : `Sales in ${selectedLabel}`, value: money(metrics.monthSales), detail: "Money received or recorded", icon: WalletCards, tone: "bg-plum text-white", detailClass: "text-white/80" },
+    { label: "Customers owe you", value: money(metrics.outstanding), detail: "Current outstanding invoice balance", icon: CircleDollarSign, tone: "bg-pale-sage text-plum", detailClass: "text-plum/55" },
     { label: "Customers", value: String(metrics.customerCount), detail: "People you do business with", icon: Users, tone: "bg-white text-plum border border-plum/10", detailClass: "text-plum/50" },
   ];
 
@@ -63,12 +74,38 @@ export default async function DashboardPage() {
         ))}
       </section>
 
+      <section className="flex flex-col justify-between gap-4 rounded-2xl border border-plum/10 bg-white p-4 sm:flex-row sm:items-center sm:px-5">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-plum/40">Reporting period</p>
+          <p className="mt-1 text-sm font-semibold text-plum">Review sales, expenses and activity for a specific month.</p>
+        </div>
+        <MonthSelector basePath="/dashboard" selectedMonth={selectedMonth} months={months} labels={monthLabels} />
+      </section>
+
+      {!metrics.isCurrentMonth && metrics.monthSales === 0 && previousMonth ? (
+        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-plum/10 bg-pale-sage px-5 py-4 sm:flex-row sm:items-center">
+          <div>
+            <p className="text-sm font-bold text-plum">No sales recorded in {selectedLabel}.</p>
+            <p className="mt-1 text-xs text-plum/55">Try the previous month to compare your recent activity.</p>
+          </div>
+          <Link href={`/dashboard?month=${previousMonth}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-plum px-4 text-xs font-bold text-white hover:bg-plum-deep">View {monthLabels[previousMonth]} <ArrowRight size={14} /></Link>
+        </div>
+      ) : metrics.isCurrentMonth && metrics.monthSales === 0 && previousMonth ? (
+        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-plum/10 bg-pale-sage px-5 py-4 sm:flex-row sm:items-center">
+          <div>
+            <p className="text-sm font-bold text-plum">No sales recorded in {selectedLabel} yet.</p>
+            <p className="mt-1 text-xs text-plum/55">You can still review your previous month’s numbers.</p>
+          </div>
+          <Link href={`/dashboard?month=${previousMonth}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-plum px-4 text-xs font-bold text-white hover:bg-plum-deep">View {monthLabels[previousMonth]} <ArrowRight size={14} /></Link>
+        </div>
+      ) : null}
+
       <section className="grid w-full justify-items-stretch gap-5 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="openbooks-card mx-auto w-full max-w-full p-6 sm:p-7">
           <div className="flex items-end justify-between gap-4 border-b border-plum/10 pb-5">
             <div>
-              <p className="openbooks-eyebrow text-plum/40">Activity</p>
-              <h2 className="mt-2 font-heading text-xl font-extrabold">Recent activity</h2>
+              <p className="openbooks-eyebrow text-plum/40">Activity · {selectedLabel}</p>
+              <h2 className="mt-2 font-heading text-xl font-extrabold">Activity in this period</h2>
             </div>
             <Link href="/sales" className="inline-flex items-center gap-1 text-xs font-bold text-terracotta hover:text-terracotta-dark">View all <ArrowUpRight size={14} /></Link>
           </div>
@@ -76,9 +113,9 @@ export default async function DashboardPage() {
           {metrics.recentSales.length === 0 ? (
             <div className="openbooks-card-soft mt-5 flex flex-col items-center px-5 py-10 text-center">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pale-sage text-plum"><ReceiptText size={20} /></span>
-              <h3 className="mt-4 font-heading text-base font-extrabold">Your activity will show up here</h3>
-              <p className="mt-1.5 max-w-sm text-sm leading-6 text-plum/50">Create an invoice, record a sale or record a payment and OpenBooks will keep the activity in one clean timeline.</p>
-              <Link href="/invoices" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-plum px-4 py-2.5 text-xs font-bold text-white hover:bg-plum-deep">Create your first invoice <ArrowRight size={14} /></Link>
+              <h3 className="mt-4 font-heading text-base font-extrabold">Nothing recorded in {selectedLabel}</h3>
+              <p className="mt-1.5 max-w-sm text-sm leading-6 text-plum/50">Sales and successful payments for this month will appear here. Your broader history is always available in Sales.</p>
+              <Link href="/sales/new" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-plum px-4 py-2.5 text-xs font-bold text-white hover:bg-plum-deep">Record a sale <ArrowRight size={14} /></Link>
             </div>
           ) : (
             <div className="mt-2 divide-y divide-plum/10">
@@ -88,7 +125,7 @@ export default async function DashboardPage() {
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-pale-sage text-plum"><FileText size={16} /></span>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-plum">{item.description}</p>
-                      <p className="mt-0.5 truncate text-xs text-plum/45">{item.customerName}{item.type === "PAYMENT" ? ` · ${item.method.replaceAll("_", " ")}` : ""}</p>
+                      <p className="mt-0.5 truncate text-xs text-plum/45">{item.customerName}{item.type === "PAYMENT" ? ` · ${item.method?.replaceAll("_", " ") ?? ""}` : ""}</p>
                     </div>
                   </div>
                   <span className="shrink-0 text-sm font-extrabold text-plum">{money(item.amount)}</span>
@@ -99,14 +136,14 @@ export default async function DashboardPage() {
         </div>
 
         <div className="mx-auto w-full max-w-full rounded-3xl bg-plum p-6 text-white sm:p-7">
-          <p className="openbooks-eyebrow text-pale-sage">This month</p>
+          <p className="openbooks-eyebrow text-pale-sage">{metrics.isCurrentMonth ? "This month" : selectedLabel}</p>
           <p className="mt-4 font-heading text-3xl font-extrabold tracking-tight">{money(metrics.monthSales)}</p>
           <div className="mt-5 space-y-3 border-t border-white/10 pt-5 text-sm">
-            <div className="flex items-center justify-between"><span className="text-white/55">Today</span><span className="font-bold">{money(metrics.todaySales)}</span></div>
+            {metrics.isCurrentMonth ? <div className="flex items-center justify-between"><span className="text-white/55">Today</span><span className="font-bold">{money(metrics.todaySales)}</span></div> : null}
             <div className="flex items-center justify-between"><span className="text-white/55">Expenses</span><span className="font-bold">{money(metrics.monthExpenses)}</span></div>
-            <div className="flex items-center justify-between"><span className="text-white/55">Invoices</span><span className="font-bold">{invoiceCount}</span></div>
+            <div className="flex items-center justify-between"><span className="text-white/55">Invoices issued</span><span className="font-bold">{metrics.invoiceCount}</span></div>
           </div>
-          <Link href="/reports" className="mt-7 inline-flex items-center gap-2 text-xs font-bold text-pale-sage hover:text-white">View business reports <ArrowRight size={14} /></Link>
+          <Link href={`/reports?month=${selectedMonth}`} className="mt-7 inline-flex items-center gap-2 text-xs font-bold text-pale-sage hover:text-white">View {selectedLabel} report <ArrowRight size={14} /></Link>
         </div>
       </section>
 
