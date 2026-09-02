@@ -28,8 +28,9 @@ export default async function DashboardPage() {
   const money = (value: number) => `₦${Number(value ?? 0).toLocaleString("en-NG")}`;
 
   const metricsCards = [
-    { label: "Sales this month", value: money(metrics.monthSales), detail: "Money received or recorded", icon: WalletCards, tone: "bg-plum text-white", detailClass: "text-pale-sage" },
-    { label: "Customers owe you", value: money(metrics.outstanding), detail: "Outstanding invoice balance", icon: CircleDollarSign, tone: "bg-pale-sage text-plum", detailClass: "text-plum/55" },
+    { label: "Total money received", value: money(metrics.totalSales), detail: "All successful sales and payments", icon: WalletCards, tone: "bg-plum text-white", detailClass: "text-pale-sage" },
+    { label: "Sales this month", value: money(metrics.monthSales), detail: "Money received or recorded", icon: CircleDollarSign, tone: "bg-pale-sage text-plum", detailClass: "text-plum/55" },
+    { label: "Customers owe you", value: money(metrics.outstanding), detail: "Outstanding invoice balance", icon: CircleDollarSign, tone: "bg-white text-plum border border-plum/10", detailClass: "text-plum/50" },
     { label: "Customers", value: String(metrics.customerCount), detail: "People you do business with", icon: Users, tone: "bg-white text-plum border border-plum/10", detailClass: "text-plum/50" },
   ];
 
@@ -46,7 +47,7 @@ export default async function DashboardPage() {
         </Link>
       </section>
 
-      <section className="grid w-full gap-4 md:grid-cols-3">
+      <section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metricsCards.map(({ label, value, detail, icon: Icon, tone, detailClass }) => (
           <div key={label} className={`w-full rounded-3xl p-6 shadow-[0_12px_32px_rgba(80,48,71,0.05)] ${tone}`}>
             <div className="flex items-start justify-between gap-4">
