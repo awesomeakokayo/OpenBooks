@@ -1,11 +1,11 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useRef } from "react";
 
 const NAV_SCROLL_KEY = "openbooks:workspace-nav-scroll";
 
 type WorkspaceNavigationStateValue = {
-  scrollTop: number;
+  getScrollTop: () => number;
   setScrollTop: (value: number) => void;
 };
 
@@ -18,17 +18,21 @@ function readStoredScrollTop() {
 }
 
 export function WorkspaceNavigationStateProvider({ children }: { children: React.ReactNode }) {
-  const [scrollTop, setScrollTopState] = useState(readStoredScrollTop);
+  const scrollTopRef = useRef<number | null>(null);
 
-  const setScrollTop = (value: number) => {
-    const next = Number.isFinite(value) && value >= 0 ? value : 0;
-    setScrollTopState(next);
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(NAV_SCROLL_KEY, String(next));
-    }
-  };
-
-  const value = useMemo(() => ({ scrollTop, setScrollTop }), [scrollTop]);
+  const value = useMemo<WorkspaceNavigationStateValue>(() => ({
+    getScrollTop: () => {
+      if (scrollTopRef.current === null) scrollTopRef.current = readStoredScrollTop();
+      return scrollTopRef.current;
+    },
+    setScrollTop: (value: number) => {
+      const next = Number.isFinite(value) && value >= 0 ? value : 0;
+      scrollTopRef.current = next;
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(NAV_SCROLL_KEY, String(next));
+      }
+    },
+  }), []);
 
   return (
     <WorkspaceNavigationStateContext.Provider value={value}>
