@@ -13,7 +13,7 @@ export function ToolShell({
   title: string;
   description: string;
   children: React.ReactNode;
-  related?: Array<{ href: string; label: string }>;
+  related?: ReadonlyArray<{ href: string; label: string }>;
 }) {
   return (
     <main className="min-h-screen bg-[#F8F8F6] text-plum">
