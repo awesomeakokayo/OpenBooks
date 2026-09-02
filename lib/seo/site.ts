@@ -7,6 +7,13 @@ export const SITE_LOGO = `${SITE_URL}/OPENBOOKS_LOGO.png?v=2`;
 export const INDEXABLE_PUBLIC_PATHS = [
   "/",
   "/guide",
+  "/guides",
+  "/guides/how-to-create-an-invoice-in-nigeria",
+  "/guides/invoice-vs-receipt",
+  "/guides/how-to-track-daily-sales",
+  "/guides/how-to-track-business-expenses",
+  "/guides/how-to-calculate-small-business-profit",
+  "/guides/how-to-track-customers-who-owe-you",
   "/for-businesses",
   "/for-customers",
   "/for-freelancers",
