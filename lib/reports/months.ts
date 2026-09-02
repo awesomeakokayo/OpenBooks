@@ -40,7 +40,9 @@ export function getNigeriaMonthRange(monthKey: string, fallback = new Date()) {
 }
 
 export function formatMonthKey(monthKey: string) {
-  const { year, month } = getNigeriaMonthRange(monthKey);
+  const match = /^(\d{4})-(\d{2})$/.exec(monthKey);
+  const key = match ? monthKey : getCurrentNigeriaMonthKey();
+  const [year, month] = key.split("-").map(Number);
   return new Intl.DateTimeFormat("en-NG", { month: "long", year: "numeric", timeZone: NIGERIA_TIME_ZONE }).format(
     new Date(Date.UTC(year, month - 1, 15, 12))
   );
@@ -68,14 +70,15 @@ export async function getBusinessMonthOptions(businessId: string, now = new Date
   const currentKey = getCurrentNigeriaMonthKey(now);
   const [saleBounds, paymentBounds] = await Promise.all([
     prisma.sale.aggregate({ where: { businessId }, _min: { saleDate: true } }),
-    prisma.payment.aggregate({ where: { businessId }, _min: { createdAt: true } }),
+    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS" }, _min: { createdAt: true } }),
   ]);
 
   const dates = [saleBounds._min.saleDate, paymentBounds._min.createdAt].filter((date): date is Date => Boolean(date));
   if (dates.length === 0) return [currentKey];
 
   const earliest = dates.reduce((oldest, date) => (date < oldest ? date : oldest), dates[0]);
-  const earliestKey = `${getNigeriaDateParts(earliest).year}-${String(getNigeriaDateParts(earliest).month).padStart(2, "0")}`;
+  const earliestParts = getNigeriaDateParts(earliest);
+  const earliestKey = `${earliestParts.year}-${String(earliestParts.month).padStart(2, "0")}`;
   return monthCursor(earliestKey, currentKey);
 }
 
