@@ -1,4 +1,5 @@
-import Link from "next/link";
+"use client";
+
 import { ChevronDown } from "lucide-react";
 
 interface MonthSelectorProps {
@@ -27,9 +28,6 @@ export function MonthSelector({ basePath, selectedMonth, months, labels, allTime
         ))}
       </select>
       <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-plum/45" />
-      {allTime && selectedMonth === "all" ? (
-        <Link href={`${basePath}?month=${months[0] ?? ""}`} className="sr-only">View latest month</Link>
-      ) : null}
     </div>
   );
 }
