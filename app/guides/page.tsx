@@ -12,42 +12,16 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const guides = [
-  {
-    slug: "how-to-create-an-invoice-in-nigeria",
-    title: "How to Create an Invoice in Nigeria",
-    description: "A practical step-by-step guide to making a clear invoice, what to include, and how to keep the payment record afterward.",
-    category: "Invoicing",
-  },
-  {
-    slug: "invoice-vs-receipt",
-    title: "Invoice vs Receipt: What Is the Difference?",
-    description: "Understand when to send an invoice, when to issue a receipt, and how both fit into a simple sales record.",
-    category: "Invoicing",
-  },
-  {
-    slug: "how-to-track-daily-sales",
-    title: "How to Track Daily Sales for a Small Business",
-    description: "A simple daily sales workflow for shops, service businesses, freelancers and other small businesses.",
-    category: "Sales",
-  },
-  {
-    slug: "how-to-track-business-expenses",
-    title: "How to Track Business Expenses",
-    description: "Learn a practical way to record business spending, separate business costs from personal spending, and review where money goes.",
-    category: "Expenses",
-  },
-  {
-    slug: "how-to-calculate-small-business-profit",
-    title: "How to Calculate Small Business Profit",
-    description: "See how to calculate gross profit, net profit and profit margin using numbers you can actually collect from your business.",
-    category: "Profit",
-  },
-  {
-    slug: "how-to-track-customers-who-owe-you",
-    title: "How to Track Customers Who Owe You Money",
-    description: "Build a simple customer-balance workflow so credit sales, due amounts and payments do not disappear in chat messages or notebooks.",
-    category: "Customers",
-  },
+  { slug: "how-to-create-an-invoice-in-nigeria", title: "How to Create an Invoice in Nigeria", description: "A practical step-by-step guide to making a clear invoice, what to include, and how to keep the payment record afterward.", category: "Invoicing" },
+  { slug: "invoice-vs-receipt", title: "Invoice vs Receipt: What Is the Difference?", description: "Understand when to send an invoice, when to issue a receipt, and how both fit into a simple sales record.", category: "Invoicing" },
+  { slug: "how-to-track-daily-sales", title: "How to Track Daily Sales for a Small Business", description: "A simple daily sales workflow for shops, service businesses, freelancers and other small businesses.", category: "Sales" },
+  { slug: "how-to-record-sales-for-small-business", title: "How to Record Sales for a Small Business", description: "Learn what to capture for each transaction and how to handle payments without double-counting sales.", category: "Sales" },
+  { slug: "cash-sales-vs-credit-sales", title: "Cash Sales vs Credit Sales: How to Record Each", description: "Understand the difference between paid-now transactions and sales that create a customer balance.", category: "Sales" },
+  { slug: "how-to-track-business-expenses", title: "How to Track Business Expenses", description: "Learn a practical way to record business spending, separate business costs from personal spending, and review where money goes.", category: "Expenses" },
+  { slug: "how-to-calculate-small-business-profit", title: "How to Calculate Small Business Profit", description: "See how to calculate gross profit, net profit and profit margin using numbers you can actually collect from your business.", category: "Profit" },
+  { slug: "how-to-track-customers-who-owe-you", title: "How to Track Customers Who Owe You Money", description: "Build a simple customer-balance workflow so credit sales, due amounts and payments do not disappear in chat messages or notebooks.", category: "Customers" },
+  { slug: "small-business-bookkeeping-nigeria", title: "Small Business Bookkeeping in Nigeria: A Simple Guide", description: "Build a simple bookkeeping routine around sales, expenses, customer balances and payments.", category: "Bookkeeping" },
+  { slug: "small-business-bookkeeping-checklist", title: "Small Business Bookkeeping Checklist", description: "A practical weekly or monthly checklist for keeping the records behind your business decisions complete.", category: "Bookkeeping" },
 ];
 
 export default function GuidesPage() {
@@ -62,12 +36,8 @@ export default function GuidesPage() {
 
       <section className="mx-auto max-w-[1180px] px-5 pb-20 pt-16 lg:px-8 lg:pb-28 lg:pt-24">
         <p className="openbooks-eyebrow text-terracotta">OpenBooks guides</p>
-        <h1 className="mt-4 max-w-5xl font-heading text-[clamp(2.9rem,6vw,5.8rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
-          Practical answers for running a small business.
-        </h1>
-        <p className="mt-6 max-w-3xl text-base leading-7 text-plum/60 sm:text-lg sm:leading-8">
-          Straightforward answers to the bookkeeping questions that come up when you sell, invoice customers, pay expenses and try to understand whether the business is actually making money.
-        </p>
+        <h1 className="mt-4 max-w-5xl font-heading text-[clamp(2.9rem,6vw,5.8rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">Practical answers for running a small business.</h1>
+        <p className="mt-6 max-w-3xl text-base leading-7 text-plum/60 sm:text-lg sm:leading-8">Straightforward answers to the bookkeeping questions that come up when you sell, invoice customers, pay expenses and try to understand whether the business is actually making money.</p>
 
         <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {guides.map((guide) => (
@@ -75,9 +45,7 @@ export default function GuidesPage() {
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-terracotta">{guide.category}</p>
               <h2 className="mt-4 font-heading text-2xl font-extrabold leading-tight">{guide.title}</h2>
               <p className="mt-3 flex-1 text-sm leading-6 text-plum/60">{guide.description}</p>
-              <Link href={`/guides/${guide.slug}`} className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-plum hover:text-terracotta">
-                Read guide <ArrowRight size={16} />
-              </Link>
+              <Link href={`/guides/${guide.slug}`} className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-plum hover:text-terracotta">Read guide <ArrowRight size={16} /></Link>
             </article>
           ))}
         </div>

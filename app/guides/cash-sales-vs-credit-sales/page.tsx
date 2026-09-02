@@ -1,0 +1,15 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { createPageMetadata } from "@/lib/seo/metadata";
+import { SITE_NAME } from "@/lib/seo/site";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Cash Sales vs Credit Sales: How to Record Each",
+  description: "Understand the difference between cash and credit sales and learn how a small business can record each transaction without confusing sales with payments.",
+  path: "/guides/cash-sales-vs-credit-sales",
+});
+
+export default function Page() {
+  return <main className="min-h-screen bg-[#F8F8F6] text-plum"><header className="border-b border-plum/10 bg-plum text-white"><div className="mx-auto flex max-w-[900px] items-center justify-between px-5 py-5 lg:px-8"><Link href="/" className="font-heading text-xl font-bold text-white">{SITE_NAME}</Link><Link href="/guides" className="text-sm font-semibold text-white/70 hover:text-white">All guides</Link></div></header><article className="mx-auto max-w-[900px] px-5 pb-20 pt-14 lg:px-8 lg:pb-28 lg:pt-20"><p className="openbooks-eyebrow text-terracotta">Sales & payments</p><h1 className="mt-4 font-heading text-[clamp(2.7rem,6vw,5.3rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">Cash sales vs credit sales: how to record each.</h1><p className="mt-6 max-w-3xl text-lg leading-8 text-plum/65">The key difference is simple: a cash sale is paid at the time of the transaction, while a credit sale creates an amount the customer still needs to pay.</p><div className="mt-12 space-y-10 text-base leading-8 text-plum/70"><section><h2 className="font-heading text-2xl font-extrabold sm:text-3xl">Cash sales</h2><p className="mt-4">Record the sale and the payment information together. The transaction is usually marked as paid, with the amount and payment method available for later review.</p></section><section><h2 className="font-heading text-2xl font-extrabold sm:text-3xl">Credit sales</h2><p className="mt-4">Record the full sale first, including the agreed due date or terms. When the customer later pays, add a separate payment record and reduce the outstanding balance.</p></section><section><h2 className="font-heading text-2xl font-extrabold sm:text-3xl">Why the distinction matters</h2><p className="mt-4">If you count every payment as a new sale, sales can be overstated. Separating the original sale from later payments keeps revenue reporting and customer balances much clearer.</p></section></div><div className="mt-14 rounded-3xl bg-plum p-7 text-white sm:p-9"><h2 className="font-heading text-2xl font-extrabold">Keep sales and payments connected in OpenBooks.</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">Record a sale, send an invoice when needed and keep track of the payments that settle it.</p><Link href="/register" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-terracotta px-5 py-3 text-sm font-bold text-white">Start for free <ArrowRight size={16} /></Link></div></article></main>;
+}
