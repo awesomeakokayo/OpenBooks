@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
+import { createPageMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "How to Use OpenBooks for Your Small Business",
+  description:
+    "Learn how to set up OpenBooks, add customers, record sales, create invoices, track payments and keep simple business records in Nigeria.",
+  path: "/guide",
+});
 
 const steps = [
   ["01", "Create your business", "Set up your business details and choose how customers can pay you."],
