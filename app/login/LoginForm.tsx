@@ -28,7 +28,7 @@ export function LoginForm() {
     const res = await signIn("credentials", { email, password, redirect: false });
     setLoading(false);
     if (res?.error) {
-      setError("Invalid email or password. If your account is not verified, you can resend the verification email below.");
+      setError("We couldn't sign you in. If you created this account but haven't verified your email, use the button below to send a fresh verification link.");
       return;
     }
     router.push("/dashboard");
