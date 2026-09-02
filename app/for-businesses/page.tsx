@@ -1,6 +1,15 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, Check } from "lucide-react";
 import { OpenBooksBrandMark } from "@/components/openbooks-brand-mark";
+import Link from "next/link";
+import { createPageMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Bookkeeping and Invoicing for Nigerian Small Businesses",
+  description:
+    "Record sales, create invoices, track expenses, see who owes you and keep simple business records with OpenBooks, built for Nigerian small businesses.",
+  path: "/for-businesses",
+});
 
 const benefits = ["Record sales in seconds", "Create and share invoices", "Choose your own payment methods", "Track who owes you", "Issue receipts", "See simple business reports"];
 
