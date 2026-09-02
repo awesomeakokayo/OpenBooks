@@ -5,7 +5,16 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
 
+const githubClientId = process.env.AUTH_GITHUB_ID ?? process.env.GITHUB_ID;
+const githubClientSecret = process.env.AUTH_GITHUB_SECRET ?? process.env.GITHUB_SECRET;
+const googleClientId = process.env.AUTH_GOOGLE_ID ?? process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.AUTH_GOOGLE_SECRET ?? process.env.GOOGLE_CLIENT_SECRET;
+
 export const authConfig: NextAuthConfig = {
+  // On hosted platforms such as Vercel, the request Host header is the
+  // canonical source for the deployment URL when AUTH_URL is not set. Keeping
+  // this explicit avoids Auth.js rejecting a legitimate production host.
+  trustHost: true,
   providers: [
     Credentials({
       credentials: {
@@ -26,8 +35,14 @@ export const authConfig: NextAuthConfig = {
         return { id: user.id, email: user.email, name: user.name, image: user.image };
       },
     }),
-    GitHub,
-    Google,
+    GitHub({
+      clientId: githubClientId,
+      clientSecret: githubClientSecret,
+    }),
+    Google({
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+    }),
   ],
   pages: { signIn: "/login", error: "/auth-error" },
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
