@@ -85,6 +85,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         description: SITE_DESCRIPTION,
         publisher: { "@id": `${SITE_URL}/#organization` },
       },
+      {
+        "@type": "SoftwareApplication",
+        "@id": `${SITE_URL}/#software`,
+        name: SITE_NAME,
+        alternateName: "OpenBooks NG",
+        description: SITE_DESCRIPTION,
+        url: SITE_URL,
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        publisher: { "@id": `${SITE_URL}/#organization` },
+      },
     ],
   };
 
