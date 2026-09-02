@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { IBM_Plex_Mono, Inter, Manrope } from "next/font/google";
 import { WorkspaceNavigationStateProvider } from "@/components/workspace/WorkspaceNavigationState";
+import { SITE_DESCRIPTION, SITE_LOGO, SITE_NAME, SITE_URL } from "@/lib/seo/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,9 +30,32 @@ const mono = IBM_Plex_Mono({
 const OPENBOOKS_ICON = "/OPENBOOKS_LOGO.png?v=2";
 
 export const metadata: Metadata = {
-  title: "OpenBooks NG — Your business notebook, but digital.",
-  description:
-    "Record sales, send invoices, collect payments and keep track of what your business is owed. Nigeria-first, mobile-first, open-source.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "OpenBooks — Simple bookkeeping, invoicing and payment tracking",
+    template: "%s | OpenBooks",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  category: "business",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_NG",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: "OpenBooks — Simple bookkeeping, invoicing and payment tracking",
+    description: SITE_DESCRIPTION,
+    images: [{ url: SITE_LOGO, width: 512, height: 512, alt: "OpenBooks logo" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "OpenBooks — Simple bookkeeping, invoicing and payment tracking",
+    description: SITE_DESCRIPTION,
+    images: [SITE_LOGO],
+  },
   icons: {
     icon: [{ url: OPENBOOKS_ICON, type: "image/png" }],
     shortcut: [{ url: OPENBOOKS_ICON, type: "image/png" }],
@@ -42,10 +66,36 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_ID;
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: SITE_NAME,
+        alternateName: "OpenBooks NG",
+        url: SITE_URL,
+        logo: SITE_LOGO,
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        url: SITE_URL,
+        name: SITE_NAME,
+        description: SITE_DESCRIPTION,
+        publisher: { "@id": `${SITE_URL}/#organization` },
+      },
+    ],
+  };
+
   return (
-    <html lang="en" className={`${inter.variable} ${manrope.variable} ${mono.variable} h-full antialiased`}>
+    <html lang="en-NG" className={`${inter.variable} ${manrope.variable} ${mono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-white text-plum">
         <WorkspaceNavigationStateProvider>{children}</WorkspaceNavigationStateProvider>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
       </body>
       <Analytics mode="production" />
       {googleAnalyticsId ? (
