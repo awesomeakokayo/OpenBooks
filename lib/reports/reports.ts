@@ -10,10 +10,6 @@ export async function getReports(businessId: string) {
     weekDirectSales,
     monthDirectSales,
     totalDirectSales,
-    todayInvoices,
-    weekInvoices,
-    monthInvoices,
-    totalInvoices,
     todayPayments,
     weekPayments,
     monthPayments,
@@ -25,17 +21,13 @@ export async function getReports(businessId: string) {
     customers,
     invoiceOutstandingRecords,
   ] = await Promise.all([
-    // Direct sales are treated as sales when a payment method is recorded.
-    prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
-    prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
-    prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
-    prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null } }, _sum: { totalAmount: true } }),
-    // Invoice totals are recorded as sales when the invoices are issued.
-    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfDay } }, _sum: { total: true } }),
-    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfWeek } }, _sum: { total: true } }),
-    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfMonth } }, _sum: { total: true } }),
-    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
-    // Successful payments are included in the period in which money was received.
+    // Match the Sales page: every recorded sale counts, regardless of whether
+    // a payment method was selected.
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
+    prisma.sale.aggregate({ where: { businessId }, _sum: { totalAmount: true } }),
+    // Match the Sales page: every successful payment counts as received money.
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
@@ -80,13 +72,6 @@ export async function getReports(businessId: string) {
     total: roundMoney(Number(totalDirectSales._sum.totalAmount ?? 0)),
   };
 
-  const invoices = {
-    today: roundMoney(Number(todayInvoices._sum.total ?? 0)),
-    week: roundMoney(Number(weekInvoices._sum.total ?? 0)),
-    month: roundMoney(Number(monthInvoices._sum.total ?? 0)),
-    total: roundMoney(Number(totalInvoices._sum.total ?? 0)),
-  };
-
   const payments = {
     today: roundMoney(Number(todayPayments._sum.amount ?? 0)),
     week: roundMoney(Number(weekPayments._sum.amount ?? 0)),
@@ -94,11 +79,13 @@ export async function getReports(businessId: string) {
     total: roundMoney(Number(totalPayments._sum.amount ?? 0)),
   };
 
+  // Reports now use the exact same sales definition as the Sales page and dashboard:
+  // recorded sales + successful payments. Invoice totals are not added separately.
   const sales = {
-    today: roundMoney(directSales.today + invoices.today + payments.today),
-    week: roundMoney(directSales.week + invoices.week + payments.week),
-    month: roundMoney(directSales.month + invoices.month + payments.month),
-    total: roundMoney(directSales.total + invoices.total + payments.total),
+    today: roundMoney(directSales.today + payments.today),
+    week: roundMoney(directSales.week + payments.week),
+    month: roundMoney(directSales.month + payments.month),
+    total: roundMoney(directSales.total + payments.total),
   };
 
   const [invoiceTotalsByCustomer, paymentTotalsByCustomer] = await Promise.all([
