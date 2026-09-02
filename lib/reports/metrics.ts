@@ -10,10 +10,6 @@ export async function getDashboardMetrics(businessId: string) {
     weekDirectSales,
     monthDirectSales,
     totalDirectSales,
-    todayInvoices,
-    weekInvoices,
-    monthInvoices,
-    totalInvoices,
     todayPayments,
     weekPayments,
     monthPayments,
@@ -24,18 +20,12 @@ export async function getDashboardMetrics(businessId: string) {
     recentSales,
     recentPayments,
   ] = await Promise.all([
-    // Direct sales contribute when a payment method was recorded.
+    // Direct sales contribute to sales when a payment method was recorded.
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null } }, _sum: { totalAmount: true } }),
-    // Invoice totals are recorded as sales when the invoices are issued.
-    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfDay } }, _sum: { total: true } }),
-    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfWeek } }, _sum: { total: true } }),
-    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfMonth } }, _sum: { total: true } }),
-    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
-    // Successful payments are also included in the sales/received figure for
-    // the period in which the money was actually received.
+    // Successful payments contribute when the money was actually received.
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
@@ -64,13 +54,6 @@ export async function getDashboardMetrics(businessId: string) {
     week: roundMoney(Number(weekDirectSales._sum.totalAmount ?? 0)),
     month: roundMoney(Number(monthDirectSales._sum.totalAmount ?? 0)),
     total: roundMoney(Number(totalDirectSales._sum.totalAmount ?? 0)),
-  };
-
-  const invoices = {
-    today: roundMoney(Number(todayInvoices._sum.total ?? 0)),
-    week: roundMoney(Number(weekInvoices._sum.total ?? 0)),
-    month: roundMoney(Number(monthInvoices._sum.total ?? 0)),
-    total: roundMoney(Number(totalInvoices._sum.total ?? 0)),
   };
 
   const payments = {
@@ -104,10 +87,14 @@ export async function getDashboardMetrics(businessId: string) {
     .slice(0, 8);
 
   return {
-    todaySales: roundMoney(directSales.today + invoices.today + payments.today),
-    weekSales: roundMoney(directSales.week + invoices.week + payments.week),
-    monthSales: roundMoney(directSales.month + invoices.month + payments.month),
-    totalSales: roundMoney(directSales.total + invoices.total + payments.total),
+    // Dashboard sales follows the same financial-event model as Recent Activity:
+    // recorded direct sales + successful payments received. Invoice totals are
+    // intentionally not added separately because they are not an activity event
+    // and doing so can double-count invoice payments.
+    todaySales: roundMoney(directSales.today + payments.today),
+    weekSales: roundMoney(directSales.week + payments.week),
+    monthSales: roundMoney(directSales.month + payments.month),
+    totalSales: roundMoney(directSales.total + payments.total),
     monthExpenses: roundMoney(Number(monthExpenses._sum.amount ?? 0)),
     outstanding,
     totalInvoiced,
