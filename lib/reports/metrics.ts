@@ -10,27 +10,27 @@ export async function getDashboardMetrics(businessId: string) {
     weekDirectSales,
     monthDirectSales,
     totalDirectSales,
-    todayPayments,
-    weekPayments,
-    monthPayments,
-    totalPayments,
+    todayInvoices,
+    weekInvoices,
+    monthInvoices,
+    totalInvoices,
     monthExpenses,
     outstandingAgg,
     customerCount,
     recentSales,
     recentPayments,
   ] = await Promise.all([
-    // A direct sale contributes to "money received" only when a payment
-    // method was recorded. Unpaid/later sales remain visible in activity but
-    // must not inflate cash-received sales metrics.
+    // A direct sale contributes to sales when a payment method was recorded.
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null } }, _sum: { totalAmount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS" }, _sum: { amount: true } }),
+    // An invoice is a recorded sale. Its later payments settle the invoice
+    // and therefore are not added again to sales (to avoid double counting).
+    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfDay } }, _sum: { total: true } }),
+    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfWeek } }, _sum: { total: true } }),
+    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfMonth } }, _sum: { total: true } }),
+    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
     prisma.expense.aggregate({ where: { businessId, expenseDate: { gte: startOfMonth } }, _sum: { amount: true } }),
     Promise.all([
       prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
@@ -57,11 +57,11 @@ export async function getDashboardMetrics(businessId: string) {
     total: roundMoney(Number(totalDirectSales._sum.totalAmount ?? 0)),
   };
 
-  const payments = {
-    today: roundMoney(Number(todayPayments._sum.amount ?? 0)),
-    week: roundMoney(Number(weekPayments._sum.amount ?? 0)),
-    month: roundMoney(Number(monthPayments._sum.amount ?? 0)),
-    total: roundMoney(Number(totalPayments._sum.amount ?? 0)),
+  const invoices = {
+    today: roundMoney(Number(todayInvoices._sum.total ?? 0)),
+    week: roundMoney(Number(weekInvoices._sum.total ?? 0)),
+    month: roundMoney(Number(monthInvoices._sum.total ?? 0)),
+    total: roundMoney(Number(totalInvoices._sum.total ?? 0)),
   };
 
   const combinedActivity = [
@@ -88,10 +88,10 @@ export async function getDashboardMetrics(businessId: string) {
     .slice(0, 8);
 
   return {
-    todaySales: roundMoney(directSales.today + payments.today),
-    weekSales: roundMoney(directSales.week + payments.week),
-    monthSales: roundMoney(directSales.month + payments.month),
-    totalSales: roundMoney(directSales.total + payments.total),
+    todaySales: roundMoney(directSales.today + invoices.today),
+    weekSales: roundMoney(directSales.week + invoices.week),
+    monthSales: roundMoney(directSales.month + invoices.month),
+    totalSales: roundMoney(directSales.total + invoices.total),
     monthExpenses: roundMoney(Number(monthExpenses._sum.amount ?? 0)),
     outstanding,
     totalInvoiced,
