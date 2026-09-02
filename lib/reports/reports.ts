@@ -10,10 +10,10 @@ export async function getReports(businessId: string) {
     weekDirectSales,
     monthDirectSales,
     totalDirectSales,
-    todayPayments,
-    weekPayments,
-    monthPayments,
-    totalPayments,
+    todayInvoices,
+    weekInvoices,
+    monthInvoices,
+    totalInvoices,
     paymentsByMethod,
     expensesTotal,
     expensesByCategory,
@@ -21,17 +21,17 @@ export async function getReports(businessId: string) {
     customers,
     invoiceOutstandingRecords,
   ] = await Promise.all([
-    // Direct sales are treated as received sales only when a payment method
-    // is recorded. An "Unpaid / later" direct sale must not inflate sales
-    // received in dashboard/reports.
+    // Direct sales are treated as sales when a payment method is recorded.
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfDay } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfWeek } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null }, saleDate: { gte: startOfMonth } }, _sum: { totalAmount: true } }),
     prisma.sale.aggregate({ where: { businessId, paymentMethod: { not: null } }, _sum: { totalAmount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfDay } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfWeek } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { businessId, status: "SUCCESS" }, _sum: { amount: true } }),
+    // Invoices are recorded sales. Payments against an invoice settle an
+    // existing sale and must not be added to sales a second time.
+    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfDay } }, _sum: { total: true } }),
+    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfWeek } }, _sum: { total: true } }),
+    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" }, issueDate: { gte: startOfMonth } }, _sum: { total: true } }),
+    prisma.invoice.aggregate({ where: { businessId, status: { not: "CANCELLED" } }, _sum: { total: true } }),
     prisma.payment.groupBy({
       by: ["method"],
       where: { businessId, status: "SUCCESS" },
@@ -72,18 +72,18 @@ export async function getReports(businessId: string) {
     total: roundMoney(Number(totalDirectSales._sum.totalAmount ?? 0)),
   };
 
-  const payments = {
-    today: roundMoney(Number(todayPayments._sum.amount ?? 0)),
-    week: roundMoney(Number(weekPayments._sum.amount ?? 0)),
-    month: roundMoney(Number(monthPayments._sum.amount ?? 0)),
-    total: roundMoney(Number(totalPayments._sum.amount ?? 0)),
+  const invoices = {
+    today: roundMoney(Number(todayInvoices._sum.total ?? 0)),
+    week: roundMoney(Number(weekInvoices._sum.total ?? 0)),
+    month: roundMoney(Number(monthInvoices._sum.total ?? 0)),
+    total: roundMoney(Number(totalInvoices._sum.total ?? 0)),
   };
 
   const sales = {
-    today: roundMoney(directSales.today + payments.today),
-    week: roundMoney(directSales.week + payments.week),
-    month: roundMoney(directSales.month + payments.month),
-    total: roundMoney(directSales.total + payments.total),
+    today: roundMoney(directSales.today + invoices.today),
+    week: roundMoney(directSales.week + invoices.week),
+    month: roundMoney(directSales.month + invoices.month),
+    total: roundMoney(directSales.total + invoices.total),
   };
 
   const [invoiceTotalsByCustomer, paymentTotalsByCustomer] = await Promise.all([
