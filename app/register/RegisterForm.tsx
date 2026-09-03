@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, Sparkles, Github } from "lucide-react";
+import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -59,7 +59,7 @@ export function RegisterForm() {
     }
   }
 
-  async function continueWith(provider: "google" | "github") {
+  async function continueWith(provider: "google") {
     setError("");
     setLoading(true);
     await signIn(provider, { callbackUrl: "/dashboard" });
@@ -68,26 +68,15 @@ export function RegisterForm() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-2.5 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => continueWith("google")}
-          disabled={loading}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#E5E3DF] bg-white px-4 text-sm font-semibold text-[#503047] hover:bg-[#F8F8F6] disabled:opacity-60"
-        >
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F8F8F6] text-[11px] font-bold text-[#503047]">G</span>
-          Continue with Google
-        </button>
-        <button
-          type="button"
-          onClick={() => continueWith("github")}
-          disabled={loading}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#E5E3DF] bg-white px-4 text-sm font-semibold text-[#503047] hover:bg-[#F8F8F6] disabled:opacity-60"
-        >
-          <Github size={17} strokeWidth={2} />
-          Continue with GitHub
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => continueWith("google")}
+        disabled={loading}
+        className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-[#E5E3DF] bg-white px-4 text-sm font-semibold text-[#503047] hover:bg-[#F8F8F6] disabled:opacity-60"
+      >
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F8F6] text-[15px] font-bold text-[#503047]">G</span>
+        Continue with Google
+      </button>
 
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-[#E5E3DF]" />

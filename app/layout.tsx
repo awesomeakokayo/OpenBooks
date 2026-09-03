@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { IBM_Plex_Mono, Inter, Manrope } from "next/font/google";
 import { WorkspaceNavigationStateProvider } from "@/components/workspace/WorkspaceNavigationState";
 import { SITE_DESCRIPTION, SITE_LOGO, SITE_NAME, SITE_URL } from "@/lib/seo/site";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,6 +34,9 @@ const mono = IBM_Plex_Mono({
 });
 
 const OPENBOOKS_ICON = "/OPENBOOKS_LOGO.png?v=2";
+// User-provided hero cover — optimized to 1200×630 for link previews (public/image.png)
+const OG_IMAGE = "/image.png";
+const OG_IMAGE_FALLBACK = "/og-image.png";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -48,13 +57,26 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: "OpenBooks — Simple bookkeeping, invoicing and payment tracking",
     description: SITE_DESCRIPTION,
-    images: [{ url: SITE_LOGO, width: 512, height: 512, alt: "OpenBooks logo" }],
+    images: [
+      {
+        url: OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: "OpenBooks NG — Run your business with clarity.",
+      },
+      {
+        url: OG_IMAGE_FALLBACK,
+        width: 1200,
+        height: 630,
+        alt: "OpenBooks NG — Run your business with clarity.",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "OpenBooks — Simple bookkeeping, invoicing and payment tracking",
     description: SITE_DESCRIPTION,
-    images: [SITE_LOGO],
+    images: [OG_IMAGE, OG_IMAGE_FALLBACK],
   },
   icons: {
     icon: [{ url: OPENBOOKS_ICON, type: "image/png" }],

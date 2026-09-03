@@ -81,9 +81,9 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   const selectedLabel = isAllTime ? "All time" : monthLabels[selectedMonth as string];
 
   return (
-    <div className="mx-auto max-w-[1200px] flex flex-col gap-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
+    <div className="mx-auto flex w-full max-w-[1200px] min-w-0 flex-col gap-6 overflow-x-hidden">
+      <div className="flex w-full min-w-0 flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="min-w-0">
           <p className="openbooks-eyebrow text-terracotta">Financial activity</p>
           <h1 className="mt-2 font-heading text-2xl font-bold text-plum">Sales</h1>
           <p className="mt-1 text-sm text-plum/60">{totalCount} recorded transactions · {selectedLabel}</p>
@@ -96,21 +96,21 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
         </div>
       </div>
 
-      <div className="rounded-[16px] bg-pale-sage p-5 sm:p-6">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
+      <div className="w-full min-w-0 overflow-hidden rounded-[16px] bg-pale-sage p-5 sm:p-6">
+        <div className="flex w-full min-w-0 flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-plum/50">Money received or recorded</p>
-            <p className="mt-2 font-heading text-3xl font-extrabold text-plum">{money(total)}</p>
+            <p className="mt-2 break-words font-heading text-3xl font-extrabold text-plum">{money(total)}</p>
             <p className="mt-1 text-xs text-plum/50">
               {isAllTime ? "All time · includes recorded sales and successful payments against invoices." : `${selectedLabel} · includes recorded sales and successful payments against invoices.`}
             </p>
           </div>
-          <span className="rounded-full border border-plum/10 bg-white/70 px-3 py-1.5 text-[11px] font-bold text-plum/55">{selectedLabel}</span>
+          <span className="shrink-0 rounded-full border border-plum/10 bg-white/70 px-3 py-1.5 text-[11px] font-bold text-plum/55">{selectedLabel}</span>
         </div>
       </div>
 
       {transactions.length === 0 ? (
-        <div className="rounded-[16px] bg-pale-sage p-12 text-center">
+        <div className="w-full min-w-0 overflow-hidden rounded-[16px] bg-pale-sage p-12 text-center">
           <p className="font-heading font-bold text-plum">No sales or payments in {selectedLabel}</p>
           <p className="mt-1 text-sm text-plum/60">Choose another month above or record a new sale.</p>
           <Link href="/sales/new" className="mt-4 inline-flex h-11 items-center justify-center rounded-[12px] bg-plum px-6 text-sm font-semibold text-white">
@@ -119,16 +119,16 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-2">
+          <div className="flex w-full min-w-0 flex-col gap-2">
             {transactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between gap-4 rounded-[16px] border border-plum/10 bg-white px-5 py-4">
+              <div key={transaction.id} className="flex w-full min-w-0 items-center justify-between gap-4 overflow-hidden rounded-[16px] border border-plum/10 bg-white px-5 py-4">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-plum">{transaction.description}</p>
-                  <p className="mt-1 text-xs text-plum/50">
+                  <p className="mt-1 truncate text-xs text-plum/50">
                     {transaction.customer} • {transaction.method.replaceAll("_", " ")} • {new Date(transaction.date).toLocaleDateString("en-NG")} • {transaction.type}
                   </p>
                 </div>
-                <p className="shrink-0 text-sm font-bold text-plum">{money(transaction.amount)}</p>
+                <p className="shrink-0 break-all text-sm font-bold text-plum">{money(transaction.amount)}</p>
               </div>
             ))}
           </div>

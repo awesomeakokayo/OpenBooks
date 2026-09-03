@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Github } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export function LoginForm() {
   const router = useRouter();
@@ -106,10 +106,7 @@ export function LoginForm() {
 
       <div className="flex items-center gap-3 py-1"><span className="h-px flex-1 bg-[#E5E3DF]" /><span className="text-xs font-medium tracking-[0.04em] text-[#918A91]">or continue with</span><span className="h-px flex-1 bg-[#E5E3DF]" /></div>
 
-      <div className="grid gap-2.5 sm:grid-cols-2">
-        <button type="button" onClick={() => signIn("github", { callbackUrl: "/dashboard" })} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#E5E3DF] bg-white px-4 text-sm font-semibold text-[#503047] hover:bg-[#F8F8F6]"><Github size={17} strokeWidth={2} />GitHub</button>
-        <button type="button" onClick={() => signIn("google", { callbackUrl: "/dashboard" })} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#E5E3DF] bg-white px-4 text-sm font-semibold text-[#503047] hover:bg-[#F8F8F6]"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F8F8F6] text-[11px] font-bold text-[#503047]">G</span>Google</button>
-      </div>
+      <button type="button" onClick={() => signIn("google", { callbackUrl: "/dashboard" })} className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-[#E5E3DF] bg-white px-4 text-sm font-semibold text-[#503047] hover:bg-[#F8F8F6]"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F8F6] text-[15px] font-bold text-[#503047]">G</span>Continue with Google</button>
     </form>
   );
 }
