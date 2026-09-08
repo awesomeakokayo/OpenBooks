@@ -17,12 +17,10 @@ export async function WorkspaceShell({ children }: { children: React.ReactNode }
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#F8F8F6] text-plum">
-      <div className="flex min-h-screen min-w-0">
-        <WorkspaceNavigation businessName={member.business.name} firstName={firstName} />
-        <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
-          <WorkspaceHeader businessName={member.business.name} firstName={firstName} />
-          <div className="flex-1 min-w-0 overflow-x-hidden px-4 pb-8 pt-24 sm:px-6 lg:px-8 lg:pb-10 lg:pt-10">{children}</div>
-        </div>
+      <WorkspaceNavigation businessName={member.business.name} firstName={firstName} />
+      <div className="flex min-h-screen min-w-0 flex-col lg:pl-[248px]">
+        <WorkspaceHeader businessName={member.business.name} firstName={firstName} />
+        <main className="flex-1 min-w-0 overflow-x-hidden px-4 pb-8 pt-24 sm:px-6 lg:px-8 lg:pb-10 lg:pt-10">{children}</main>
       </div>
     </div>
   );
