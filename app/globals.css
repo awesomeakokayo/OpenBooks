@@ -46,265 +46,104 @@
 }
 
 html { scroll-behavior: smooth; }
-
-body {
-  background: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-body), Inter, system-ui, sans-serif;
-  text-rendering: optimizeLegibility;
-}
-
-h1, h2, h3, h4 {
-  font-family: var(--font-heading), Manrope, sans-serif;
-  color: inherit;
-  line-height: 1.15;
-}
-
+body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-body), Inter, system-ui, sans-serif; text-rendering: optimizeLegibility; }
+h1, h2, h3, h4 { font-family: var(--font-heading), Manrope, sans-serif; color: inherit; line-height: 1.15; }
 a[href], button:not(:disabled) { cursor: pointer; }
 a { color: inherit; }
 a:hover { color: inherit; }
 button:disabled, a[aria-disabled="true"] { cursor: not-allowed; }
 a:not([href]) { cursor: default; }
+::selection { background: var(--color-pale-sage); color: var(--color-plum); }
+*:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(192, 87, 70, 0.2); }
 
-::selection {
-  background: var(--color-pale-sage);
-  color: var(--color-plum);
-}
+main > div.sticky nav a { color: var(--color-white) !important; }
+main > div.sticky nav a:hover { color: var(--color-white) !important; }
 
-*:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(192, 87, 70, 0.2);
-}
-
-/* Landing-page navigation sits on plum; keep every navigation label readable. */
-main > div.sticky nav a {
-  color: var(--color-white) !important;
-}
-
-main > div.sticky nav a:hover {
-  color: var(--color-white) !important;
-}
-
-/* Mobile landing-page menu: keep the drawer explicitly plum with white labels. */
 @media (max-width: 639px) {
-  main > div.sticky > div[class*="sm:hidden"] {
-    background: var(--color-plum) !important;
-  }
+  main > div.sticky > div[class*="sm:hidden"] { background: var(--color-plum) !important; }
+  main > div.sticky > div[class*="sm:hidden"] a { color: var(--color-white) !important; }
+  main > div.sticky > div[class*="sm:hidden"] a:hover { color: var(--color-white) !important; }
 
-  main > div.sticky > div[class*="sm:hidden"] a {
-    color: var(--color-white) !important;
-  }
-
-  main > div.sticky > div[class*="sm:hidden"] a:hover {
-    color: var(--color-white) !important;
-  }
-
-  /* Mobile controls should be comfortably tappable instead of relying on small
-     padding values scattered across individual screens. 44px is the minimum
-     touch target for primary and secondary controls on the app. */
-  button:not(:disabled) {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  a.inline-flex,
-  a[class*="bg-plum"],
-  a[class*="bg-terracotta"],
-  a[class*="bg-\\[\\#503047\\]"],
-  a[class*="bg-\\[\\#C05746\\]"],
-  a[class*="bg-\\[\\#c05746\\]"] {
-    min-height: 44px;
-  }
+  /* Keep every interactive control comfortably tappable on phones. */
+  button:not(:disabled) { min-height: 44px; min-width: 44px; }
+  a.inline-flex { min-height: 44px; }
+  a[class*="bg-plum"], a[class*="bg-terracotta"] { min-height: 44px; }
 }
 
-/* Terracotta is a filled action surface; never allow a terracotta-on-terracotta label. */
 .bg-terracotta.text-terracotta,
 .bg-terracotta .text-terracotta,
-.bg-\\[\\#C05746\\].text-\\[\\#C05746\\],
-.bg-\\[\\#C05746\\] .text-\\[\\#C05746\\],
-.bg-\\[\\#c05746\\].text-\\[\\#c05746\\],
-.bg-\\[\\#c05746\\] .text-\\[\\#c05746\\],
-.bg-\\[\\#C05746\\].text-terracotta,
-.bg-\\[\\#C05746\\] .text-terracotta,
-.bg-terracotta.text-\\[\\#C05746\\],
-.bg-terracotta .text-\\[\\#C05746\\],
-.bg-\\[\\#c05746\\].text-terracotta,
-.bg-\\[\\#c05746\\] .text-terracotta,
-.bg-terracotta .text-\\[\\#c05746\\],
-.bg-\\[\\#C05746\\] .text-\\[\\#c05746\\] {
-  color: var(--color-white) !important;
-}
+.bg-\[\#C05746\].text-\[\#C05746\],
+.bg-\[\#C05746\] .text-\[\#C05746\],
+.bg-\[\#c05746\].text-\[\#c05746\],
+.bg-\[\#c05746\] .text-\[\#c05746\],
+.bg-\[\#C05746\].text-terracotta,
+.bg-\[\#C05746\] .text-terracotta,
+.bg-terracotta.text-\[\#C05746\],
+.bg-terracotta .text-\[\#C05746\],
+.bg-\[\#c05746\].text-terracotta,
+.bg-\[\#c05746\] .text-terracotta,
+.bg-terracotta .text-\[\#c05746\],
+.bg-\[\#C05746\] .text-\[\#c05746\] { color: var(--color-white) !important; }
 
 .bg-terracotta.text-terracotta:hover,
 .bg-terracotta:hover .text-terracotta,
-.bg-\\[\\#C05746\\].text-\\[\\#C05746\\]:hover,
-.bg-\\[\\#C05746\\]:hover .text-\\[\\#C05746\\],
-.bg-\\[\\#c05746\\].text-\\[\\#c05746\\]:hover,
-.bg-\\[\\#c05746\\]:hover .text-\\[\\#c05746\\],
-.bg-\\[\\#C05746\\].text-terracotta:hover,
-.bg-\\[\\#C05746\\]:hover .text-terracotta,
-.bg-terracotta.text-\\[\\#C05746\\]:hover,
-.bg-terracotta:hover .text-\\[\\#C05746\\] {
-  color: var(--color-white) !important;
-}
+.bg-\[\#C05746\].text-\[\#C05746\]:hover,
+.bg-\[\#C05746\]:hover .text-\[\#C05746\],
+.bg-\[\#c05746\].text-\[\#c05746\]:hover,
+.bg-\[\#c05746\]:hover .text-\[\#c05746\],
+.bg-\[\#C05746\].text-terracotta:hover,
+.bg-\[\#C05746\]:hover .text-terracotta,
+.bg-terracotta.text-\[\#C05746\]:hover,
+.bg-terracotta:hover .text-\[\#C05746\] { color: var(--color-white) !important; }
 
-/* Plum is a filled action surface; never allow plum-on-plum labels. */
 .bg-plum.text-plum,
 .bg-plum .text-plum,
-.bg-\\[\\#503047\\].text-\\[\\#503047\\],
-.bg-\\[\\#503047\\] .text-\\[\\#503047\\],
-.bg-\\[\\#503047\\].text-plum,
-.bg-\\[\\#503047\\] .text-plum,
-.bg-plum.text-\\[\\#503047\\],
-.bg-plum .text-\\[\\#503047\\] {
-  color: var(--color-white) !important;
-}
+.bg-\[\#503047\].text-\[\#503047\],
+.bg-\[\#503047\] .text-\[\#503047\],
+.bg-\[\#503047\].text-plum,
+.bg-\[\#503047\] .text-plum,
+.bg-plum.text-\[\#503047\],
+.bg-plum .text-\[\#503047\] { color: var(--color-white) !important; }
 
-/* Filled brand buttons and action links are white-on-plum/terracotta even on hover.
-   This also protects links from the generic `a { color: inherit; }` base rule. */
 a.bg-plum,
 button.bg-plum,
 a.bg-terracotta,
 button.bg-terracotta,
-a.bg-\\[\\#503047\\],
-button.bg-\\[\\#503047\\],
-a.bg-\\[\\#C05746\\],
-button.bg-\\[\\#C05746\\],
-a.bg-\\[\\#c05746\\],
-button.bg-\\[\\#c05746\\] {
-  color: var(--color-white) !important;
-}
+a.bg-\[\#503047\],
+button.bg-\[\#503047\],
+a.bg-\[\#C05746\],
+button.bg-\[\#C05746\],
+a.bg-\[\#c05746\],
+button.bg-\[\#c05746\] { color: var(--color-white) !important; }
 
-a.bg-plum:hover,
-button.bg-plum:hover,
-a.bg-plum:focus-visible,
-button.bg-plum:focus-visible,
-a.bg-terracotta:hover,
-button.bg-terracotta:hover,
-a.bg-terracotta:focus-visible,
-button.bg-terracotta:focus-visible,
-a.bg-\\[\\#503047\\]:hover,
-button.bg-\\[\\#503047\\]:hover,
-a.bg-\\[\\#503047\\]:focus-visible,
-button.bg-\\[\\#503047\\]:focus-visible,
-a.bg-\\[\\#C05746\\]:hover,
-button.bg-\\[\\#C05746\\]:hover,
-a.bg-\\[\\#C05746\\]:focus-visible,
-button.bg-\\[\\#C05746\\]:focus-visible,
-a.bg-\\[\\#c05746\\]:hover,
-button.bg-\\[\\#c05746\\]:hover,
-a.bg-\\[\\#c05746\\]:focus-visible,
-button.bg-\\[\\#c05746\\]:focus-visible {
-  color: var(--color-white) !important;
-}
+a.bg-plum:hover, button.bg-plum:hover, a.bg-plum:focus-visible, button.bg-plum:focus-visible,
+a.bg-terracotta:hover, button.bg-terracotta:hover, a.bg-terracotta:focus-visible, button.bg-terracotta:focus-visible,
+a.bg-\[\#503047\]:hover, button.bg-\[\#503047\]:hover, a.bg-\[\#503047\]:focus-visible, button.bg-\[\#503047\]:focus-visible,
+a.bg-\[\#C05746\]:hover, button.bg-\[\#C05746\]:hover, a.bg-\[\#C05746\]:focus-visible, button.bg-\[\#C05746\]:focus-visible,
+a.bg-\[\#c05746\]:hover, button.bg-\[\#c05746\]:hover, a.bg-\[\#c05746\]:focus-visible, button.bg-\[\#c05746\]:focus-visible { color: var(--color-white) !important; }
 
-a[href^="/dashboard?month="] {
-  min-height: 44px;
-  color: var(--color-white) !important;
-}
+a[href^="/dashboard?month="] { min-height: 44px; color: var(--color-white) !important; }
+a[href^="/dashboard?month="]:hover, a[href^="/dashboard?month="]:focus-visible { color: var(--color-white) !important; }
 
-a[href^="/dashboard?month="]:hover,
-a[href^="/dashboard?month="]:focus-visible {
-  color: var(--color-white) !important;
-}
-
-.openbooks-card {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  border-radius: var(--radius-2xl);
-  box-shadow: 0 14px 40px rgba(80, 48, 71, 0.07);
-}
-
-.openbooks-card-soft {
-  border: 1px solid var(--color-border-soft);
-  background: var(--color-surface-soft);
-  border-radius: var(--radius-xl);
-}
-
-.openbooks-eyebrow {
-  font-size: 11px;
-  line-height: 1.2;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.openbooks-scrollbar-hidden {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.openbooks-scrollbar-hidden::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
-
-.openbooks-nav-scroll-region {
-  position: relative;
-  overflow: hidden;
-}
-
-.openbooks-nav-scroll-region::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 34px;
-  pointer-events: none;
-  background: linear-gradient(to bottom, rgba(80, 48, 71, 0), #503047 82%);
-}
-
-.animate-openbooks-fade {
-  animation: openbooks-fade 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes openbooks-fade {
-  from { opacity: 0; transform: translateY(10px) scale(0.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
+.openbooks-card { border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-2xl); box-shadow: 0 14px 40px rgba(80, 48, 71, 0.07); }
+.openbooks-card-soft { border: 1px solid var(--color-border-soft); background: var(--color-surface-soft); border-radius: var(--radius-xl); }
+.openbooks-eyebrow { font-size: 11px; line-height: 1.2; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
+.openbooks-scrollbar-hidden { scrollbar-width: none; -ms-overflow-style: none; }
+.openbooks-scrollbar-hidden::-webkit-scrollbar { width: 0; height: 0; display: none; }
+.openbooks-nav-scroll-region { position: relative; overflow: hidden; }
+.openbooks-nav-scroll-region::after { content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 34px; pointer-events: none; background: linear-gradient(to bottom, rgba(80, 48, 71, 0), #503047 82%); }
+.animate-openbooks-fade { animation: openbooks-fade 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes openbooks-fade { from { opacity: 0; transform: translateY(10px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 @media print {
-  @page {
-    size: A4;
-    margin: 12mm;
-  }
-
-  html,
-  body {
-    background: #ffffff !important;
-  }
-
-  .print-hidden,
-  .print\\:hidden {
-    display: none !important;
-  }
-
-  .print-invoice {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
-
-  .print-invoice-card {
-    border: 0 !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-  }
-
-  a {
-    text-decoration: none !important;
-  }
+  @page { size: A4; margin: 12mm; }
+  html, body { background: #ffffff !important; }
+  .print-hidden, .print\:hidden { display: none !important; }
+  .print-invoice { width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+  .print-invoice-card { border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+  a { text-decoration: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-  }
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
 }
