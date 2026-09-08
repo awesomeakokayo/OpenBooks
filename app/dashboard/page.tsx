@@ -52,7 +52,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <h1 className="mt-2 font-heading text-3xl font-extrabold tracking-tight text-plum sm:text-4xl">Good morning, {name}.</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-plum/55">Here’s the state of your business today. Keep the numbers clear and the next action obvious.</p>
         </div>
-        <Link href="/invoices" className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-terracotta px-5 text-sm font-bold !text-white shadow-[0_10px_28px_rgba(192,87,70,0.2)] transition-all hover:-translate-y-px hover:bg-terracotta-dark sm:h-11 sm:w-auto">
+        <Link href="/invoices/new" className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-terracotta px-5 text-sm font-bold !text-white shadow-[0_10px_28px_rgba(192,87,70,0.2)] transition-all hover:-translate-y-px hover:bg-terracotta-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 sm:h-11 sm:w-auto">
           <Plus size={17} /> Create invoice
         </Link>
       </section>
@@ -107,7 +107,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <p className="openbooks-eyebrow text-plum/40">Activity · {selectedLabel}</p>
               <h2 className="mt-2 font-heading text-xl font-extrabold">Activity in this period</h2>
             </div>
-            <Link href="/sales" className="inline-flex items-center gap-1 text-xs font-bold text-terracotta hover:text-terracotta-dark">View all <ArrowUpRight size={14} /></Link>
+            <Link href="/sales" className="inline-flex items-center gap-1 text-xs font-bold text-terracotta hover:text-terracotta-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2">View all <ArrowUpRight size={14} /></Link>
           </div>
 
           {metrics.recentSales.length === 0 ? (
@@ -115,7 +115,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pale-sage text-plum"><ReceiptText size={20} /></span>
               <h3 className="mt-4 font-heading text-base font-extrabold">Nothing recorded in {selectedLabel}</h3>
               <p className="mt-1.5 max-w-sm text-sm leading-6 text-plum/50">Sales and successful payments for this month will appear here. Your broader history is always available in Sales.</p>
-              <Link href="/sales/new" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-plum px-4 py-2.5 text-xs font-bold !text-white hover:bg-plum-deep">Record a sale <ArrowRight size={14} /></Link>
+              <Link href="/sales/new" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-plum px-4 py-2.5 text-xs font-bold !text-white hover:bg-plum-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum focus-visible:ring-offset-2">Record a sale <ArrowRight size={14} /></Link>
             </div>
           ) : (
             <div className="mt-2 divide-y divide-plum/10">
@@ -143,7 +143,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <div className="flex items-center justify-between gap-2"><span className="text-white/55">Expenses</span><span className="shrink-0 break-all font-bold">{money(metrics.monthExpenses)}</span></div>
             <div className="flex items-center justify-between gap-2"><span className="text-white/55">Invoices issued</span><span className="shrink-0 font-bold">{metrics.invoiceCount}</span></div>
           </div>
-          <Link href={`/reports?month=${selectedMonth}`} className="mt-7 inline-flex items-center gap-2 text-xs font-bold text-pale-sage hover:text-white">View {selectedLabel} report <ArrowRight size={14} /></Link>
+          <Link href={`/reports?month=${selectedMonth}`} className="mt-7 inline-flex items-center gap-2 text-xs font-bold text-pale-sage hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pale-sage focus-visible:ring-offset-2 focus-visible:ring-offset-plum">View {selectedLabel} report <ArrowRight size={14} /></Link>
         </div>
       </section>
 
@@ -157,10 +157,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             { href: "/customers/new", label: "Add customer", copy: "Save a customer and keep their history together.", icon: Users },
-            { href: "/expenses", label: "Record expense", copy: "Capture what leaves the business before it gets forgotten.", icon: CircleDollarSign },
+            { href: "/expenses/new", label: "Record expense", copy: "Capture what leaves the business before it gets forgotten.", icon: CircleDollarSign },
             { href: "/business/settings", label: "Payment settings", copy: "Choose how customers can pay you on invoices.", icon: WalletCards },
           ].map(({ href, label, copy, icon: Icon }) => (
-            <Link key={href} href={href} className="group min-w-0 overflow-hidden rounded-2xl border border-plum/10 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-plum/15 hover:shadow-[0_12px_32px_rgba(80,48,71,0.07)]">
+            <Link key={href} href={href} className="group min-w-0 overflow-hidden rounded-2xl border border-plum/10 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-plum/15 hover:shadow-[0_12px_32px_rgba(80,48,71,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum focus-visible:ring-offset-2">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-pale-sage text-plum"><Icon size={18} /></span>
               <div className="mt-5 flex items-center justify-between gap-3">
                 <h3 className="font-heading text-sm font-extrabold">{label}</h3>
