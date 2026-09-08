@@ -98,48 +98,65 @@ main > div.sticky nav a:hover {
   main > div.sticky > div[class*="sm:hidden"] a:hover {
     color: var(--color-white) !important;
   }
+
+  /* Mobile controls should be comfortably tappable instead of relying on small
+     padding values scattered across individual screens. 44px is the minimum
+     touch target for primary and secondary controls on the app. */
+  button:not(:disabled) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  a.inline-flex,
+  a[class*="bg-plum"],
+  a[class*="bg-terracotta"],
+  a[class*="bg-\\[\\#503047\\]"],
+  a[class*="bg-\\[\\#C05746\\]"],
+  a[class*="bg-\\[\\#c05746\\]"] {
+    min-height: 44px;
+  }
 }
 
 /* Terracotta is a filled action surface; never allow a terracotta-on-terracotta label. */
 .bg-terracotta.text-terracotta,
 .bg-terracotta .text-terracotta,
-.bg-\[\#C05746\].text-\[\#C05746\],
-.bg-\[\#C05746\] .text-\[\#C05746\],
-.bg-\[\#c05746\].text-\[\#c05746\],
-.bg-\[\#c05746\] .text-\[\#c05746\],
-.bg-\[\#C05746\].text-terracotta,
-.bg-\[\#C05746\] .text-terracotta,
-.bg-terracotta.text-\[\#C05746\],
-.bg-terracotta .text-\[\#C05746\],
-.bg-\[\#c05746\].text-terracotta,
-.bg-\[\#c05746\] .text-terracotta,
-.bg-terracotta .text-\[\#c05746\],
-.bg-\[\#C05746\] .text-\[\#c05746\] {
+.bg-\\[\\#C05746\\].text-\\[\\#C05746\\],
+.bg-\\[\\#C05746\\] .text-\\[\\#C05746\\],
+.bg-\\[\\#c05746\\].text-\\[\\#c05746\\],
+.bg-\\[\\#c05746\\] .text-\\[\\#c05746\\],
+.bg-\\[\\#C05746\\].text-terracotta,
+.bg-\\[\\#C05746\\] .text-terracotta,
+.bg-terracotta.text-\\[\\#C05746\\],
+.bg-terracotta .text-\\[\\#C05746\\],
+.bg-\\[\\#c05746\\].text-terracotta,
+.bg-\\[\\#c05746\\] .text-terracotta,
+.bg-terracotta .text-\\[\\#c05746\\],
+.bg-\\[\\#C05746\\] .text-\\[\\#c05746\\] {
   color: var(--color-white) !important;
 }
 
 .bg-terracotta.text-terracotta:hover,
 .bg-terracotta:hover .text-terracotta,
-.bg-\[\#C05746\].text-\[\#C05746\]:hover,
-.bg-\[\#C05746\]:hover .text-\[\#C05746\],
-.bg-\[\#c05746\].text-\[\#c05746\]:hover,
-.bg-\[\#c05746\]:hover .text-\[\#c05746\],
-.bg-\[\#C05746\].text-terracotta:hover,
-.bg-\[\#C05746\]:hover .text-terracotta,
-.bg-terracotta.text-\[\#C05746\]:hover,
-.bg-terracotta:hover .text-\[\#C05746\] {
+.bg-\\[\\#C05746\\].text-\\[\\#C05746\\]:hover,
+.bg-\\[\\#C05746\\]:hover .text-\\[\\#C05746\\],
+.bg-\\[\\#c05746\\].text-\\[\\#c05746\\]:hover,
+.bg-\\[\\#c05746\\]:hover .text-\\[\\#c05746\\],
+.bg-\\[\\#C05746\\].text-terracotta:hover,
+.bg-\\[\\#C05746\\]:hover .text-terracotta,
+.bg-terracotta.text-\\[\\#C05746\\]:hover,
+.bg-terracotta:hover .text-\\[\\#C05746\\] {
   color: var(--color-white) !important;
 }
 
 /* Plum is a filled action surface; never allow plum-on-plum labels. */
 .bg-plum.text-plum,
 .bg-plum .text-plum,
-.bg-\[\#503047\].text-\[\#503047\],
-.bg-\[\#503047\] .text-\[\#503047\],
-.bg-\[\#503047\].text-plum,
-.bg-\[\#503047\] .text-plum,
-.bg-plum.text-\[\#503047\],
-.bg-plum .text-\[\#503047\] {
+.bg-\\[\\#503047\\].text-\\[\\#503047\\],
+.bg-\\[\\#503047\\] .text-\\[\\#503047\\],
+.bg-\\[\\#503047\\].text-plum,
+.bg-\\[\\#503047\\] .text-plum,
+.bg-plum.text-\\[\\#503047\\],
+.bg-plum .text-\\[\\#503047\\] {
   color: var(--color-white) !important;
 }
 
@@ -149,12 +166,12 @@ a.bg-plum,
 button.bg-plum,
 a.bg-terracotta,
 button.bg-terracotta,
-a.bg-\[\#503047\],
-button.bg-\[\#503047\],
-a.bg-\[\#C05746\],
-button.bg-\[\#C05746\],
-a.bg-\[\#c05746\],
-button.bg-\[\#c05746\] {
+a.bg-\\[\\#503047\\],
+button.bg-\\[\\#503047\\],
+a.bg-\\[\\#C05746\\],
+button.bg-\\[\\#C05746\\],
+a.bg-\\[\\#c05746\\],
+button.bg-\\[\\#c05746\\] {
   color: var(--color-white) !important;
 }
 
@@ -166,23 +183,21 @@ a.bg-terracotta:hover,
 button.bg-terracotta:hover,
 a.bg-terracotta:focus-visible,
 button.bg-terracotta:focus-visible,
-a.bg-\[\#503047\]:hover,
-button.bg-\[\#503047\]:hover,
-a.bg-\[\#503047\]:focus-visible,
-button.bg-\[\#503047\]:focus-visible,
-a.bg-\[\#C05746\]:hover,
-button.bg-\[\#C05746\]:hover,
-a.bg-\[\#C05746\]:focus-visible,
-button.bg-\[\#C05746\]:focus-visible,
-a.bg-\[\#c05746\]:hover,
-button.bg-\[\#c05746\]:hover,
-a.bg-\[\#c05746\]:focus-visible,
-button.bg-\[\#c05746\]:focus-visible {
+a.bg-\\[\\#503047\\]:hover,
+button.bg-\\[\\#503047\\]:hover,
+a.bg-\\[\\#503047\\]:focus-visible,
+button.bg-\\[\\#503047\\]:focus-visible,
+a.bg-\\[\\#C05746\\]:hover,
+button.bg-\\[\\#C05746\\]:hover,
+a.bg-\\[\\#C05746\\]:focus-visible,
+button.bg-\\[\\#C05746\\]:focus-visible,
+a.bg-\\[\\#c05746\\]:hover,
+button.bg-\\[\\#c05746\\]:hover,
+a.bg-\\[\\#c05746\\]:focus-visible,
+button.bg-\\[\\#c05746\\]:focus-visible {
   color: var(--color-white) !important;
 }
 
-/* Historical-month dashboard CTAs are filled plum actions; force readable white labels
-   and give them the same comfortable height as other primary actions. */
 a[href^="/dashboard?month="] {
   min-height: 44px;
   color: var(--color-white) !important;
@@ -261,7 +276,7 @@ a[href^="/dashboard?month="]:focus-visible {
   }
 
   .print-hidden,
-  .print\:hidden {
+  .print\\:hidden {
     display: none !important;
   }
 
