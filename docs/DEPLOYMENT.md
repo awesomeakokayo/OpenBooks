@@ -1,4 +1,3 @@
-
 # OpenBooks Deployment
 
 ## Production platform
@@ -25,6 +24,26 @@ prisma generate && next build
 
 The application uses Next.js with the App Router.
 
+The build command generates Prisma Client but does not apply database migrations.
+
+## CI
+
+GitHub Actions validation is defined in:
+
+.github/workflows/ci.yml
+
+The current workflow runs:
+
+~~~text
+npm ci
+prisma generate
+npm run lint
+npm test
+npm run build
+~~~
+
+CI is a quality gate, not a substitute for production smoke testing.
+
 ## Release flow
 
 A safe release should follow this sequence:
@@ -38,11 +57,13 @@ production build
   ↓
 review diff
   ↓
+database migration when required
+  ↓
 merge to main
   ↓
 Vercel deployment
   ↓
-smoke test production
+production smoke test
 ~~~
 
 ## Pre-release checklist
@@ -116,6 +137,21 @@ Verify:
 - important public pages render without authentication.
 
 See SEO.md.
+
+## Database migrations
+
+When a production schema change is included in a release:
+
+1. create/test the migration locally;
+2. commit the migration files;
+3. verify the migration against a safe staging/test database;
+4. apply the production migration with the approved deployment procedure;
+5. deploy application code compatible with the resulting schema;
+6. smoke test financial and authentication flows.
+
+Never rely on next build to migrate production automatically.
+
+See DATABASE.md and backup.md.
 
 ## Cron
 
