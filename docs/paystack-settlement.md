@@ -1,71 +1,82 @@
-# Paystack Settlement Model — OpenBooks NG
 
-## Decision
-We use **Paystack Standard + Subaccount settlement** without OpenBooks acting as wallet.
+# Paystack Settlement Model — Future Reference
 
-Flow:
-```
-Customer
-  ↓
-Paystack Checkout (initialized with subaccount)
-  ↓
-Paystack settles to Business subaccount bank account
-  ↓ (Paystack settlement schedule, fees deducted)
-Business bank account
-```
+## Status
 
-OpenBooks only records the transaction; never holds customer funds.
+**Not active in OpenBooks V1.**
 
-## Why Subaccount
-- Paystack subaccount (`ACCT_xxx`) represents each business's settlement destination.
-- Initialize call includes `subaccount: business.paystackSubaccountCode` when present.
-- If no subaccount, funds settle to platform account — we still record but
-  ops must reconcile manually. V1 therefore allows `subaccount` null and still
-  works as record-only.
+The current V1 API intentionally returns 410 Gone for Paystack initialize, verify and webhook endpoints. V1 uses manual Cash, Bank Transfer and POS payment recording.
 
-## Onboarding (V1 minimal)
-1. Business enables Paystack in Payment Settings → we store `paystackSubaccountCode` (optional).
-2. For hosted OpenBooks: platform owner creates subaccount via `POST /subaccount`
-   with business bank details + percentage charge (e.g., business gets 100% minus
-   Paystack fees). Requires `bank_code`, `account_number`, `business_name`.
-3. Future: KYC per Paystack docs — business must provide valid bank account
-   that Paystack can verify; no secret key ever stored from business.
+This document is retained so a future engineer does not have to reconstruct the earlier provider design from old code or chat history.
 
-## Initialize Contract
-`POST /transaction/initialize`:
-```json
-{
-  "amount": "<outstanding * 100 kobo>",
-  "email": "customer.email || business.email || fallback",
-  "reference": "OB_<invoiceId>_<timestamp>_<random>",
-  "callback_url": "${APP_URL}/invoice/${publicToken}?reference=<ref>",
-  "subaccount": "ACCT_xxx (if present)",
-  "metadata": { "businessId", "invoiceId", "customerId", "publicToken" }
-}
-```
+## Intended boundary
 
-Stored as `Payment { provider PAYSTACK, status PENDING, providerReference = reference }`.
+When Paystack is eventually introduced, it should remain a provider-specific layer behind a payment-provider boundary.
 
-## Verification (Source of Truth)
-- Browser redirect `?reference=` is NOT trusted.
-- Webhook `POST /api/webhooks/paystack` with `x-paystack-signature = HMAC_SHA512(secret, rawBody)` is validated, then server `GET /transaction/verify/:reference` is called.
-- We confirm: `status === "success"`, `currency === "NGN"`, `amount === expectedOutstandingKobo`, `businessId` matches invoice.businessId via `providerReference` lookup or metadata.
-- Idempotency: `findUnique Payment where providerReference = reference` → if exists, 200 without duplicate.
-- Then create `Payment { SUCCESS, AUTOMATIC, verifiedAt }`, update invoice status
-  (PARTIALLY_PAID → PAID when totalPaid >= total), create receipt atomically.
+Conceptually:
 
-## Fees / Settlement Schedule
-Per Paystack docs at production time — typically T+1 settlement, fees ~1.5% + ₦100 capped.
-OpenBooks does not deduct extra fee in V1; platform fee can be added via subaccount `percentage_charge`.
+~~~text
+OpenBooks invoice
+      ↓
+provider adapter
+      ↓
+external checkout
+      ↓
+provider verification/webhook
+      ↓
+OpenBooks payment record
+      ↓
+receipt + invoice status
+~~~
 
-## Keys
-- `PAYSTACK_SECRET_KEY` server-only (env), `PAYSTACK_PUBLIC_KEY` not needed server-side except for reference.
-- `PAYSTACK_WEBHOOK_SECRET` is actually the same secret used for HMAC (Paystack uses secret key).
+OpenBooks must not treat a browser redirect as proof of payment.
 
-## Current Limitation
-Direct bank-transfer via Paystack Dedicated Virtual Account is V2; V1 uses
-online card/bank checkout only. Manual BANK_TRANSFER remains manual until DVA.
+## Required future controls
 
-## References
-- Paystack docs: Transaction initialize, Verify, Webhooks, Subaccounts
-- Verification prerequisite per buildversion.md:1132 before live money
+A future Paystack implementation must be designed and tested for:
+
+- server-side transaction verification;
+- webhook authenticity verification;
+- exact invoice/business/customer association;
+- amount and currency verification;
+- idempotent processing;
+- duplicate webhook handling;
+- safe retry behavior;
+- provider failure states;
+- refund/reversal semantics;
+- settlement/reconciliation;
+- provider-specific onboarding/compliance requirements.
+
+## Existing schema boundary
+
+The Prisma schema already contains provider-oriented payment fields and a business field reserved for a future settlement/subaccount model.
+
+Do not enable those fields in V1 UI simply because the schema can represent them.
+
+## Non-goals for V1
+
+V1 does not:
+
+- initialize online Paystack transactions;
+- verify Paystack transactions;
+- accept Paystack webhook events;
+- act as a wallet;
+- hold customer funds.
+
+## Future implementation checklist
+
+Before activating Paystack:
+
+1. write the product/payment contract;
+2. decide the settlement architecture;
+3. implement the provider adapter;
+4. add server-side verification;
+5. add webhook authentication;
+6. make processing idempotent;
+7. test partial/final payment behavior;
+8. test failures/retries/refunds;
+9. review tenant isolation and secret handling;
+10. update SECURITY.md, INTEGRATIONS.md, DATABASE.md and deployment documentation;
+11. run the full release gate.
+
+No live-money provider should be reactivated by restoring an old code path without this review.
