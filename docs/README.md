@@ -12,31 +12,33 @@ The repository is the source of truth for implementation. Documentation explains
 
 | Need | Read |
 | --- | --- |
-| Understand the codebase | [CODEBASE-MAP.md](./CODEBASE-MAP.md) |
-| Understand system design | [ARCHITECTURE.md](./ARCHITECTURE.md) |
-| Set up a development machine | [CONTRIBUTING.md](../CONTRIBUTING.md) |
-| Configure local/production secrets | [ENVIRONMENT.md](./ENVIRONMENT.md) |
-| Understand the Prisma data model | [DATABASE.md](./DATABASE.md) |
-| Deploy the application | [DEPLOYMENT.md](./DEPLOYMENT.md) |
-| Understand integrations | [INTEGRATIONS.md](./INTEGRATIONS.md) |
-| Run the test/release checks | [TESTING.md](./TESTING.md) |
-| Fix a common problem | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) |
-| Understand SEO implementation | [SEO.md](./SEO.md) |
-| Understand financial rules | [FINANCE.md](./FINANCE.md) |
-| Work with authentication | [AUTHENTICATION.md](./AUTHENTICATION.md) |
-| Work safely with an AI coding agent | [AI-DEVELOPER-GUIDE.md](./AI-DEVELOPER-GUIDE.md) |
-| See the current implementation stage | [PHASE-CHECKPOINT.md](./PHASE-CHECKPOINT.md) |
-| Understand the original V1 plan | [V1-IMPLEMENTATION-PLAN.md](./V1-IMPLEMENTATION-PLAN.md) |
+| Understand the codebase | CODEBASE-MAP.md |
+| Understand system design | ARCHITECTURE.md |
+| Set up a development machine | ../CONTRIBUTING.md |
+| Configure environment safely | ENVIRONMENT.md |
+| Understand the data model | DATABASE.md |
+| Understand financial rules | FINANCE.md |
+| Understand authentication | AUTHENTICATION.md |
+| Deploy the application | DEPLOYMENT.md |
+| Understand integrations | INTEGRATIONS.md |
+| Run test/release checks | TESTING.md |
+| Fix recurring problems | TROUBLESHOOTING.md |
+| Understand SEO | SEO.md |
+| Work safely with AI coding agents | AI-DEVELOPER-GUIDE.md |
+| Review architecture decisions | DECISIONS.md |
+| Review durable milestones | CHANGELOG.md |
+| See current implementation status | PHASE-CHECKPOINT.md |
+| See the original V1 plan | V1-IMPLEMENTATION-PLAN.md |
 
 ## Existing reference documents
 
-- [SECURITY.md](../SECURITY.md) — security model and vulnerability reporting.
-- [CONTRIBUTING.md](../CONTRIBUTING.md) — contribution rules.
-- [RATE-LIMITING.md](./RATE-LIMITING.md) — request-limiting implementation.
-- [backup.md](./backup.md) — database backup/recovery notes.
-- [paystack-settlement.md](./paystack-settlement.md) — future Paystack settlement design; Paystack is currently deferred from V1.
-- [FULL-AUDIT-AND-REMEDIATION-PLAN.md](./FULL-AUDIT-AND-REMEDIATION-PLAN.md) — audit/remediation history.
-- [PHASE-1-EXIT-TESTS.md](./PHASE-1-EXIT-TESTS.md) — V1 identity/onboarding test checklist.
+- ../SECURITY.md — security model and vulnerability reporting.
+- ../CONTRIBUTING.md — contribution workflow.
+- RATE-LIMITING.md — request-limiting implementation.
+- backup.md — database backup/recovery notes.
+- paystack-settlement.md — future Paystack provider design.
+- FULL-AUDIT-AND-REMEDIATION-PLAN.md — audit/remediation history.
+- PHASE-1-EXIT-TESTS.md — V1 identity/onboarding test checklist.
 
 ## Documentation rules
 
@@ -44,7 +46,7 @@ The repository is the source of truth for implementation. Documentation explains
 
 Never put a real database URL or password, authentication secret, OAuth client secret, API key, webhook signing secret, access token, private deployment credential, private customer data, or private bank data in Markdown, source comments, screenshots, commit messages, tests, fixtures, or examples.
 
-Use placeholder values only. The public .env.example file is the reference for environment-variable names and placeholder formats. Secret values belong in the local secret store or deployment platform.
+Use placeholders only. The public .env.example file contains environment-variable names and placeholder formats. Secret values belong in the local secret store or deployment platform.
 
 ### Keep change locations explicit
 
@@ -55,28 +57,30 @@ When introducing a feature, update the relevant documentation with:
 - the service/helper that owns the business logic;
 - the database entities involved;
 - the tests covering the behavior;
-- deployment or provider configuration when applicable.
+- deployment/provider configuration when applicable.
 
 ### Keep current state separate from future plans
 
-A future design is not a current feature. For example, Paystack settlement documentation is retained as future design reference, while V1 currently uses manual payment methods.
+A future design is not a current feature. Paystack is the current example: its future settlement model is documented, but V1 does not process Paystack payments.
 
 ### Prefer durable links
 
-Use repository paths and route paths instead of links to local machines, temporary deployment URLs, or personal accounts.
+Use repository paths and route paths instead of links to local machines or temporary deployment URLs.
 
 ## Documentation maintenance
 
-Every meaningful change should update the smallest relevant document.
+Update the smallest relevant document when behavior changes.
 
-Examples:
+| Change | Documentation |
+| --- | --- |
+| Database field/relation | DATABASE.md |
+| Financial rule | FINANCE.md |
+| Auth flow | AUTHENTICATION.md and SECURITY.md |
+| Public SEO page | SEO.md |
+| Deployment behavior | DEPLOYMENT.md |
+| Integration/provider | INTEGRATIONS.md |
+| Recurring bug | TROUBLESHOOTING.md |
+| Architecture decision | DECISIONS.md |
+| Major milestone | CHANGELOG.md |
 
-- database field or relation → DATABASE.md and the Prisma schema;
-- financial calculation → FINANCE.md and related tests;
-- auth flow → AUTHENTICATION.md and SECURITY.md;
-- new public SEO route → SEO.md and the central SEO path list;
-- deployment behavior → DEPLOYMENT.md;
-- recurring production bug → TROUBLESHOOTING.md;
-- architectural decision → add a dated entry to the relevant decision section and keep the implementation source of truth in code.
-
-For historical detail, use Git history rather than turning this directory into a copy of commit messages.
+For historical detail, use Git history rather than turning docs into a copy of commit messages.
