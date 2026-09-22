@@ -1,79 +1,162 @@
+
 # Security Policy
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-Email: awesomeakokayo@gmail.com with subject `[OpenBooks Security]`.
-Do not open a public issue for sensitive reports. We aim to respond within 72 hours.
+Email: awesomeakokayo@gmail.com with subject [OpenBooks Security].
 
-## Security Model (V1)
+Do not open a public issue for sensitive reports.
+
+## Security model
 
 ### Multi-tenant isolation
-Every business is a logical tenant. All business-owned data is scoped by `businessId`.
-Every server handler that touches business data calls `requireBusinessMember(userId, businessId)` 
-`lib/security/tenant.ts:7` which checks `BusinessMember` unique `[userId,businessId]` and throws 403 if not a member.
-This prevents ID tampering (`/api/invoices/abc` cannot read Business B by changing ID).
 
-Covered routes: `/api/customers`, `/api/customers/[id]`, `/api/sales`, `/api/invoices`, `/api/invoices/[id]`,
-`/api/payments`, `/api/receipts`, `/api/expenses`, `/api/reports`, `/api/business/payment-settings`.
+Every business is a logical tenant.
 
-### Authentication
-Auth.js / NextAuth with PrismaAdapter + Neon. Providers: Credentials (bcryptjs 10 rounds) + GitHub + Google.
-JWT strategy, middleware `proxy.ts` protects `/dashboard`, `/api/*` except public:
-`/`, `/login`, `/register`, `/api/auth/*`, `/api/webhooks/*`, `/invoice/*`, `/api/invoice`, `/api/payments/paystack/*`.
-Secret never leaves server: `PAYSTACK_SECRET_KEY` server-only, `DATABASE_URL` server-only.
+Protected business routes must establish:
 
-### Secrets
-- `.env*` gitignored, `.env.example` documents names without values.
-- Never log `PAYSTACK_SECRET_KEY`, `DATABASE_URL` — `lib/security/error.ts` redacts them.
-- Never expose sequential IDs publicly — invoices use `publicToken` `crypto.randomBytes(16).hex()` 32-char.
+~~~text
+authenticated user
+      ↓
+BusinessMember membership
+      ↓
+business-scoped read/write
+~~~
 
-### Financial integrity
-- Amounts use Prisma `Decimal(12,2)` — no float.
-- Invoice totals recalculated server-side `lib/invoices/utils.ts:calculateInvoiceTotal`.
-- Balances derived: `outstanding = sum(invoices total not CANCELLED) - sum(payments SUCCESS)` via `lib/customers/service.ts:68` and `lib/reports/*`.
-- Multi-record writes in `prisma.$transaction`: `Payment + Receipt + Invoice status`.
-- Overpayment guard: `recordManualPayment` rejects `amount > outstanding` `lib/payments/service.ts`.
-- Idempotency: `Payment.providerReference` unique, `Receipt.paymentId` unique, webhook checks `existing.status === SUCCESS` before duplicate `app/api/webhooks/paystack/route.ts:32`.
+The reusable membership check is:
 
-### Webhook hardening
-`POST /api/webhooks/paystack`:
-1. `x-paystack-signature` HMAC_SHA512(secret, rawBody) timingSafeEqual `lib/paystack/client.ts`
-2. `event === charge.success` else ack
-3. Server `GET /transaction/verify/:reference` — never trust webhook body alone
-4. Verify `status === success`, `currency === NGN`, `amount === expectedKobo`, business association via `providerReference` lookup
-5. Idempotent, returns 200 on duplicate, 401 on bad sig, 429 rate limited per IP.
-6. Rate limited via `lib/security/rateLimit.ts` (100/min webhook, 20/min initialize, 10/min auth).
+lib/security/tenant.ts
 
-### Rate limiting
-In-memory token bucket `lib/security/rateLimit.ts` — per IP or per business. For scale, replace with Upstash Redis / Vercel KV.
-Applied to: `POST /api/register` (10/min), `POST /api/payments/paystack/initialize` (20/min), `POST /api/webhooks/paystack` (100/min).
-Headers `X-RateLimit-Remaining` + `X-RateLimit-Reset` returned on 429.
+Changing a business ID in a request must not grant access to another tenant.
 
-### Headers
-`next.config.ts` adds `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`.
+## Authentication
 
-### Validation
-All financial inputs via `zod` `lib/validation/schemas.ts`: `amount > 0`, `quantity > 0`, `currency NGN`, `valid date`, `valid email`, `valid payment method`.
+Auth.js with PrismaAdapter provides:
 
-### Audit trail
-`AuditEvent` via `lib/audit/logger.ts` for `BUSINESS_CREATED`, `BUSINESS_SETTINGS_CHANGED`, `CUSTOMER_CREATED`, `SALE_RECORDED`, `INVOICE_CREATED/VIEWED`, `PAYMENT_RECORDED`, `EXPENSE_RECORDED`. Not the ledger itself, but ops history.
+- credentials login;
+- Google OAuth;
+- GitHub OAuth.
 
-### Cron
-`GET /api/cron/overdue` marks `dueDate < now && status in SENT,VIEWED,PARTIALLY_PAID -> OVERDUE` daily 02:00 via `vercel.json`. Protected by `CRON_SECRET` Bearer if set.
+Credentials login requires a verified email.
 
-### Backups
-Neon point-in-time + branching. Configure daily `pg_dump` in production and test restore per `docs/backup.md`.
+Request protection is handled by proxy.ts.
 
-### Error handling
-User errors: `We couldn't save this payment. Please try again.` with `requestId`. Server logs: structured `[scope:requestId] message context` via `lib/security/error.ts`, never leaking stack or secrets to client.
+The public/private boundary is explicit and includes the auth/recovery surfaces and public invoice access required by the product.
 
-## Checklist before production
-- [ ] Tenant isolation tested (change ID in URL fails 403)
-- [ ] Public token brute force rate limited 32-char random
-- [ ] Webhook sig + verify + idempotency tested
-- [ ] Financial calcs tested (Decimal)
-- [ ] Input validation tested
-- [ ] Rate limiting on auth/webhook
-- [ ] Secrets not in client bundle (grep PAYSTACK_SECRET, DATABASE_URL)
-- [ ] Backups configured + restore drill
-- [ ] Error leakage reviewed (no stack in response)
+## Secrets
+
+- Environment files containing real values are gitignored.
+- .env.example contains placeholders only.
+- Production secrets live in the deployment platform.
+- Secret values must never appear in source, logs, screenshots, issues, tests or documentation.
+- Server-side integrations must not expose private credentials to client code.
+
+Error logging in lib/security/error.ts is designed to redact sensitive values.
+
+## Financial integrity
+
+- Financial persistence uses Prisma Decimal(12,2).
+- Invoice totals are recalculated server-side.
+- Successful invoice-linked payments are the only payment records that reduce invoice outstanding.
+- Direct Sales do not settle invoices.
+- Manual payment recording uses serializable database transactions and rejects overpayment.
+- Payment plus Receipt plus invoice-status updates are kept consistent through the payment service.
+
+See docs/FINANCE.md.
+
+## Public invoices
+
+Public invoice access uses a random public token rather than a sequential internal invoice ID.
+
+Public invoice responses are minimized to recipient-facing information.
+
+Payment details such as bank-transfer information must follow the business's enabled payment settings.
+
+Public invoice pages are intentionally outside the authenticated workspace.
+
+## Rate limiting
+
+Rate limiting is implemented in:
+
+lib/security/rateLimit.ts
+
+Current route classes include:
+
+| Class | Current limit |
+| --- | --- |
+| General API | 120 requests/minute |
+| Auth | 30 requests/minute |
+| Registration | 5 requests/10 minutes |
+| Email verification | 10 requests/15 minutes |
+| Password reset | 5 requests/15 minutes |
+| Public invoice | 60 requests/minute |
+| Future Paystack initialize | 20 requests/minute |
+| Future Paystack webhook | 100 requests/minute |
+
+The last two limits are retained as reserved configuration/documentation for a future provider phase; the current Paystack endpoints return 410 in V1.
+
+The limiter can use an optional distributed Redis-compatible backend and falls back to an in-memory guard when the distributed limiter is unavailable.
+
+## HTTP security headers
+
+next.config.ts provides:
+
+- X-Content-Type-Options: nosniff;
+- X-Frame-Options: DENY;
+- strict-origin-when-cross-origin Referrer-Policy;
+- a restrictive Permissions-Policy for camera, microphone and geolocation.
+
+## Validation
+
+External input is validated through the Zod schemas under:
+
+lib/validation/
+
+Do not trust browser-calculated financial values.
+
+## Audit trail
+
+Important business actions are recorded through:
+
+lib/audit/logger.ts
+
+Audit events are operational history. They are not a replacement for financial records.
+
+## Scheduled jobs
+
+The overdue-invoice job is protected by a configured bearer secret and fails closed when it is missing.
+
+Route:
+
+/api/cron/overdue
+
+## Paystack status
+
+Paystack is intentionally deferred from V1.
+
+The current Paystack initialize, verify and webhook routes return 410 and do not process money.
+
+Do not reactivate provider processing without a fresh security and financial-integrity review.
+
+Future provider design is documented in docs/paystack-settlement.md.
+
+## Backup/recovery
+
+See docs/backup.md.
+
+Production recovery must be tested, not merely assumed.
+
+## Production checklist
+
+Before a production release:
+
+- [ ] tenant isolation verified;
+- [ ] public invoice data minimized;
+- [ ] authentication/recovery flows tested;
+- [ ] financial invariants tested;
+- [ ] rate limiting reviewed;
+- [ ] secrets absent from repository and client bundle;
+- [ ] backups/recovery verified;
+- [ ] error responses do not leak sensitive details;
+- [ ] production build passes;
+- [ ] relevant E2E scenarios pass.
