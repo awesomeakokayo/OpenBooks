@@ -1,4 +1,3 @@
-
 # OpenBooks Database
 
 Prisma schema:
@@ -154,7 +153,7 @@ Persisted financial amounts use Prisma Decimal(12,2).
 
 Do not change financial persistence to binary floating-point numbers.
 
-The invoice utility layer also converts and rounds money carefully around NGN kobo boundaries.
+The invoice utility layer also handles conversion and rounding around NGN kobo boundaries.
 
 ## Tenant rules
 
@@ -170,7 +169,7 @@ Database relations are not a substitute for application authorization. Both are 
 
 ## Schema change workflow
 
-Create a migration locally:
+For local development, create a migration with:
 
 ~~~bash
 npx prisma migrate dev --name describe_change
@@ -189,7 +188,27 @@ npx prisma validate
 npx prisma format
 ~~~
 
-For production, use the repository's committed migration workflow. Never point prisma migrate dev at a production database.
+### Important production note
+
+The current Vercel build command is:
+
+~~~text
+prisma generate && next build
+~~~
+
+It does not apply database migrations.
+
+When a schema change needs to reach production, the migration must be created and committed, then applied through the production migration workflow before the application relies on the new schema.
+
+Use:
+
+~~~bash
+npx prisma migrate deploy
+~~~
+
+Never run prisma migrate dev against production and do not use prisma db push for production schema management.
+
+The repository currently keeps prisma/schema.prisma and prisma/seed.ts as the visible Prisma source files. When production migration history is introduced or extended, commit the generated prisma/migrations/ directory so releases have a reproducible schema history.
 
 Before changing a field or relation:
 
@@ -211,4 +230,4 @@ For a destructive migration, document:
 - what rollback means;
 - how production backup/recovery protects the change.
 
-Use backup.md for the recovery procedure.
+Use backup.md for recovery guidance.
