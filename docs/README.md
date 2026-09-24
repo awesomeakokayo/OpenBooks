@@ -1,4 +1,3 @@
-
 # OpenBooks Documentation
 
 This directory is the engineering documentation for OpenBooks. It is written to answer two questions quickly:
@@ -14,6 +13,8 @@ The repository is the source of truth for implementation. Documentation explains
 | --- | --- |
 | Understand the codebase | CODEBASE-MAP.md |
 | Understand system design | ARCHITECTURE.md |
+| Understand the product | PRODUCT.md |
+| Review the public pitch | PITCH-DECK.md |
 | Set up a development machine | ../CONTRIBUTING.md |
 | Configure environment safely | ENVIRONMENT.md |
 | Understand the data model | DATABASE.md |
@@ -63,9 +64,15 @@ When introducing a feature, update the relevant documentation with:
 
 A future design is not a current feature. Paystack is the current example: its future settlement model is documented, but V1 does not process Paystack payments.
 
-### Prefer durable links
+## Product and pitch maintenance
 
-Use repository paths and route paths instead of links to local machines or temporary deployment URLs.
+The product source of truth is PRODUCT.md.
+
+The public submission deck is documented in PITCH-DECK.md and served at:
+
+https://www.openbooks.click/pitch-deck
+
+When product behavior changes, review both documents before submitting the deck externally.
 
 ## Documentation maintenance
 
@@ -73,6 +80,8 @@ Update the smallest relevant document when behavior changes.
 
 | Change | Documentation |
 | --- | --- |
+| Product workflow or current capability | PRODUCT.md |
+| Pitch slide narrative or evidence | PITCH-DECK.md |
 | Database field/relation | DATABASE.md |
 | Financial rule | FINANCE.md |
 | Auth flow | AUTHENTICATION.md and SECURITY.md |
