@@ -47,6 +47,7 @@ export default auth(async (req) => {
     "/api/register",
     "/api/verify-email",
     "/api/password-reset",
+    "/pitch-deck",
     "/invoice",
     "/api/invoice",
   ];
