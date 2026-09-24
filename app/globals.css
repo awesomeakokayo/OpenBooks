@@ -135,6 +135,8 @@ a[href^="/dashboard?month="]:hover, a[href^="/dashboard?month="]:focus-visible {
 @keyframes openbooks-fade { from { opacity: 0; transform: translateY(10px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 @media print {
+  .deck-slide { min-height: 0 !important; height: 185mm !important; break-inside: avoid; page-break-inside: avoid; page-break-after: always; }
+  .deck-slide main { background: #ffffff !important; }
   @page { size: A4; margin: 12mm; }
   html, body { background: #ffffff !important; }
   .print-hidden, .print\:hidden { display: none !important; }
