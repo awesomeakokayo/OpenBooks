@@ -45,8 +45,8 @@
   --font-mono: var(--font-openbooks-mono);
 }
 
-html { scroll-behavior: smooth; }
-body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-body), Inter, system-ui, sans-serif; text-rendering: optimizeLegibility; }
+html { scroll-behavior: smooth; overflow-x: clip; overscroll-behavior-x: none; }
+body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-body), Inter, system-ui, sans-serif; text-rendering: optimizeLegibility; overflow-x: clip; overscroll-behavior-x: none; width: 100%; min-width: 0; }
 h1, h2, h3, h4 { font-family: var(--font-heading), Manrope, sans-serif; color: inherit; line-height: 1.15; }
 a[href], button:not(:disabled) { cursor: pointer; }
 a { color: inherit; }
@@ -64,7 +64,6 @@ main > div.sticky nav a:hover { color: var(--color-white) !important; }
   main > div.sticky > div[class*="sm:hidden"] a { color: var(--color-white) !important; }
   main > div.sticky > div[class*="sm:hidden"] a:hover { color: var(--color-white) !important; }
 
-  /* Keep every interactive control comfortably tappable on phones. */
   button:not(:disabled) { min-height: 44px; min-width: 44px; }
   a.inline-flex { min-height: 44px; }
   a[class*="bg-plum"], a[class*="bg-terracotta"] { min-height: 44px; }
