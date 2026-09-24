@@ -29,13 +29,13 @@ const slides = [
   ["close", "The ask"],
 ];
 
-const features = [
-  [Users, "Customers", "Keep customer records and history together with the transactions they create."],
-  [FileText, "Invoices", "Create invoices, share public invoice links and keep outstanding balances visible."],
-  [WalletCards, "Payments", "Record Cash, Bank Transfer and POS payments and keep payment history attached to the right records."],
-  [ReceiptText, "Receipts", "Turn recorded payments into receipts that can be kept or shared as proof."],
-  [LayoutDashboard, "Reports", "See business totals and reporting periods without rebuilding the numbers manually."],
-  [ShieldCheck, "Business controls", "Use authentication, tenant isolation and server-side financial rules to protect business records."],
+const features: Array<{ icon: typeof Users; title: string; copy: string }> = [
+  { icon: Users, title: "Customers", copy: "Keep customer records and history together with the transactions they create." },
+  { icon: FileText, title: "Invoices", copy: "Create invoices, share public invoice links and keep outstanding balances visible." },
+  { icon: WalletCards, title: "Payments", copy: "Record Cash, Bank Transfer and POS payments and keep payment history attached to the right records." },
+  { icon: ReceiptText, title: "Receipts", copy: "Turn recorded payments into receipts that can be kept or shared as proof." },
+  { icon: LayoutDashboard, title: "Reports", copy: "See business totals and reporting periods without rebuilding the numbers manually." },
+  { icon: ShieldCheck, title: "Business controls", copy: "Use authentication, tenant isolation and server-side financial rules to protect business records." },
 ];
 
 const steps = [
@@ -262,16 +262,13 @@ export default function PitchDeckPage() {
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {features.map(([Icon, title, copy]) => {
-                const FeatureIcon = Icon as typeof Users;
-                return (
-                  <div key={String(title)} className="rounded-[26px] border border-white/12 bg-white/8 p-5">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D0E3C4] text-[#503047]"><FeatureIcon size={18} /></div>
-                    <h3 className="mt-8 font-heading text-xl font-extrabold">{String(title)}</h3>
-                    <p className="mt-2 text-sm leading-6 text-white/55">{String(copy)}</p>
-                  </div>
-                );
-              })}
+              {features.map(({ icon: FeatureIcon, title, copy }) => (
+                <div key={title} className="rounded-[26px] border border-white/12 bg-white/8 p-5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D0E3C4] text-[#503047]"><FeatureIcon size={18} /></div>
+                  <h3 className="mt-8 font-heading text-xl font-extrabold">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/55">{copy}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -472,14 +469,6 @@ export default function PitchDeckPage() {
         </section>
       </div>
 
-      <style jsx>{\`
-        .deck-slide { min-height: 78vh; }
-        @media print {
-          .deck-slide { min-height: 0; height: 185mm; break-inside: avoid; page-break-inside: avoid; page-break-after: always; }
-          main { background: #fff !important; }
-          body { background: #fff !important; }
-        }
-      \`}</style>
     </main>
   );
 }
