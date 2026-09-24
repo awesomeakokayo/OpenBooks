@@ -1,48 +1,68 @@
-
 # OpenBooks Engineering Changelog
 
 This document records durable project milestones. It is not a replacement for Git history.
 
-## 2026-08-27 — Foundation and first product build
+## 2026-09-24 — Hackaholics pitch and product documentation
 
-OpenBooks was established as a Next.js + Prisma + PostgreSQL/Auth.js application.
+Added a public, print-ready OpenBooks pitch deck at /pitch-deck for startup programme submissions.
 
-The initial implementation progressed through:
+Added product documentation that defines:
 
-- foundation and design system;
-- authentication and business onboarding;
-- customers and sales;
-- invoice engine;
-- manual payments and receipts;
-- Paystack provider work;
-- expenses and reports;
-- production hardening.
+- current V1 product capabilities;
+- user groups and the core product journey;
+- active and deferred payment boundaries;
+- approved external-facing product language;
+- evidence standards for future traction claims.
 
-The original phase commits are preserved in Git. The V1 implementation plan later became the more durable planning source.
+Added pitch-deck documentation covering the public route, slide narrative, visual system, maintenance rules and submission checklist.
 
-## 2026-08-28 — Identity/onboarding hardening
+## 2026-09-22 — Documentation system
 
-The project added and hardened:
+The repository was upgraded from scattered engineering notes to a navigable documentation system covering:
 
-- email verification;
-- verification resend/recovery;
-- password reset;
-- Google/GitHub OAuth;
-- business/payment onboarding;
-- Phase 1 exit tests and checkpoints;
-- production auth/build compatibility fixes.
+- architecture;
+- codebase map;
+- database;
+- financial rules;
+- authentication;
+- environment safety;
+- deployment;
+- integrations;
+- SEO;
+- testing;
+- troubleshooting;
+- AI-assisted development;
+- architecture decisions;
+- project milestones.
 
-## 2026-08-29 — Product surface and financial UX
+A pull-request documentation checklist and repository guidance for AI coding agents were also added.
 
-Work focused on:
+## 2026-09-03 to 2026-09-08 — Reliability and mobile polish
 
-- shared workspace shell and navigation;
-- dashboard/customer/invoice UX;
-- invoice PDF and bank-transfer presentation;
-- safer money math and readable statuses;
-- mobile navigation and interaction behavior;
-- payment/receipt history;
-- business profile settings.
+The project continued with:
+
+- public OG/social image improvements;
+- dashboard/mobile layout fixes;
+- removal of deferred Paystack UI;
+- navigation persistence and scroll behavior;
+- stronger touch targets;
+- accessible primary actions.
+
+## 2026-09-02 — Search acquisition system
+
+OpenBooks expanded from basic metadata into a structured SEO/search acquisition system:
+
+- central site identity and metadata;
+- crawler policy and XML sitemap;
+- indexability controls for public invoice tokens;
+- software structured data;
+- no-account browser tools;
+- practical bookkeeping answer pages;
+- industry-specific business guides;
+- commercial product-intent pages;
+- a central indexable public-path registry.
+
+The SEO system is documented in docs/SEO.md.
 
 ## 2026-08-30 — Security, financial correctness and API quality
 
@@ -66,53 +86,46 @@ A broad production remediation pass addressed:
 
 The phase/checkpoint documents under docs/ preserve the detailed remediation state.
 
-## 2026-09-02 — Search acquisition system
+## 2026-08-29 — Product surface and financial UX
 
-OpenBooks expanded from basic metadata into a structured SEO/search acquisition system:
+Work focused on:
 
-- central site identity and metadata;
-- crawler policy and XML sitemap;
-- indexability controls for public invoice tokens;
-- software structured data;
-- no-account browser tools;
-- practical bookkeeping answer pages;
-- industry-specific business guides;
-- commercial product-intent pages;
-- a central indexable public-path registry.
+- shared workspace shell and navigation;
+- dashboard/customer/invoice UX;
+- invoice PDF and bank-transfer presentation;
+- safer money math and readable statuses;
+- mobile navigation and interaction behavior;
+- payment/receipt history;
+- business profile settings.
 
-The SEO system is documented in docs/SEO.md.
+## 2026-08-28 — Identity/onboarding hardening
 
-## 2026-09-03 to 2026-09-08 — Reliability and mobile polish
+The project added and hardened:
 
-The project continued with:
+- email verification;
+- verification resend/recovery;
+- password reset;
+- Google/GitHub OAuth;
+- business/payment onboarding;
+- Phase 1 exit tests and checkpoints;
+- production auth/build compatibility fixes.
 
-- public OG/social image improvements;
-- dashboard/mobile layout fixes;
-- removal of deferred Paystack UI;
-- navigation persistence and scroll behavior;
-- stronger touch targets;
-- accessible primary actions.
+## 2026-08-27 — Foundation and first product build
 
-## 2026-09-22 — Documentation system
+OpenBooks was established as a Next.js + Prisma + PostgreSQL/Auth.js application.
 
-The repository was upgraded from scattered engineering notes to a navigable documentation system covering:
+The initial implementation progressed through:
 
-- architecture;
-- codebase map;
-- database;
-- financial rules;
-- authentication;
-- environment safety;
-- deployment;
-- integrations;
-- SEO;
-- testing;
-- troubleshooting;
-- AI-assisted development;
-- architecture decisions;
-- project milestones.
+- foundation and design system;
+- authentication and business onboarding;
+- customers and sales;
+- invoice engine;
+- manual payments and receipts;
+- Paystack provider work;
+- expenses and reports;
+- production hardening.
 
-A pull-request documentation checklist and repository guidance for AI coding agents were also added.
+The original phase commits are preserved in Git. The V1 implementation plan later became the more durable planning source.
 
 ## Current product boundary
 
