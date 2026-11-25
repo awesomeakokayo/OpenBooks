@@ -1,7 +1,7 @@
 
 # OpenBooks NG
 
-OpenBooks is an open-source, Nigeria-first digital cashbook for small businesses. It helps business owners keep customers, sales, invoices, payments, receipts, expenses and reports in one workspace.
+OpenBooks is a Nigeria-first digital cashbook for small businesses. It helps business owners keep customers, sales, invoices, payments, receipts, expenses and reports in one workspace.
 
 **Production:** https://www.openbooks.click
 
@@ -148,6 +148,10 @@ The documentation hub is [docs/README.md](./docs/README.md).
 
 The repository intentionally keeps the README as an orientation document and puts detailed operational knowledge in docs/ so engineers can find the right place quickly without turning one file into an unmaintainable manual.
 
-## License
+## Copyright and licensing
 
-No final open-source license has been selected for this repository yet. Until a license is added, reuse and redistribution rights should not be assumed.
+This repository does not currently grant an open-source license or a general permission to copy, modify, distribute, sublicense, or commercially reuse the OpenBooks application. The absence of a `LICENSE` file is intentional; do not assume that the application source code is offered under an open-source license.
+
+Third-party packages, fonts, images, icons, and other incorporated materials remain subject to their respective licenses and terms. Those terms are separate from the licensing status of the OpenBooks application.
+
+Any acquisition or transfer of the application, its source code, branding, domain, or other assets must be documented separately and is limited to rights the seller is legally entitled to transfer. A buyer should review the third-party dependency and asset obligations as part of technical and legal due diligence.
